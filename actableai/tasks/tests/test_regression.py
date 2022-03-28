@@ -1,5 +1,8 @@
 import numpy as np
+<<<<<<< HEAD
 import pandas as pd
+=======
+>>>>>>> 6e466d325... Initial
 import pytest
 
 from actableai.tasks.regression import AAIRegressionTask
@@ -261,6 +264,7 @@ class TestRemoteRegression:
         assert r["validations"][0]["name"] == "IsSufficientDataChecker"
         assert r["validations"][0]["level"] == CheckLevels.CRITICAL
 
+<<<<<<< HEAD
     def test_invalid_eval_metric(self, regression_task, tmp_path, data):
         r = run_regression_task(regression_task, tmp_path, data, "y", eval_metric="abc")
         assert r["status"] == "FAILURE"
@@ -268,6 +272,8 @@ class TestRemoteRegression:
         assert r["validations"][0]["name"] == "RegressionEvalMetricChecker"
         assert r["validations"][0]["level"] == CheckLevels.CRITICAL
 
+=======
+>>>>>>> 6e466d325... Initial
     def test_validation_has_prediction(self, regression_task, tmp_path):
         df = pd.DataFrame({
             "x": [1, 2, 3, 4, 5, None, None, 8, 9, 10] * 2,

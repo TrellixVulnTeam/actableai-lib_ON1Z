@@ -125,6 +125,7 @@ class ResidualsModel:
 
                 residuals_features_dict[residuals_feature] = debiased_feature
             else:
+<<<<<<< HEAD
                 for class_label in model.get_predictor(debiased_feature).class_labels:
                     class_residuals_feature = f"{residuals_feature}_{class_label}"
                     df_residuals[class_residuals_feature] = (X[debiased_feature] == class_label).apply(lambda row: 1 if row else 0)
@@ -132,6 +133,20 @@ class ResidualsModel:
 
                     residuals_features_dict[class_residuals_feature] = debiased_feature
                     categorical_residuals_count += 1
+=======
+                df_residuals[residuals_feature] = pd.Series(np.nan, index=X.index)
+
+                # Creating mask not to compute losses when we have nan values (sklearn does not like nan)
+                if not nan_mask.all():
+                    df_residuals[residuals_feature][~nan_mask] = self._per_sample_log_loss(
+                        X[debiased_feature][~nan_mask],
+                        pred_proba[debiased_feature][~nan_mask],
+                        labels=model.get_predictor(debiased_feature).class_labels
+                    )
+
+                residuals_features_dict[residuals_feature] = debiased_feature
+                categorical_residuals_count += 1
+>>>>>>> 6e466d325... Initial
 
         residuals_features_list = list(residuals_features_dict.keys())
         df_residuals[residuals_features_list] = df_residuals[residuals_features_list].astype(float)

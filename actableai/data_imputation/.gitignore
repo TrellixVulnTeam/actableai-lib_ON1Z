@@ -142,3 +142,8 @@ cython_debug/
 
 # AutoGluon
 AutogluonModels*/
+#
+# data
+experiments/data/
+!experiments/data/manual_test/
+!experiments/data/**/README.md

@@ -3,7 +3,10 @@ import pandas as pd
 from autogluon.core.models import AbstractModel
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+<<<<<<< HEAD
 from sklearn.impute import SimpleImputer
+=======
+>>>>>>> 6e466d325... Initial
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import Ridge, LogisticRegression
 

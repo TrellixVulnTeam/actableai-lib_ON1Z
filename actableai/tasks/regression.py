@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 from typing import List, Optional
 import pandas as pd
+=======
+from typing import List
+>>>>>>> 6e466d325... Initial
 
 from actableai.tasks import TaskType
 from actableai.tasks.base import AAITask
@@ -153,8 +157,12 @@ class _AAIInterventionTask(AAITask):
             cate_alpha,
             presets,
             model_directory,
+<<<<<<< HEAD
             num_gpus,
     ):
+=======
+            num_gpus):
+>>>>>>> 6e466d325... Initial
         import numpy as np
         import pandas as pd
         from tempfile import mkdtemp
@@ -185,7 +193,11 @@ class _AAIInterventionTask(AAITask):
             problem_type="regression" if current_intervention_column in num_cols else "multiclass",
         )
         model_t = SKLearnWrapper(
+<<<<<<< HEAD
             model_t, hyperparameters=causal_hyperparameters, presets=presets,
+=======
+            X, model_t, hyperparameters=causal_hyperparameters, presets=presets,
+>>>>>>> 6e466d325... Initial
             ag_args_fit={
                 "num_gpus": num_gpus,
             }
@@ -197,7 +209,11 @@ class _AAIInterventionTask(AAITask):
             problem_type="regression",
         )
         model_y = SKLearnWrapper(
+<<<<<<< HEAD
             model_y, hyperparameters=causal_hyperparameters, presets=presets,
+=======
+            X, model_y, hyperparameters=causal_hyperparameters, presets=presets,
+>>>>>>> 6e466d325... Initial
             ag_args_fit = {
                 "num_gpus": num_gpus,
             }
@@ -280,12 +296,18 @@ class _AAIInterventionTask(AAITask):
 
 
 class AAIRegressionTask(AAITask):
+<<<<<<< HEAD
     """ Regression task.
 
+=======
+    """
+    TODO write documentation
+>>>>>>> 6e466d325... Initial
     """
 
     @AAITask.run_with_ray_remote(TaskType.REGRESSION)
     def run(self,
+<<<<<<< HEAD
             df: pd.DataFrame,
             target: str,
             features: Optional[List[str]] = None,
@@ -380,6 +402,37 @@ class AAIRegressionTask(AAITask):
         -------
 
 
+=======
+            df,
+            target,
+            features=None,
+            biased_groups=None,
+            debiased_features=None,
+            validation_ratio=.2,
+            prediction_quantile_low=5,
+            prediction_quantile_high=95,
+            explain_samples=False,
+            model_directory=None,
+            presets="medium_quality_faster_train",
+            hyperparameters=None,
+            train_task_params=None,
+            intervention_task_params=None,
+            kfolds=1,
+            cross_validation_max_concurrency=1,
+            current_intervention_column=None,
+            new_intervention_column=None,
+            cate_alpha=None,
+            common_causes : List[str] = [],
+            causal_cv=5,
+            causal_hyperparameters=None,
+            residuals_hyperparameters=None,
+            drop_duplicates=True,
+            return_residuals=False,
+            kde_steps=10,
+            num_gpus=0):
+        """
+        TODO write documentation
+>>>>>>> 6e466d325... Initial
         """
         import os
         import ray
@@ -435,12 +488,19 @@ class AAIRegressionTask(AAITask):
             df,
             biased_groups,
             debiased_features,
+<<<<<<< HEAD
             eval_metric,
+=======
+>>>>>>> 6e466d325... Initial
             prediction_quantile_low,
             prediction_quantile_high,
             presets,
             explain_samples,
+<<<<<<< HEAD
             drop_duplicates,
+=======
+            drop_duplicates
+>>>>>>> 6e466d325... Initial
         )
         failed_checks = [
             check

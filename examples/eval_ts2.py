@@ -5,7 +5,7 @@ import mxnet as mx
 import numpy as np
 import pandas as pd
 from scipy.stats import sem
-import actableai.timeseries.models 
+import actableai.timeseries.models
 import actableai.timeseries.params as params
 from jinja2 import Environment, FileSystemLoader
 
@@ -25,7 +25,7 @@ if not os.path.exists(multivariate_data_folder):
 
 
 def evaluate(df_train, param, prediction_length):
-    
+
     target_dim = len(df_train.columns)
 
     univariate_params = {"feedforward":params.FeedForwardParams(hidden_layer_size=10, epochs=2,
@@ -36,7 +36,7 @@ def evaluate(df_train, param, prediction_length):
     if df_train.shape[0] <= 1000:
         univariate_params["deepar"]=params.DeepARParams(num_cells=20, num_layers=2, epochs=1,
                                 context_length=None)
-    
+
     multivariate_params = {"feedforward": params.FeedForwardParams(hidden_layer_size=10, epochs=2,
                                 context_length=None,learning_rate=0.001,l2=1e-08),
                         "deepvar": params.DeepVARParams(
@@ -44,7 +44,7 @@ def evaluate(df_train, param, prediction_length):
                                 context_length=None,l2=1e-4),
                         "transformer": params.TransformerTempFlowParams(
                             context_length=None,
-                            epochs=2,learning_rate=0.001, l2=0.0001, num_heads=8, d_model=8),                            
+                            epochs=2,learning_rate=0.001, l2=0.0001, num_heads=8, d_model=8),
                         }
 
     m = actableai.timeseries.models.AAITimeseriesForecaster(
@@ -163,7 +163,7 @@ file = open(html_file,"w")
 file.write(html_out)
 file.close()
 
-        
 
- 
+
+
 
