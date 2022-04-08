@@ -1,0 +1,37 @@
+diff a/actableai/causal/predictors.py b/actableai/causal/predictors.py	(rejected hunks)
+@@ -20,22 +20,32 @@ class UnsupportedProblemType(ValueError):
+     pass
+ 
+ 
+-class DataFrameTransformer(TransformerMixin):
++class DataFrameTransformer(BaseEstimator, TransformerMixin):
+     """DataFrame Transformer to convert List to DataFrame
+ 
+     Args:
+         TransformerMixin (_type_): Base Class Transformer of SKLearn
+     """
++    def __init__(self, column_names=None) -> None:
++        self.column_names = column_names
++
+     def fit_transform(self, X, y=None, **fit_params):
++        return self.transform(X)
++
++    def fit(self, X):
++        return self
++
++    def transform(self, X, y=None):
++        if isinstance(X, pd.DataFrame):
++            return X.copy()
+         if isinstance(X, np.ndarray):
+-            return pd.DataFrame(X.tolist())
++            return pd.DataFrame(X.tolist(), index=self.column_names)
+         if isinstance(X, list) and len(np.array(X).shape) != 2:
+             raise Exception("List must be two dimensional to be converted to DataFrame")
+         if isinstance(X, list) or isinstance(X, dict):
+             return pd.DataFrame(X)
+         raise TypeError
+ 
+-
+ class LinearRegressionWrapper(LinearRegression):
+ 
+     def score(self, X, y, sample_weight=None):

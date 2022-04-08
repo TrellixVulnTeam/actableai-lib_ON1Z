@@ -21,25 +21,30 @@ class UnsupportedProblemType(ValueError):
     pass
 
 
-class DataFrameTransformer(TransformerMixin):
+class DataFrameTransformer(BaseEstimator, TransformerMixin):
     """DataFrame Transformer to convert List to DataFrame
-
+ 
     Args:
         TransformerMixin (_type_): Base Class Transformer of SKLearn
     """
-    def fit_transform(self, X, y=None, x_w_columns=None, **fit_params):
+    def __init__(self, column_names=None) -> None:
+        self.column_names = column_names
+
+    def fit_transform(self, X, y=None, **fit_params):
+        return self.transform(X)
+
+    def fit(self, X):
+        return self
+
+    def transform(self, X, y=None):
+        if isinstance(X, pd.DataFrame):
+            return X.copy()
         if isinstance(X, np.ndarray):
-            df = pd.DataFrame(X.tolist())
-            if x_w_columns is not None and len(x_w_columns) != 0:
-                df.columns = x_w_columns
-            return df
+            return pd.DataFrame(X.tolist(), index=self.column_names)
         if isinstance(X, list) and len(np.array(X).shape) != 2:
             raise Exception("List must be two dimensional to be converted to DataFrame")
         if isinstance(X, list) or isinstance(X, dict):
-            df = pd.DataFrame(X)
-            if x_w_columns is not None:
-                df.columns = x_w_columns
-            return df
+            return pd.DataFrame(X)
         raise TypeError
 
 

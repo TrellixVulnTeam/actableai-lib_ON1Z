@@ -5,6 +5,8 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
 
 
 class AutogluonShapWrapper:
@@ -211,6 +213,8 @@ def get_type_special_no_ag(X: pd.Series) -> str:
             return False
 
     def check_if_nlp_feature(X: pd.Series) -> bool:
+        if X.isna().all():
+            return False
         type_family = get_type_family_raw(X.dtype)
         if type_family != 'object':
             return False
@@ -324,3 +328,10 @@ def random_directory(path=""):
     directory = os.path.join(path, str(uid))
 
     return directory
+
+def is_fitted(transformer):
+    try:
+        check_is_fitted(transformer)
+    except NotFittedError as e:
+        return False
+    return True
