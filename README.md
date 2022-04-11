@@ -168,12 +168,12 @@ Trung Huynh - [@Linkedin](https://www.linkedin.com/in/trunghlt/) - trung@actable
 
 Project Link: [https://github.com/Actable-AI/actableai-lib](https://github.com/Actable-AI/actableai-lib)
 
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+## Official Maintainers
 
-## Maintainers
-
-For any question about the ML Library feel free to send us a message.
+For any question about the ML Library feel free to send us a message :
+- trung@actable.ai
+- axeng@actable.ai
+- mehdib@actable.ai
 
 
 
@@ -192,6 +192,6 @@ For any question about the ML Library feel free to send us a message.
 [issues-url]: https://github.com/Actable-AI/actableai-lib/issues
 [license-shield]: https://img.shields.io/github/license/Actable-AI/actableai-lib.svg?style=for-the-badge
 [license-url]: https://github.com/Actable-AI/actableai-lib/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=256
 [linkedin-url]: https://www.linkedin.com/company/actable-ai
 [product-screenshot]: images/screenshot.png
