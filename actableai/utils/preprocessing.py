@@ -72,3 +72,27 @@ class SKLearnAGFeatureWrapperBase(TransformerMixin, BaseEstimator):
         if self.transformed_df is None:
             raise Exception("Needs to be fit_transform first")
         return list(self.transformed_df.columns)
+from sklearn.base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+
+class PercentageTransformer(_OneToOneFeatureMixin, BaseEstimator, TransformerMixin):
+    """Percentage Transformer that transforms strings with percentages into floats
+
+    Args:
+        BaseEstimator (BaseEstimator): SKLearn BaseEstimator
+        TransformerMixin (TransformerMixin): SKLearn TransformerMixin
+    """
+    def fit_transform(self, X, y=None):
+        return self.transform(X, y)
+
+    def fit(self, X):
+        return self
+
+    def transform(self, X, y=None):
+        return X.apply(lambda x: x.str.extract(r'^[^\S\r\n]*(\d+(?:\.\d+)?)[^\S\r\n]*%[^\S\r\n]*$')[0]).astype(float)
+
+    @staticmethod
+    def selector(df):
+        obj_cols = list(df.select_dtypes(include='object').columns)
+        parsed_rate_check = lambda x, min : x.isna().sum() >= min * len(x)
+        extracted = df[obj_cols].apply(lambda x: x.str.extract(r'^[^\S\r\n]*(\d+(?:\.\d+)?)[^\S\r\n]*%[^\S\r\n]*$')[0])
+        return ~extracted.apply(lambda x: parsed_rate_check(x, 0.5))
