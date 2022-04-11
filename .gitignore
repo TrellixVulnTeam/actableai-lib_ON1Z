@@ -792,3 +792,5 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,macos,emacs,linux,python,windows,visualstudio,jetbrains+all,visualstudiocode,jupyternotebooks,virtualenv
 deploy/charts/actableai-api-docs/prod.yaml
+
+Pipfile
