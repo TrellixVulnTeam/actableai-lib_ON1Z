@@ -8,20 +8,20 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://actable.ai">
+  <a href="https://actable.ai" target="_blank">
     <img src="images/logo.png" alt="Logo">
 
   <p align="center">
     Automated Machine Learning and Data Science for everyone
     <br />
-    <a href="https://google.com"><strong>Explore the docs »</strong></a>
+    <a href="https://google.com" target="_blank"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://actable.ai">View Demo</a>
+    <a href="https://actable.ai" target="_blank">View Demo</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
+    <a href="https://github.com/othneildrew/Best-README-Template/issues" target="_blank">Report Bug</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+    <a href="https://github.com/othneildrew/Best-README-Template/issues" target="_blank">Request Feature</a>
   </p>
 </div>
 
@@ -95,15 +95,24 @@ To get a local copy up and running follow these simple example steps.
 
 ### Installation
 
+- Install from PyPI : *Coming Soon*
+
 ```sh
+pip install actableai-lib
+```
+
+- Install from source :
+
+```sh
+git clone git@github.com:Actable-AI/actableai-lib.git --recursive
+cd actableai-lib
 pip install -r requirements.txt
 ```
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Running a classification :
-
+- Running a classification :
 ```python
 import pandas as pd
 
@@ -115,7 +124,19 @@ result = AAIClassificationTask(
   df,
   target='target_column'
 )
+```
+- Running a regression :
+```python
+import pandas as pd
 
+from actableai.tasks.regression import AAIRegressionTask
+
+df = pd.read_csv("dataframepath.csv")
+
+result = AAIClassificationTask(
+  df,
+  target='target_column'
+)
 ```
 _For more examples, please refer to the [Documentation](https://google.com)_
 
