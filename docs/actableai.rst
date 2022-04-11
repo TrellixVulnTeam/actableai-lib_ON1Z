@@ -15,6 +15,7 @@ Subpackages
    actableai.data_validation
    actableai.debiasing
    actableai.regression
+   actableai.sentiment
    actableai.stats
    actableai.tasks
    actableai.third_parties

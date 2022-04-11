@@ -13,7 +13,7 @@ COPY ./third_parties/autogluon ./third_parties/autogluon
 RUN pip install --upgrade pip \
     && pip install --use-deprecated=legacy-resolver -r requirements.txt \
     && pip install --use-deprecated=legacy-resolver fbprophet==0.7.1 \
-    && pip install "sphinx==4.5.0 maisie-sphinx-theme==0.1.2"
+    && pip install sphinx==4.5.0 maisie-sphinx-theme==0.1.2
 
 COPY . .
 
