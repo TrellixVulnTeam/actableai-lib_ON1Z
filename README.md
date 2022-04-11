@@ -130,7 +130,7 @@ result = AAICorrelationTask(
   target='target_column'
 )
 ```
-_For more examples, please refer to the [Documentation](https://google.com)_
+_For more examples, please refer to the [Documentation](https://app.actable.ai/api-docs/)_
 
 <!-- ROADMAP -->
 ## Roadmap
