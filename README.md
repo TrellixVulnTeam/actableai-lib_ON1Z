@@ -1,4 +1,4 @@
-<div id="top"></div>
+<div id="top"/>
 <!-- PROJECT SHIELDS -->
 
 [![Actions Status](https://github.com/Actable-AI/actableai-lib/workflows/UnitTest/badge.svg)](https://github.com/Actable-AI/actableai-lib/actions)
@@ -14,10 +14,10 @@
   <p align="center">
     Automated Machine Learning and Data Science for everyone
     <br />
-    <a href="https://google.com" target="_blank"><strong>Explore the docs »</strong></a>
+    <a href="https://app.actable.ai/api-docs/genindex.html" target="_blank"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://actable.ai" target="_blank">View Demo</a>
+    <a href="https://app.actable.ai/superset/explore/?form_data=%7B%22datasource%22%3A%2228506__table%22%2C%22viz_type%22%3A%22plotly_correlation%22%2C%22slice_id%22%3A623%2C%22url_params%22%3A%7B%7D%2C%22time_range_endpoints%22%3A%5B%22inclusive%22%2C%22exclusive%22%5D%2C%22adhoc_filters%22%3A%5B%5D%2C%22correlation_target%22%3A%22two_year_recid%22%2C%22columns_name%22%3A%5B%22compas_screening_date%22%2C%22sex%22%2C%22dob%22%2C%22age%22%2C%22age_cat%22%2C%22race%22%2C%22juv_fel_count%22%2C%22juv_misd_count%22%2C%22juv_other_count%22%2C%22priors_count%22%2C%22days_b_screening_arrest%22%2C%22c_jail_in%22%2C%22c_jail_out%22%2C%22c_case_number%22%2C%22c_offense_date%22%2C%22c_arrest_date%22%2C%22c_days_from_compas%22%2C%22c_charge_degree%22%2C%22c_charge_desc%22%2C%22r_days_from_arrest%22%2C%22r_offense_date%22%2C%22r_charge_desc%22%2C%22r_jail_in%22%2C%22r_jail_out%22%2C%22violent_recid%22%2C%22is_violent_recid%22%2C%22vr_case_number%22%2C%22vr_charge_degree%22%2C%22vr_offense_date%22%2C%22vr_charge_desc%22%2C%22type_of_assessment%22%2C%22screening_date%22%2C%22in_custody%22%2C%22out_custody%22%2C%22start%22%2C%22end%22%2C%22event%22%5D%2C%22correlation_control%22%3A%5B%5D%2C%22number_factors%22%3A20%2C%22show_bar_value%22%3Afalse%2C%22taskId%22%3A%22f1e3c2e7-b093-460f-9801-d69c98dbcd54%22%2C%22sql%22%3Anull%2C%22databaseName%22%3A%22actableai%22%7D" target="_blank">View Demo</a>
     ·
     <a href="https://github.com/othneildrew/Best-README-Template/issues" target="_blank">Report Bug</a>
     ·
@@ -63,23 +63,18 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
+**actableai-lib** is a Python module for automated Machine Learning and Analytics. It offers a wide range of *tasks* that automatically infer statistics or results based on your Data.
 
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should implement DRY principles to the rest of your life :smile:
+This repository is a library used for our main app [app.actable.ai](https://app.actable.ai) where you can run every analytics and inferences without any knowledge about code or statistics.
 
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have contributed to expanding this template!
-
-Use the `BLANK_README.md` to get started.
+This project started in 2020 and is maintained by [Actable](https://www.linkedin.com/company/actable-ai/mycompany/) and any volunteers who wants to participate in this open source project.
 
 ### Built With
 
 * [Autogluon](https://reactjs.org/)
+* [Ray](https://angular.io/)
 * [Sklearn](https://nextjs.org/)
 * [Pandas](https://vuejs.org/)
-* [Ray](https://angular.io/)
 
 
 <!-- GETTING STARTED -->
@@ -107,33 +102,30 @@ pip install actableai-lib
 git clone git@github.com:Actable-AI/actableai-lib.git --recursive
 cd actableai-lib
 pip install -r requirements.txt
+pip install .
 ```
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-- Running a classification :
+- Running a Classification :
 ```python
 import pandas as pd
-
 from actableai.tasks.classification import AAIClassificationTask
 
-df = pd.read_csv("dataframepath.csv")
-
+df = pd.read_csv("path/to/dataframe.csv")
 result = AAIClassificationTask(
   df,
   target='target_column'
 )
 ```
-- Running a regression :
+- Running a Correlation Analysis :
 ```python
 import pandas as pd
-
-from actableai.tasks.regression import AAIRegressionTask
+from actableai.tasks.regression import AAICorrelationTask
 
 df = pd.read_csv("dataframepath.csv")
-
-result = AAIClassificationTask(
+result = AAICorrelationTask(
   df,
   target='target_column'
 )
@@ -143,13 +135,10 @@ _For more examples, please refer to the [Documentation](https://google.com)_
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
+- [ ] Add Changelog
+- [ ] Add LICENSE
+- [ ] Add PyPI installer
+- [ ] Check Installation against Windows
 
 See the [open issues](https://github.com/Actable-AI/actableai-lib/issues) for a full list of proposed features (and known issues).
 
@@ -161,8 +150,8 @@ Contributions are what make the open source community such an amazing place to l
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 Don't forget to give the project a star! Thanks again!
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+1. Create an Issue with Bug or Feature label
+2. Create your Feature/BugFix Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
@@ -181,6 +170,13 @@ Project Link: [https://github.com/Actable-AI/actableai-lib](https://github.com/A
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
+
+## Maintainers
+
+For any question about the ML Library feel free to send us a message.
+
+
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
