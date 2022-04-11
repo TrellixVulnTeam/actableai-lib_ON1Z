@@ -1,7 +1,7 @@
-from typing import List, Optional
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.neighbors import KernelDensity
 
 class Stats(object):
@@ -15,38 +15,39 @@ class Stats(object):
     def _is_categorical(self, df, column):
         return not self._is_numeric(df, column)
 
-    def corr(
-        self,
-        df,
-        target_col,
-        target_value=None,
-        p_value=0.05,
-        categorical_columns:Optional[List]=None,
-        gen_categorical_columns:Optional[List]=None):
+    def corr(self, df, target_col, target_value=None, p_value=0.05):
         """ Return correlations of target_col and other columns in a dataframe. Categorical values are converted using
         one-hot-encoding.
 
         @return a Pandas dataframe whose index is column names and columns are correlation and p-values respectively.
 
         """
+        categorical_columns = df.columns[df.dtypes == object]
+        train_df = df[categorical_columns].fillna('NaN')
+        enc = OneHotEncoder()
+        enc.fit(train_df)
+        dummies = pd.DataFrame.sparse.from_spmatrix(
+            enc.transform(train_df),
+            columns=enc.get_feature_names(categorical_columns))
         dummy_col_to_original = {}
-        for i, cat_col in enumerate(categorical_columns):
-            for gen_cat_col in gen_categorical_columns[i]:
-                    dummy_col_to_original[cat_col + '_' + (gen_cat_col if gen_cat_col is not None else 'None')] = cat_col
+        for i in range(len(categorical_columns)):
+            for t in enc.categories_[i]:
+                dummy_col_to_original[categorical_columns[i] + '_' + str(t)] = categorical_columns[i]
 
+        x = pd.concat([df.drop(columns=categorical_columns), dummies], axis=1)
         if target_value is not None:
             target_col = "_".join([target_col, target_value])
-        if target_col not in df.columns:
+        if target_col not in x.columns:
             raise ValueError("Target column or target value is not in the input dataframe")
         re = []
-        spearman_col = df[target_col]
+        spearman_col = x[target_col]
         is_target_col_cat = target_col in dummy_col_to_original.keys()
-        for col in list(df.columns):
+        for col in x.columns:
             if col == target_col or (is_target_col_cat and col in dummy_col_to_original.keys()
                                     and dummy_col_to_original[target_col] == dummy_col_to_original[col]):
-                df = df.drop(col, axis=1)
-        for col in list(df.columns):
-            c = spearmanr(spearman_col, df[col], nan_policy="omit")
+                x = x.drop(col, axis=1)
+        for col in x.columns:
+            c = spearmanr(spearman_col, x[col], nan_policy="omit")
             if c.pvalue <= p_value:
                 original_col = dummy_col_to_original.get(col, col)
                 re.append({
