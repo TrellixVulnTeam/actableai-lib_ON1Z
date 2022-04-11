@@ -84,6 +84,12 @@ This project started in 2020 and is maintained by [Actable](https://www.linkedin
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
+### Environment
+
+- [X] [Ubuntu>18.04](https://wiki.ubuntu.com/Releases)
+- [X] MacOS
+- [ ] Windows *Coming Soon*
+
 ### Prerequisites
 
 - You need to have [python 3.7](https://www.python.org/downloads/release/python-370) installed with [pip](https://pip.pypa.io/en/stable/)
