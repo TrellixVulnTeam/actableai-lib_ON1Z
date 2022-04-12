@@ -75,14 +75,14 @@ def test_min_samples_split():
     for mss in [2, 4, 10, 20]:
         mfr = MondrianForestRegressor(random_state=0, min_samples_split=mss)
         mfr.partial_fit(X_r[: X_r.shape[0] // 2], y_r[: X_r.shape[0] // 2])
-        mfr.partial_fit(X_r[X_r.shape[0] // 2:], y_r[X_r.shape[0] // 2:])
+        mfr.partial_fit(X_r[X_r.shape[0] // 2 :], y_r[X_r.shape[0] // 2 :])
         for est in mfr.estimators_:
             n_node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
             assert_greater(np.min(n_node_samples) + 1, mss)
 
         mfc = MondrianForestClassifier(random_state=0, min_samples_split=mss)
         mfc.partial_fit(X_c[: X_c.shape[0] // 2], y_c[: X_c.shape[0] // 2])
-        mfc.partial_fit(X_c[X_c.shape[0] // 2:], y_c[X_c.shape[0] // 2:])
+        mfc.partial_fit(X_c[X_c.shape[0] // 2 :], y_c[X_c.shape[0] // 2 :])
         for est in mfc.estimators_:
             n_node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
             assert_greater(np.min(n_node_samples) + 1, mss)

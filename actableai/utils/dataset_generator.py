@@ -12,13 +12,15 @@ import pandas as pd
 
 class DatasetGenerator:
     @classmethod
-    def __generate_text_column(cls,
-                               random_generator: np.random.Generator,
-                               rows: int,
-                               n_categories: Optional[int] = None,
-                               word_len_range: Optional[Tuple[int, int]] = None,
-                               word_count_range: Optional[Tuple[int, int]] = None) -> List[str]:
-        """ Handle/pre-process the text column parameters (in place)
+    def __generate_text_column(
+        cls,
+        random_generator: np.random.Generator,
+        rows: int,
+        n_categories: Optional[int] = None,
+        word_len_range: Optional[Tuple[int, int]] = None,
+        word_count_range: Optional[Tuple[int, int]] = None,
+    ) -> List[str]:
+        """Handle/pre-process the text column parameters (in place)
 
         Parameters
         ----------
@@ -44,11 +46,18 @@ class DatasetGenerator:
 
         for _ in range(n_categories):
             random_string = ""
-            word_counts = random_generator.integers(word_count_range[0], word_count_range[1])
+            word_counts = random_generator.integers(
+                word_count_range[0], word_count_range[1]
+            )
 
             for _ in range(word_counts):
-                word_len = random_generator.integers(word_len_range[0], word_len_range[1])
-                random_string += "".join(random_generator.choice(list(string.ascii_letters)) for _ in range(word_len))
+                word_len = random_generator.integers(
+                    word_len_range[0], word_len_range[1]
+                )
+                random_string += "".join(
+                    random_generator.choice(list(string.ascii_letters))
+                    for _ in range(word_len)
+                )
 
                 random_string += " "
 
@@ -57,12 +66,14 @@ class DatasetGenerator:
         return values
 
     @classmethod
-    def __generate_number_column(cls,
-                                 random_generator: np.random.Generator,
-                                 rows: int,
-                                 is_float: Optional[bool] = None,
-                                 number_range: Optional[Tuple[int, int]] = None) -> List[Union[int, float]]:
-        """ Handle/pre-process the number column parameters (in place)
+    def __generate_number_column(
+        cls,
+        random_generator: np.random.Generator,
+        rows: int,
+        is_float: Optional[bool] = None,
+        number_range: Optional[Tuple[int, int]] = None,
+    ) -> List[Union[int, float]]:
+        """Handle/pre-process the number column parameters (in place)
 
         Parameters
         ----------
@@ -94,13 +105,15 @@ class DatasetGenerator:
         return values
 
     @classmethod
-    def __generate_date_column(cls,
-                               random_generator: np.random.Generator,
-                               rows: int,
-                               freq: str = None,
-                               start: Union[str, pd.Timestamp] = None,
-                               end: Union[str, pd.Timestamp] = None) -> pd.DatetimeIndex:
-        """ Handle/pre-process the date column parameters (in place)
+    def __generate_date_column(
+        cls,
+        random_generator: np.random.Generator,
+        rows: int,
+        freq: str = None,
+        start: Union[str, pd.Timestamp] = None,
+        end: Union[str, pd.Timestamp] = None,
+    ) -> pd.DatetimeIndex:
+        """Handle/pre-process the date column parameters (in place)
 
         Parameters
         ----------
@@ -120,18 +133,22 @@ class DatasetGenerator:
         if freq is None and (start is None or end is None):
             freq = "D"
         if end is None and start is None:
-            end = date.today() - timedelta(days=random_generator.integers(0, 60000, dtype=int))
+            end = date.today() - timedelta(
+                days=random_generator.integers(0, 60000, dtype=int)
+            )
 
         return pd.date_range(start=start, end=end, freq=freq, periods=rows)
 
     @classmethod
-    def generate(cls,
-                 columns_parameters: List[dict],
-                 rows: int = 1000,
-                 output_path: Optional[Union[str, Path]] = None,
-                 save_parameters_path: Optional[Union[str, Path]] = None,
-                 random_state: Optional[int] = None) -> Optional[pd.DataFrame]:
-        """ Generate a dataset, this function generates random data and no sense should be expected from it
+    def generate(
+        cls,
+        columns_parameters: List[dict],
+        rows: int = 1000,
+        output_path: Optional[Union[str, Path]] = None,
+        save_parameters_path: Optional[Union[str, Path]] = None,
+        random_state: Optional[int] = None,
+    ) -> Optional[pd.DataFrame]:
+        """Generate a dataset, this function generates random data and no sense should be expected from it
 
         Parameters
         ----------
@@ -213,7 +230,7 @@ class DatasetGenerator:
             parameters = {
                 "rows": rows,
                 "columns_parameters": columns_parameters,
-                "random_state": random_state if random_state is not None else "None"
+                "random_state": random_state if random_state is not None else "None",
             }
             with open(save_parameters_path, "w") as parameters_file:
                 json.dump(parameters, parameters_file)
@@ -230,30 +247,37 @@ class DatasetGenerator:
             # Generate the values list if needed
             if "values" not in column or len(column["values"]) <= 0:
                 if column["type"] == "text":
-                    column["values"] = cls.__generate_text_column(random_generator,
-                                                                  rows,
-                                                                  n_categories=column.get("n_categories"),
-                                                                  word_len_range=column.get("range"),
-                                                                  word_count_range=column.get(
-                                                                      "word_range"))
+                    column["values"] = cls.__generate_text_column(
+                        random_generator,
+                        rows,
+                        n_categories=column.get("n_categories"),
+                        word_len_range=column.get("range"),
+                        word_count_range=column.get("word_range"),
+                    )
                 elif column["type"] == "number":
-                    column["values"] = cls.__generate_number_column(random_generator,
-                                                                    rows,
-                                                                    is_float=column.get("float"),
-                                                                    number_range=column.get("range"))
+                    column["values"] = cls.__generate_number_column(
+                        random_generator,
+                        rows,
+                        is_float=column.get("float"),
+                        number_range=column.get("range"),
+                    )
                 elif column["type"] == "date":
-                    column["values"] = cls.__generate_date_column(random_generator,
-                                                                  rows,
-                                                                  freq=column.get("freq"),
-                                                                  start=column.get("start"),
-                                                                  end=column.get("end"))
+                    column["values"] = cls.__generate_date_column(
+                        random_generator,
+                        rows,
+                        freq=column.get("freq"),
+                        start=column.get("start"),
+                        end=column.get("end"),
+                    )
                 else:
                     raise Exception("Error while parsing columns parameters")
 
             # Create the final values list
             if len(column["values"]) < rows:
                 values = copy(column["values"])
-                column["values"] = [random_generator.choice(values) for _ in range(rows)]
+                column["values"] = [
+                    random_generator.choice(values) for _ in range(rows)
+                ]
             elif len(column["values"]) > rows:
                 column["values"] = column["values"][:rows]
 
@@ -266,10 +290,12 @@ class DatasetGenerator:
         df.to_csv(output_path, index=False)
 
     @classmethod
-    def generate_from_file(cls,
-                           parameters_path: Union[str, Path],
-                           output_path: Optional[Union[str, Path]] = None) -> Optional[pd.DataFrame]:
-        """ Generate dataset from a file containing the parameters
+    def generate_from_file(
+        cls,
+        parameters_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+    ) -> Optional[pd.DataFrame]:
+        """Generate dataset from a file containing the parameters
 
         Parameters
         ----------
@@ -289,7 +315,9 @@ class DatasetGenerator:
             if random_state == "None":
                 random_state = None
 
-            return cls.generate(columns_parameters=columns_parameters,
-                                rows=rows,
-                                output_path=output_path,
-                                random_state=random_state)
+            return cls.generate(
+                columns_parameters=columns_parameters,
+                rows=rows,
+                output_path=output_path,
+                random_state=random_state,
+            )

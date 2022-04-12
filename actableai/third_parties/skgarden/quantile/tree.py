@@ -8,6 +8,7 @@ from sklearn.utils import check_X_y
 
 from .utils import weighted_percentile
 
+
 class BaseTreeQuantileRegressor(BaseDecisionTree):
     def predict(self, X, quantile=None, check_input=False):
         """
@@ -36,18 +37,20 @@ class BaseTreeQuantileRegressor(BaseDecisionTree):
         # apply method requires X to be of dtype np.float32
         X = check_array(X, dtype=np.float32, accept_sparse="csc")
         if quantile is None:
-            return super(BaseTreeQuantileRegressor, self).predict(X, check_input=check_input)
+            return super(BaseTreeQuantileRegressor, self).predict(
+                X, check_input=check_input
+            )
 
         quantiles = np.zeros(X.shape[0])
         X_leaves = self.apply(X)
         unique_leaves = np.unique(X_leaves)
         for leaf in unique_leaves:
             quantiles[X_leaves == leaf] = weighted_percentile(
-                self.y_train_[self.y_train_leaves_ == leaf], quantile)
+                self.y_train_[self.y_train_leaves_ == leaf], quantile
+            )
         return quantiles
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted=None):
+    def fit(self, X, y, sample_weight=None, check_input=True, X_idx_sorted=None):
         """
         Build a decision tree classifier from the training set (X, y).
 
@@ -91,10 +94,15 @@ class BaseTreeQuantileRegressor(BaseDecisionTree):
 
         # apply method requires X to be of dtype np.float32
         X, y = check_X_y(
-            X, y, accept_sparse="csc", dtype=np.float32, multi_output=False)
+            X, y, accept_sparse="csc", dtype=np.float32, multi_output=False
+        )
         super(BaseTreeQuantileRegressor, self).fit(
-            X, y, sample_weight=sample_weight, check_input=check_input,
-            X_idx_sorted=X_idx_sorted)
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=check_input,
+            X_idx_sorted=X_idx_sorted,
+        )
         self.y_train_ = y
 
         # Stores the leaf nodes that the samples lie in.
@@ -201,16 +209,19 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
         Cache the leaf nodes that each training sample falls into.
         y_train_leaves_[i] is the leaf that y_train[i] ends up at.
     """
-    def __init__(self,
-                 criterion="mse",
-                 splitter="best",
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.,
-                 max_features=None,
-                 random_state=None,
-                 max_leaf_nodes=None):
+
+    def __init__(
+        self,
+        criterion="mse",
+        splitter="best",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features=None,
+        random_state=None,
+        max_leaf_nodes=None,
+    ):
         super(DecisionTreeQuantileRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -220,20 +231,23 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
 
 class ExtraTreeQuantileRegressor(ExtraTreeRegressor, BaseTreeQuantileRegressor):
-    def __init__(self,
-                 criterion='mse',
-                 splitter='random',
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.0,
-                 max_features='auto',
-                 random_state=None,
-                 max_leaf_nodes=None):
+    def __init__(
+        self,
+        criterion="mse",
+        splitter="random",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features="auto",
+        random_state=None,
+        max_leaf_nodes=None,
+    ):
         super(ExtraTreeQuantileRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -243,4 +257,5 @@ class ExtraTreeQuantileRegressor(ExtraTreeRegressor, BaseTreeQuantileRegressor):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+        )

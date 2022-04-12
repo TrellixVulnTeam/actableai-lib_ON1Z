@@ -10,6 +10,6 @@ def get_memory_usage(stage: Text):
     process = psutil.Process(os.getpid())
     logger.debug(
         f"Memory usage in stage - '{stage}':",
-        process.memory_info().rss * 9.31 * 10 ** -10,
+        process.memory_info().rss * 9.31 * 10**-10,
         "GB",
     )

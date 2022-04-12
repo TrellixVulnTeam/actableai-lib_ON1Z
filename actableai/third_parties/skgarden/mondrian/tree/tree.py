@@ -46,7 +46,6 @@ from ._tree import Tree
 from . import _tree, _splitter, _criterion
 
 
-
 # =============================================================================
 # Types and constants
 # =============================================================================
@@ -72,13 +71,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     """
 
     @abstractmethod
-    def __init__(self,
-                 criterion,
-                 splitter,
-                 max_depth,
-                 min_samples_split,
-                 random_state,
-                 class_weight=None):
+    def __init__(
+        self,
+        criterion,
+        splitter,
+        max_depth,
+        min_samples_split,
+        random_state,
+        class_weight=None,
+    ):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -86,8 +87,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.random_state = random_state
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted=None):
+    def fit(self, X, y, sample_weight=None, check_input=True, X_idx_sorted=None):
         random_state = check_random_state(self.random_state)
         if check_input:
             X, y = check_X_y(X, y, dtype=DTYPE, multi_output=False)
@@ -118,15 +118,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             y_encoded = np.zeros(y.shape, dtype=np.int)
             for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k],
-                                                       return_inverse=True)
+                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
             y = y_encoded
 
             if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(
-                    self.class_weight, y_original)
+                    self.class_weight, y_original
+                )
 
         else:
             self.classes_ = [None] * self.n_outputs_
@@ -138,44 +138,50 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = ((2 ** 31) - 1 if self.max_depth is None
-                     else self.max_depth)
+        max_depth = (2**31) - 1 if self.max_depth is None else self.max_depth
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
-                raise ValueError("min_samples_split must be an integer "
-                                 "greater than 1 or a float in (0.0, 1.0]; "
-                                 "got the integer %s"
-                                 % self.min_samples_split)
+                raise ValueError(
+                    "min_samples_split must be an integer "
+                    "greater than 1 or a float in (0.0, 1.0]; "
+                    "got the integer %s" % self.min_samples_split
+                )
             min_samples_split = self.min_samples_split
         else:  # float
-            if not 0. < self.min_samples_split <= 1.:
-                raise ValueError("min_samples_split must be an integer "
-                                 "greater than 1 or a float in (0.0, 1.0]; "
-                                 "got the float %s"
-                                 % self.min_samples_split)
+            if not 0.0 < self.min_samples_split <= 1.0:
+                raise ValueError(
+                    "min_samples_split must be an integer "
+                    "greater than 1 or a float in (0.0, 1.0]; "
+                    "got the float %s" % self.min_samples_split
+                )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
         if len(y) != n_samples:
-            raise ValueError("Number of labels=%d does not match "
-                             "number of samples=%d" % (len(y), n_samples))
+            raise ValueError(
+                "Number of labels=%d does not match "
+                "number of samples=%d" % (len(y), n_samples)
+            )
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
 
         if sample_weight is not None:
-            if (getattr(sample_weight, "dtype", None) != DOUBLE or
-                    not sample_weight.flags.contiguous):
-                sample_weight = np.ascontiguousarray(
-                    sample_weight, dtype=DOUBLE)
+            if (
+                getattr(sample_weight, "dtype", None) != DOUBLE
+                or not sample_weight.flags.contiguous
+            ):
+                sample_weight = np.ascontiguousarray(sample_weight, dtype=DOUBLE)
             if len(sample_weight.shape) > 1:
-                raise ValueError("Sample weights array has more "
-                                 "than one dimension: %d" %
-                                 len(sample_weight.shape))
+                raise ValueError(
+                    "Sample weights array has more "
+                    "than one dimension: %d" % len(sample_weight.shape)
+                )
             if len(sample_weight) != n_samples:
-                raise ValueError("Number of weights=%d does not match "
-                                 "number of samples=%d" %
-                                 (len(sample_weight), n_samples))
+                raise ValueError(
+                    "Number of weights=%d does not match "
+                    "number of samples=%d" % (len(sample_weight), n_samples)
+                )
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -187,18 +193,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
             if is_classification:
-                criterion = CRITERIA_CLF[self.criterion](self.n_outputs_,
-                                                         self.n_classes_)
+                criterion = CRITERIA_CLF[self.criterion](
+                    self.n_outputs_, self.n_classes_
+                )
             else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_,
-                                                         n_samples)
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](criterion,
-                                                random_state)
+            splitter = SPLITTERS[self.splitter](criterion, random_state)
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
-        builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                        max_depth)
+        builder = DepthFirstTreeBuilder(splitter, min_samples_split, max_depth)
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
         if self.n_outputs_ == 1:
@@ -210,22 +214,26 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _validate_X_predict(self, X, check_input):
         """Validate X whenever one tries to predict, apply, predict_proba"""
         if self.tree_ is None:
-            raise NotFittedError("Estimator not fitted, "
-                                 "call `fit` before exploiting the model.")
+            raise NotFittedError(
+                "Estimator not fitted, " "call `fit` before exploiting the model."
+            )
 
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-            if issparse(X) and (X.indices.dtype != np.intc or
-                                X.indptr.dtype != np.intc):
-                raise ValueError("No support for np.int64 index based "
-                                 "sparse matrices")
+            if issparse(X) and (
+                X.indices.dtype != np.intc or X.indptr.dtype != np.intc
+            ):
+                raise ValueError(
+                    "No support for np.int64 index based " "sparse matrices"
+                )
 
         n_features = X.shape[1]
         if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_features_, n_features))
+            raise ValueError(
+                "Number of features of the model must "
+                "match the input. Model n_features is %s and "
+                "input n_features is %s " % (self.n_features_, n_features)
+            )
 
         return X
 
@@ -255,7 +263,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self, "tree_")
         X = self._validate_X_predict(X, check_input)
 
         # Classification
@@ -265,7 +273,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Regression
         else:
             mean_and_std = self.tree_.predict(
-                X, return_std=return_std, is_regression=True)
+                X, return_std=return_std, is_regression=True
+            )
             if return_std:
                 return mean_and_std
             return mean_and_std[0]
@@ -295,7 +304,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self, "tree_")
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -371,6 +380,7 @@ class BaseMondrianTree(BaseDecisionTree):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
     """
+
     def partial_fit(self, X, y, classes=None):
         """
         Incremental building of Mondrian Trees.
@@ -398,8 +408,7 @@ class BaseMondrianTree(BaseDecisionTree):
         X, y = check_X_y(X, y, dtype=DTYPE, multi_output=False, order="C")
         is_classifier = isinstance(self, ClassifierMixin)
         random_state = check_random_state(self.random_state)
-        max_depth = ((2 ** 31) - 1 if self.max_depth is None
-                     else self.max_depth)
+        max_depth = (2**31) - 1 if self.max_depth is None else self.max_depth
 
         # This is necessary to rebuild the tree if partial_fit is called
         # after fit.
@@ -413,8 +422,10 @@ class BaseMondrianTree(BaseDecisionTree):
             # First call to partial_fit
             if first_call:
                 if len(y) == 1 and classes is None:
-                    raise ValueError("Unable to infer classes. Should be "
-                                     "provided at the first call to partial_fit.")
+                    raise ValueError(
+                        "Unable to infer classes. Should be "
+                        "provided at the first call to partial_fit."
+                    )
                 self.le_ = LabelEncoder()
                 if classes is not None:
                     self.le_.fit(classes)
@@ -437,8 +448,7 @@ class BaseMondrianTree(BaseDecisionTree):
             self.n_outputs_ = 1
             self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
-        builder = PartialFitTreeBuilder(
-            self.min_samples_split, max_depth, random_state)
+        builder = PartialFitTreeBuilder(self.min_samples_split, max_depth, random_state)
         builder.build(self.tree_, X, y)
         return self
 
@@ -471,16 +481,14 @@ class BaseMondrianTree(BaseDecisionTree):
 
 
 class MondrianTreeRegressor(BaseMondrianTree, RegressorMixin):
-    def __init__(self,
-                 max_depth=None,
-                 min_samples_split=2,
-                 random_state=None):
+    def __init__(self, max_depth=None, min_samples_split=2, random_state=None):
         super(MondrianTreeRegressor, self).__init__(
             criterion="mse",
             splitter="mondrian",
             max_depth=max_depth,
             min_samples_split=min_samples_split,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
     def partial_fit(self, X, y):
         """
@@ -501,17 +509,16 @@ class MondrianTreeRegressor(BaseMondrianTree, RegressorMixin):
         """
         return super(MondrianTreeRegressor, self).partial_fit(X, y)
 
+
 class MondrianTreeClassifier(BaseMondrianTree, ClassifierMixin):
-    def __init__(self,
-                 max_depth=None,
-                 min_samples_split=2,
-                 random_state=None):
+    def __init__(self, max_depth=None, min_samples_split=2, random_state=None):
         super(MondrianTreeClassifier, self).__init__(
             criterion="classification",
             splitter="mondrian",
             max_depth=max_depth,
             min_samples_split=min_samples_split,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
     def predict_proba(self, X, check_input=True):
         """
@@ -532,7 +539,7 @@ class MondrianTreeClassifier(BaseMondrianTree, ClassifierMixin):
         y_prob : array of shape = [n_samples, n_classes]
             Prediceted probabilities for each class.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self, "tree_")
         X = self._validate_X_predict(X, check_input)
 
         return self.tree_.predict(X, return_std=False, is_regression=False)[0]
@@ -560,5 +567,4 @@ class MondrianTreeClassifier(BaseMondrianTree, ClassifierMixin):
         -------
         self: instance of MondrianTree
         """
-        return super(MondrianTreeClassifier, self).partial_fit(
-            X, y, classes=classes)
+        return super(MondrianTreeClassifier, self).partial_fit(X, y, classes=classes)

@@ -49,9 +49,7 @@ def merge_num_with_tag_columns(
         if isinstance(col_meta, NumWithTagColumnMeta):
             num_column = df_fixed[col_meta.get_num_column_name()]
             if col_meta.num_type == "int":
-                num_column = num_column.apply(
-                    lambda x: "" if pd.isna(x) else int(x)
-                )
+                num_column = num_column.apply(lambda x: "" if pd.isna(x) else int(x))
             df[col_meta.name] = (
                 df_fixed[col_meta.get_left_tag_column_name()].astype(str)
                 + num_column.astype(str)
@@ -65,9 +63,7 @@ def merge_num_with_tag_columns(
     return df
 
 
-def finalize_columns(
-    original_df: pd.DataFrame, fixed_df: pd.DataFrame
-) -> pd.DataFrame:
+def finalize_columns(original_df: pd.DataFrame, fixed_df: pd.DataFrame) -> pd.DataFrame:
     """
     Use columns in fixed_df to replace original_df columns, due to original_df might have some unsupported columns
     :param original_df: the original df waiting to fix

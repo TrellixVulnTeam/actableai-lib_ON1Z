@@ -19,4 +19,6 @@ class TestRulesBuilderParser:
         assert mock_constraints_parse.call_count == 1
         assert mock_match_rules_parse.call_count == 1
         assert mock_constraints_parse.call_args_list == [call(mock_validations)]
-        assert mock_match_rules_parse.call_args_list == [call(mock_df_types, mock_misplaced)]
+        assert mock_match_rules_parse.call_args_list == [
+            call(mock_df_types, mock_misplaced)
+        ]

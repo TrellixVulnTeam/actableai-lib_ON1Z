@@ -15,7 +15,7 @@ all_dataset_features = [
     "dataset_categorical_column_count",
     "dataset_text_column_count",
     "dataset_numbers_column_count",
-    "dataset_column_count"
+    "dataset_column_count",
 ]
 
 
@@ -34,8 +34,8 @@ def _is_column_short(series: pd.Series, max_len: int = 6) -> bool:
     -------
     True if the column is considered short
     """
-    series_word_count = series.astype('string').str.count(" ") + 1
-    series_len = series.astype('string').str.len()
+    series_word_count = series.astype("string").str.count(" ") + 1
+    series_len = series.astype("string").str.len()
 
     # Returns true if all the rows contain less than `max_len` times the number of character
     # + the number of word minus one for the spaces
@@ -104,10 +104,15 @@ def extract_dataset_features(df_dataset: pd.DataFrame, prefix: str = "") -> dict
         else:
             raise Exception("This should not happen")
 
-    dataset_categorical_column_count = dataset_categorical_column_short_count + \
-                                       dataset_categorical_column_long_count
-    dataset_text_column_count = dataset_text_column_unique_short_count + dataset_text_column_unique_long_count
-    dataset_numbers_column_count = dataset_numbers_int_column_count + dataset_numbers_float_column_count
+    dataset_categorical_column_count = (
+        dataset_categorical_column_short_count + dataset_categorical_column_long_count
+    )
+    dataset_text_column_count = (
+        dataset_text_column_unique_short_count + dataset_text_column_unique_long_count
+    )
+    dataset_numbers_column_count = (
+        dataset_numbers_int_column_count + dataset_numbers_float_column_count
+    )
     dataset_column_count = len(df_dataset.columns)
     dataset_row_count = len(df_dataset)
 
@@ -130,5 +135,5 @@ def extract_dataset_features(df_dataset: pd.DataFrame, prefix: str = "") -> dict
         f"{prefix}dataset_categorical_column_count": dataset_categorical_column_count,
         f"{prefix}dataset_text_column_count": dataset_text_column_count,
         f"{prefix}dataset_numbers_column_count": dataset_numbers_column_count,
-        f"{prefix}dataset_column_count": dataset_column_count
+        f"{prefix}dataset_column_count": dataset_column_count,
     }

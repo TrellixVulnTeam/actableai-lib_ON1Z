@@ -25,7 +25,7 @@ class MemoryProfiler(ResourceProfiler):
         "shared": ResourceProfilerType.SHARED_MEMORY,
         "uss": ResourceProfilerType.USS_MEMORY,
         "pss": ResourceProfilerType.PSS_MEMORY,
-        "swap": ResourceProfilerType.SWAP_MEMORY
+        "swap": ResourceProfilerType.SWAP_MEMORY,
     }
 
     def __init__(self, resource_profiled: ResourceProfilerType):
@@ -39,9 +39,14 @@ class MemoryProfiler(ResourceProfiler):
         """
         super().__init__(resource_profiled)
 
-        self.need_full_info = ((ResourceProfilerType.USS_MEMORY
-                                | ResourceProfilerType.PSS_MEMORY
-                                | ResourceProfilerType.SWAP_MEMORY) & resource_profiled) != 0
+        self.need_full_info = (
+            (
+                ResourceProfilerType.USS_MEMORY
+                | ResourceProfilerType.PSS_MEMORY
+                | ResourceProfilerType.SWAP_MEMORY
+            )
+            & resource_profiled
+        ) != 0
 
         self.profiling_info_list = [
             info_name
@@ -49,7 +54,9 @@ class MemoryProfiler(ResourceProfiler):
             if resource_type in resource_profiled
         ]
 
-    def __call__(self, process_list: List[psutil.Process]) -> List[Tuple[int, ResourceProfilerType, float]]:
+    def __call__(
+        self, process_list: List[psutil.Process]
+    ) -> List[Tuple[int, ResourceProfilerType, float]]:
         """
         Function called to profile processes
 
@@ -82,6 +89,12 @@ class MemoryProfiler(ResourceProfiler):
             for info_name in self.profiling_info_list:
                 if hasattr(memory_info, info_name):
                     info = getattr(memory_info, info_name)
-                    profiled_memory.append((process.pid, self._profiling_info_to_resource_type[info_name], info))
+                    profiled_memory.append(
+                        (
+                            process.pid,
+                            self._profiling_info_to_resource_type[info_name],
+                            info,
+                        )
+                    )
 
         return profiled_memory

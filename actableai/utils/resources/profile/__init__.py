@@ -10,6 +10,7 @@ class ResourceProfilerType(IntFlag):
     """
     Enum representing the different resource that can be profiled
     """
+
     RSS_MEMORY = auto()
     VMS_MEMORY = auto()
     SHARED_MEMORY = auto()
@@ -17,7 +18,9 @@ class ResourceProfilerType(IntFlag):
     PSS_MEMORY = auto()
     SWAP_MEMORY = auto()
     GPU_MEMORY = auto()
-    MEMORY = RSS_MEMORY | VMS_MEMORY | SHARED_MEMORY | USS_MEMORY | PSS_MEMORY | SWAP_MEMORY
+    MEMORY = (
+        RSS_MEMORY | VMS_MEMORY | SHARED_MEMORY | USS_MEMORY | PSS_MEMORY | SWAP_MEMORY
+    )
 
 
 class ResourceProfilerResults:
@@ -56,8 +59,12 @@ class ResourceProfilerResults:
         if len(df_resource_profiling_results) == 0:
             return 0
 
-        df_resource_profiling_results = df_resource_profiling_results[["timestamp", "value"]]
-        df_resource_profiling_results = df_resource_profiling_results.groupby("timestamp").sum()
+        df_resource_profiling_results = df_resource_profiling_results[
+            ["timestamp", "value"]
+        ]
+        df_resource_profiling_results = df_resource_profiling_results.groupby(
+            "timestamp"
+        ).sum()
         max_profiled = df_resource_profiling_results.max()
 
         if max_profiled.isna().all():
@@ -72,14 +79,16 @@ from actableai.utils.resources.profile.base import ResourceProfiler
 
 _resource_profilers: Dict[ResourceProfilerType, Type[ResourceProfiler]] = {
     ResourceProfilerType.MEMORY: MemoryProfiler,
-    ResourceProfilerType.GPU_MEMORY: GPUMemoryProfiler
+    ResourceProfilerType.GPU_MEMORY: GPUMemoryProfiler,
 }
 
 
-def _run_profiler(resource_profiled: ResourceProfilerType,
-                  include_children: bool,
-                  pid: int,
-                  queue: Queue):
+def _run_profiler(
+    resource_profiled: ResourceProfilerType,
+    include_children: bool,
+    pid: int,
+    queue: Queue,
+):
     """
     Run the profiler for a specific pid
 
@@ -109,7 +118,9 @@ def _run_profiler(resource_profiled: ResourceProfilerType,
         if resource != 0:
             profilers.append(resource_profiler(resource))
 
-    df_profiling_results = pd.DataFrame(columns=["timestamp", "pid", "resource_type", "value"])
+    df_profiling_results = pd.DataFrame(
+        columns=["timestamp", "pid", "resource_type", "value"]
+    )
 
     # Run profiler while there is nothing in the queue
     while True:
@@ -122,12 +133,15 @@ def _run_profiler(resource_profiled: ResourceProfilerType,
         for profiler in profilers:
             profiler_results = profiler(process_list)
             for pid, resource_type, value in profiler_results:
-                df_profiling_results = df_profiling_results.append({
-                    "timestamp": timestamp,
-                    "pid": pid,
-                    "resource_type": resource_type,
-                    "value": value
-                }, ignore_index=True)
+                df_profiling_results = df_profiling_results.append(
+                    {
+                        "timestamp": timestamp,
+                        "pid": pid,
+                        "resource_type": resource_type,
+                        "value": value,
+                    },
+                    ignore_index=True,
+                )
 
         if not queue.empty():
             break
@@ -140,10 +154,13 @@ def _run_profiler(resource_profiled: ResourceProfilerType,
     queue.put(df_profiling_results)
 
 
-def profile_function(resource_profiled: ResourceProfilerType,
-                     include_children: bool,
-                     function: Callable,
-                     *args, **kwargs) -> Tuple[ResourceProfilerResults, Any]:
+def profile_function(
+    resource_profiled: ResourceProfilerType,
+    include_children: bool,
+    function: Callable,
+    *args,
+    **kwargs
+) -> Tuple[ResourceProfilerResults, Any]:
     """
     Profile a function
 
@@ -178,10 +195,10 @@ def profile_function(resource_profiled: ResourceProfilerType,
 
     # Start the profiler in another thread
     queue = Queue()
-    thread = Thread(target=_run_profiler, args=(resource_profiled,
-                                                include_children,
-                                                main_process_pid,
-                                                queue))
+    thread = Thread(
+        target=_run_profiler,
+        args=(resource_profiled, include_children, main_process_pid, queue),
+    )
     thread.start()
 
     # Run the function to profile
@@ -197,14 +214,22 @@ def profile_function(resource_profiled: ResourceProfilerType,
 
     if len(df_profiling_results) > 0:
         # Process the profiling data
-        df_profiling_results["timestamp"] = pd.to_datetime(df_profiling_results["timestamp"], unit="s")
+        df_profiling_results["timestamp"] = pd.to_datetime(
+            df_profiling_results["timestamp"], unit="s"
+        )
         df_profiling_results["pid"] = df_profiling_results["pid"].astype(int)
-        df_profiling_results["resource_type"] = df_profiling_results["resource_type"].astype(int)
+        df_profiling_results["resource_type"] = df_profiling_results[
+            "resource_type"
+        ].astype(int)
 
         # We do that to avoid having duplicates (for instance GPU memory profiler will add one row per device)
-        df_profiling_results = df_profiling_results.groupby(["timestamp", "pid", "resource_type"], as_index=False).sum()
+        df_profiling_results = df_profiling_results.groupby(
+            ["timestamp", "pid", "resource_type"], as_index=False
+        ).sum()
 
         df_profiling_results["child_process"] = True
-        df_profiling_results.loc[df_profiling_results["pid"] == main_process_pid, "child_process"] = False
+        df_profiling_results.loc[
+            df_profiling_results["pid"] == main_process_pid, "child_process"
+        ] = False
 
     return ResourceProfilerResults(df_profiling_results), result

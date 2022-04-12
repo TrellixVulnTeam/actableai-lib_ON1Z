@@ -13,12 +13,14 @@ from actableai.third_parties.skgarden import ExtraTreeQuantileRegressor
 boston = load_boston()
 X, y = boston.data, boston.target
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=0.6, test_size=0.4, random_state=0)
+    X, y, train_size=0.6, test_size=0.4, random_state=0
+)
 X_train = np.array(X_train, dtype=np.float32)
 X_test = np.array(X_test, dtype=np.float32)
 estimators = [
     RandomForestQuantileRegressor(random_state=0),
-    ExtraTreesQuantileRegressor(random_state=0)]
+    ExtraTreesQuantileRegressor(random_state=0),
+]
 
 
 def test_quantile_attributes():
@@ -29,13 +31,13 @@ def test_quantile_attributes():
         # corresponding leaf is marked as -1.
         assert_array_equal(
             np.vstack(np.where(est.y_train_leaves_ == -1)),
-            np.vstack(np.where(est.y_weights_ == 0))
+            np.vstack(np.where(est.y_weights_ == 0)),
         )
 
         # Should sum up to number of leaf nodes.
         assert_array_equal(
             np.sum(est.y_weights_, axis=1),
-            [sum(tree.tree_.children_left == -1) for tree in est.estimators_]
+            [sum(tree.tree_.children_left == -1) for tree in est.estimators_],
         )
 
         n_est = est.n_estimators
@@ -43,7 +45,7 @@ def test_quantile_attributes():
         est.fit(X_train, y_train)
         assert_array_equal(
             np.sum(est.y_weights_, axis=1),
-            [sum(tree.tree_.children_left == -1) for tree in est.estimators_]
+            [sum(tree.tree_.children_left == -1) for tree in est.estimators_],
         )
         assert_true(np.all(est.y_train_leaves_ != -1))
 
@@ -53,8 +55,7 @@ def test_tree_forest_equivalence():
     Test that a DecisionTree and RandomForest give equal quantile
     predictions when bootstrap is set to False.
     """
-    rfqr = RandomForestQuantileRegressor(
-        random_state=0, bootstrap=False, max_depth=2)
+    rfqr = RandomForestQuantileRegressor(random_state=0, bootstrap=False, max_depth=2)
     rfqr.fit(X_train, y_train)
 
     dtqr = DecisionTreeQuantileRegressor(random_state=0, max_depth=2)
@@ -62,8 +63,8 @@ def test_tree_forest_equivalence():
 
     assert_true(np.all(rfqr.y_train_leaves_ == dtqr.y_train_leaves_))
     assert_array_almost_equal(
-        rfqr.predict(X_test, quantile=10),
-        dtqr.predict(X_test, quantile=10), 5)
+        rfqr.predict(X_test, quantile=10), dtqr.predict(X_test, quantile=10), 5
+    )
 
 
 def test_max_depth_None_rfqr():
@@ -74,13 +75,14 @@ def test_max_depth_None_rfqr():
     y = np.linspace(0.0, 100.0, 10.0)
 
     rfqr = RandomForestQuantileRegressor(
-        random_state=0, bootstrap=False, max_depth=None)
+        random_state=0, bootstrap=False, max_depth=None
+    )
     rfqr.fit(X, y)
 
     for quantile in [20, 40, 50, 60, 80, 90]:
         assert_array_almost_equal(
-            rfqr.predict(X, quantile=None),
-            rfqr.predict(X, quantile=quantile), 5)
+            rfqr.predict(X, quantile=None), rfqr.predict(X, quantile=quantile), 5
+        )
 
 
 def test_base_forest_quantile():
@@ -119,8 +121,8 @@ def test_forest_toy_data():
         est.fit(X, y)
         for quantile in [20, 30, 40, 50, 60, 70, 80]:
             assert_array_almost_equal(
-                est.predict(x1, quantile=quantile),
-                [np.percentile(y1, quantile)], 3)
+                est.predict(x1, quantile=quantile), [np.percentile(y1, quantile)], 3
+            )
             assert_array_almost_equal(
-                est.predict(x2, quantile=quantile),
-                [np.percentile(y2, quantile)], 3)
+                est.predict(x2, quantile=quantile), [np.percentile(y2, quantile)], 3
+            )

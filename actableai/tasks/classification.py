@@ -8,22 +8,24 @@ class _AAIClassificationTrainTask(AAITask):
     """
 
     @AAITask.run_with_ray_remote(TaskType.CLASSIFICATION_TRAIN)
-    def run(self,
-            problem_type,
-            positive_label,
-            presets,
-            hyperparameters,
-            model_directory,
-            target,
-            features,
-            df_train,
-            df_val,
-            drop_duplicates,
-            run_debiasing,
-            biased_groups,
-            debiased_features,
-            residuals_hyperparameters,
-            num_gpus):
+    def run(
+        self,
+        problem_type,
+        positive_label,
+        presets,
+        hyperparameters,
+        model_directory,
+        target,
+        features,
+        df_train,
+        df_val,
+        drop_duplicates,
+        run_debiasing,
+        biased_groups,
+        debiased_features,
+        residuals_hyperparameters,
+        num_gpus,
+    ):
         """
         TODO write documentation
         """
@@ -60,13 +62,15 @@ class _AAIClassificationTrainTask(AAITask):
         df_val = df_val[features + biased_groups + [target]]
 
         # Start training
-        predictor = TabularPredictor(label=target, problem_type=problem_type, path=model_directory)
+        predictor = TabularPredictor(
+            label=target, problem_type=problem_type, path=model_directory
+        )
         predictor = predictor.fit(
             train_data=df_train,
             hyperparameters=hyperparameters,
             presets=presets,
             ag_args_fit=ag_args_fit,
-            feature_generator=AutoMLPipelineFeatureGenerator(**feature_generator_args)
+            feature_generator=AutoMLPipelineFeatureGenerator(**feature_generator_args),
         )
         predictor.persist_models()
         leaderboard = predictor.leaderboard()
@@ -74,37 +78,42 @@ class _AAIClassificationTrainTask(AAITask):
 
         # Evaluate results
         important_features = []
-        for feature, importance in predictor.feature_importance(df_val)["importance"].iteritems():
+        for feature, importance in predictor.feature_importance(df_val)[
+            "importance"
+        ].iteritems():
             if feature in biased_groups:
                 continue
 
-            important_features.append({
-                "feature": feature,
-                "importance": importance
-            })
+            important_features.append({"feature": feature, "importance": importance})
 
         label_val = df_val[target]
         label_pred = predictor.predict(df_val)
-        perf = predictor.evaluate_predictions(y_true=label_val, y_pred=label_pred, auxiliary_metrics=True)
+        perf = predictor.evaluate_predictions(
+            y_true=label_val, y_pred=label_pred, auxiliary_metrics=True
+        )
         pred_prob_val = predictor.predict_proba(df_val, as_multiclass=True)
 
         evaluate = {
             "problem_type": predictor.problem_type,
-            "accuracy": perf["accuracy"]
+            "accuracy": perf["accuracy"],
         }
         evaluate["labels"] = predictor.class_labels
         evaluate["confusion_matrix"] = confusion_matrix(
-            label_val,
-            label_pred,
-            labels=evaluate["labels"],
-            normalize="true"
+            label_val, label_pred, labels=evaluate["labels"], normalize="true"
         ).tolist()
 
         if evaluate["problem_type"] == "binary":
-            pos_label = positive_label if positive_label is not None else evaluate["labels"][1]
-            neg_label = evaluate["labels"][0] if evaluate["labels"][0] != pos_label \
-                        else evaluate["labels"][1]
-            fpr, tpr, thresholds = roc_curve(label_val, pred_prob_val[pos_label], pos_label=pos_label)
+            pos_label = (
+                positive_label if positive_label is not None else evaluate["labels"][1]
+            )
+            neg_label = (
+                evaluate["labels"][0]
+                if evaluate["labels"][0] != pos_label
+                else evaluate["labels"][1]
+            )
+            fpr, tpr, thresholds = roc_curve(
+                label_val, pred_prob_val[pos_label], pos_label=pos_label
+            )
             evaluate["auc_score"] = auc(fpr, tpr)
             evaluate["auc_curve"] = {
                 "False Positive Rate": fpr.tolist(),
@@ -124,24 +133,26 @@ class AAIClassificationTask(AAITask):
     """
 
     @AAITask.run_with_ray_remote(TaskType.CLASSIFICATION)
-    def run(self,
-            df,
-            target,
-            features=None,
-            biased_groups=None,
-            debiased_features=None,
-            validation_ratio=.2,
-            positive_label=None,
-            explain_samples=False,
-            model_directory=None,
-            presets="medium_quality_faster_train",
-            hyperparameters=None,
-            train_task_params=None,
-            kfolds=1,
-            cross_validation_max_concurrency=1,
-            residuals_hyperparameters=None,
-            drop_duplicates=True,
-            num_gpus=0):
+    def run(
+        self,
+        df,
+        target,
+        features=None,
+        biased_groups=None,
+        debiased_features=None,
+        validation_ratio=0.2,
+        positive_label=None,
+        explain_samples=False,
+        model_directory=None,
+        presets="medium_quality_faster_train",
+        hyperparameters=None,
+        train_task_params=None,
+        kfolds=1,
+        cross_validation_max_concurrency=1,
+        residuals_hyperparameters=None,
+        drop_duplicates=True,
+        num_gpus=0,
+    ):
         """
         TODO write documentation
         """
@@ -156,10 +167,21 @@ class AAIClassificationTask(AAITask):
         from scipy.stats import spearmanr
         from sklearn.model_selection import train_test_split
         from sklearn.preprocessing import OrdinalEncoder
-        from actableai.utils import memory_efficient_hyperparameters, handle_boolean_features, preprocess_dataset, \
-            explain_predictions, create_explainer, gen_anchor_explanation, debiasing_hyperparameters
+        from actableai.utils import (
+            memory_efficient_hyperparameters,
+            handle_boolean_features,
+            preprocess_dataset,
+            explain_predictions,
+            create_explainer,
+            gen_anchor_explanation,
+            debiasing_hyperparameters,
+        )
         from actableai.data_validation.params import ClassificationDataValidator
-        from actableai.data_validation.base import CheckLevels, CLASSIFICATION_MINIMUM_NUMBER_OF_CLASS_SAMPLE, UNIQUE_CATEGORY_THRESHOLD
+        from actableai.data_validation.base import (
+            CheckLevels,
+            CLASSIFICATION_MINIMUM_NUMBER_OF_CLASS_SAMPLE,
+            UNIQUE_CATEGORY_THRESHOLD,
+        )
         from actableai.classification.cross_validation import run_cross_validation
         from actableai.utils.sanitize import sanitize_timezone
 
@@ -196,16 +218,14 @@ class AAIClassificationTask(AAITask):
             validation_ratio=validation_ratio,
             kfolds=kfolds,
             drop_duplicates=drop_duplicates,
-            explain_samples=explain_samples
+            explain_samples=explain_samples,
         )
         failed_checks = [
-            check
-            for check in data_validation_results
-            if check is not None
+            check for check in data_validation_results if check is not None
         ]
 
         if CheckLevels.CRITICAL in [x.level for x in failed_checks]:
-            return ({
+            return {
                 "status": "FAILURE",
                 "data": {},
                 "validations": [
@@ -213,7 +233,7 @@ class AAIClassificationTask(AAITask):
                     for check in failed_checks
                 ],
                 "runtime": time.time() - start,
-            })
+            }
 
         # Pre process data
         df = handle_boolean_features(df)
@@ -231,9 +251,7 @@ class AAIClassificationTask(AAITask):
         df_val = None
         if not use_cross_validation:
             df_train, df_val = train_test_split(
-                df_train,
-                test_size=validation_ratio,
-                stratify=df_train[target]
+                df_train, test_size=validation_ratio, stratify=df_train[target]
             )
 
         df_test = df[pd.isnull(df[target])]
@@ -254,7 +272,14 @@ class AAIClassificationTask(AAITask):
         # Train
         classification_train_task = _AAIClassificationTrainTask(**train_task_params)
         if kfolds > 1:
-            predictor, important_features, evaluate, pred_prob_val, df_val, leaderboard = run_cross_validation(
+            (
+                predictor,
+                important_features,
+                evaluate,
+                pred_prob_val,
+                df_val,
+                leaderboard,
+            ) = run_cross_validation(
                 classification_train_task=classification_train_task,
                 problem_type=problem_type,
                 positive_label=positive_label,
@@ -262,7 +287,7 @@ class AAIClassificationTask(AAITask):
                 hyperparameters=hyperparameters,
                 model_directory=model_directory,
                 target=target,
-                features = features,
+                features=features,
                 df_train=df_train,
                 kfolds=kfolds,
                 cross_validation_max_concurrency=cross_validation_max_concurrency,
@@ -274,7 +299,13 @@ class AAIClassificationTask(AAITask):
                 num_gpus=num_gpus,
             )
         else:
-            predictor, important_features, evaluate, pred_prob_val, leaderboard = classification_train_task.run(
+            (
+                predictor,
+                important_features,
+                evaluate,
+                pred_prob_val,
+                leaderboard,
+            ) = classification_train_task.run(
                 problem_type=problem_type,
                 positive_label=positive_label,
                 presets=presets,
@@ -334,13 +365,15 @@ class AAIClassificationTask(AAITask):
                 predictor,
                 cat_map,
                 encoder=ordinal_encoder,
-                ncpu=int(self.ray_params.get("num_cpus", 1)))
+                ncpu=int(self.ray_params.get("num_cpus", 1)),
+            )
             pd.set_option("chained_assignment", "warn")
 
             if not use_cross_validation:
                 df_val_processed = preprocess_dataset(df_val[features + biased_groups])
                 val_anchors = explain_predictions(
-                    df_val_processed, cat_cols, explainer, encoder=ordinal_encoder)
+                    df_val_processed, cat_cols, explainer, encoder=ordinal_encoder
+                )
 
                 df_val["explanation"] = [
                     gen_anchor_explanation(anchor, df_full.shape[0])
@@ -348,12 +381,11 @@ class AAIClassificationTask(AAITask):
                 ]
 
             if run_model:
-                df_predict_processed = preprocess_dataset(df_test[features + biased_groups])
+                df_predict_processed = preprocess_dataset(
+                    df_test[features + biased_groups]
+                )
                 predict_anchors = explain_predictions(
-                    df_predict_processed,
-                    cat_cols,
-                    explainer,
-                    encoder=ordinal_encoder
+                    df_predict_processed, cat_cols, explainer, encoder=ordinal_encoder
                 )
                 df_predict["explanation"] = [
                     gen_anchor_explanation(anchor, df_full.shape[0])
@@ -380,26 +412,29 @@ class AAIClassificationTask(AAITask):
                         df_values = pd.DataFrame()
 
                         for biased_class in biased_classes:
-                            values = df_val[df_val_biased_group == biased_class][plot_target]
+                            values = df_val[df_val_biased_group == biased_class][
+                                plot_target
+                            ]
                             values = values.value_counts(normalize=True)
 
                             df_values[biased_class] = values
 
                         df_values.sort_index(inplace=True)
-                        corr, pvalue = spearmanr(df_val[biased_group], df_val[plot_target])
-                        group_charts.append({
-                            "x_label": plot_target,
-                            "y": df_values.columns.tolist(),
-                            "bars": [
-                                {
-                                    "x": values.tolist(),
-                                    "name": target_class
-                                }
-                                for target_class, values in df_values.iterrows()
-                            ],
-                            "corr": corr,
-                            "pvalue": pvalue
-                        })
+                        corr, pvalue = spearmanr(
+                            df_val[biased_group], df_val[plot_target]
+                        )
+                        group_charts.append(
+                            {
+                                "x_label": plot_target,
+                                "y": df_values.columns.tolist(),
+                                "bars": [
+                                    {"x": values.tolist(), "name": target_class}
+                                    for target_class, values in df_values.iterrows()
+                                ],
+                                "corr": corr,
+                                "pvalue": pvalue,
+                            }
+                        )
                 else:
                     # Non-Categorical Biased Group => Scatter plot
                     group_chart_type = "scatter"
@@ -412,21 +447,27 @@ class AAIClassificationTask(AAITask):
                         X = X[notna_mask]
                         y = y[notna_mask]
 
-                        corr, pvalue = spearmanr(df_val[biased_group], df_val[plot_target])
-                        group_charts.append({
-                            "x_label": plot_target,
-                            "x": X.tolist(),
-                            "y": y.tolist(),
-                            "corr": corr,
-                            "pvalue": pvalue
-                        })
+                        corr, pvalue = spearmanr(
+                            df_val[biased_group], df_val[plot_target]
+                        )
+                        group_charts.append(
+                            {
+                                "x_label": plot_target,
+                                "x": X.tolist(),
+                                "y": y.tolist(),
+                                "corr": corr,
+                                "pvalue": pvalue,
+                            }
+                        )
 
-                debiasing_charts.append({
-                    "type": group_chart_type,
-                    "group": biased_group,
-                    "target": target,
-                    "charts": group_charts
-                })
+                debiasing_charts.append(
+                    {
+                        "type": group_chart_type,
+                        "group": biased_group,
+                        "target": target,
+                        "charts": group_charts,
+                    }
+                )
 
         predict_data = json.loads(df_predict.to_json(orient="table"))
         predict_data["schema"]["fields"].pop(0)
@@ -459,6 +500,6 @@ class AAIClassificationTask(AAITask):
                 "evaluate": evaluate,
                 "importantFeatures": important_features,
                 "debiasing_charts": debiasing_charts,
-                "leaderboard": leaderboard
-            }
+                "leaderboard": leaderboard,
+            },
         }

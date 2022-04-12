@@ -12,9 +12,7 @@ from actableai.data_imputation.type_recon.type_detector import DfTypes
 stub_path = "actableai.data_imputation.auto_fixer.neighbor_fixer"
 
 
-@pytest.mark.parametrize(
-    "df_without_error", [pd.DataFrame.from_dict({"A": [1, 2]})]
-)
+@pytest.mark.parametrize("df_without_error", [pd.DataFrame.from_dict({"A": [1, 2]})])
 @patch(f"{stub_path}.get_df_without_error")
 @patch(f"{stub_path}.IterativeImputer")
 def test_fix_should_raise_error_when_df_without_error_is_empty(
@@ -32,9 +30,7 @@ def test_fix_should_raise_error_when_df_without_error_is_empty(
         fixer.fix(df, errors, current_column)
 
 
-@pytest.mark.parametrize(
-    "df_without_error", [pd.DataFrame.from_dict({"A": [1, 2]})]
-)
+@pytest.mark.parametrize("df_without_error", [pd.DataFrame.from_dict({"A": [1, 2]})])
 @patch(f"{stub_path}.get_df_without_error")
 @patch(f"{stub_path}.IterativeImputer")
 def test_fix(

@@ -143,11 +143,7 @@ class TypeDetector:
     def detect_possible_types(
         df: pd.DataFrame,
     ) -> Dict[ColumnName, Set[ColumnType]]:
-        return {
-            col: detect_possible_type_for_column(df[col]) for col in df.columns
-        }
+        return {col: detect_possible_type_for_column(df[col]) for col in df.columns}
 
     def detect(self, df: pd.DataFrame) -> DfTypes:
-        return DfTypes(
-            [(col, self.detect_column(df[col])) for col in df.columns]
-        )
+        return DfTypes([(col, self.detect_column(df[col])) for col in df.columns])

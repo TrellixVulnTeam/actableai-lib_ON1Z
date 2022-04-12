@@ -37,9 +37,7 @@ class ValidationDetector(BaseErrorDetector):
 
     def detect_cells(self) -> CellErrors:
         self._error_cell_selector.reset()
-        candidates = self._validation_checker.detect_most_possible_candidates(
-            self._df
-        )
+        candidates = self._validation_checker.detect_most_possible_candidates(self._df)
         for candidate in candidates:
             self._error_cell_selector.append_candidate(candidate)
 

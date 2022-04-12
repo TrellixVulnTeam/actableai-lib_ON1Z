@@ -381,14 +381,14 @@ def test_convert_category_to_label(mock_categories_processor_mod):
             pd.DataFrame(data={"a": [1.0, 2.0, np.nan, 3.1]}),
         ),
         (
-                pd.DataFrame(data={"a": [1, 2, 3, 3]}),
+            pd.DataFrame(data={"a": [1, 2, 3, 3]}),
+            DfTypes([("a", ColumnType.Integer)]),
+            CellErrors(
                 DfTypes([("a", ColumnType.Integer)]),
-                CellErrors(
-                    DfTypes([("a", ColumnType.Integer)]),
-                    [CellError(column="a", index=2, error_type=ErrorType.INVALID)],
-                ),
-                pd.DataFrame(data={"a": [1.0, 2.0, np.nan, 3.0]}),
-        )
+                [CellError(column="a", index=2, error_type=ErrorType.INVALID)],
+            ),
+            pd.DataFrame(data={"a": [1.0, 2.0, np.nan, 3.0]}),
+        ),
     ],
 )
 def test_replace_all_error_to_na(df, dftypes, errors, df_expect):

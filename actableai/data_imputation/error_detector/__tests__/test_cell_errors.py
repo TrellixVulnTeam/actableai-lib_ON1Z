@@ -50,9 +50,7 @@ def test_cell_errors_extend_should_deduplicate():
 
 
 def test_cell_errors_columns():
-    e1 = CellErrors(
-        DfTypes([("a", ColumnType.Integer), ("b", ColumnType.Integer)])
-    )
+    e1 = CellErrors(DfTypes([("a", ColumnType.Integer), ("b", ColumnType.Integer)]))
     e1.append(CellError("a", 7, ErrorType.INVALID))
     e1.append(CellError("a", 3, ErrorType.INVALID))
     e1.append(CellError("b", 9, ErrorType.INVALID))
@@ -149,8 +147,6 @@ def test_column_errors_get_column(errors, column):
         )
     ],
 )
-def test_column_errors_get_column_does_not_pop_item_from_errors(
-    errors, expect_size
-):
+def test_column_errors_get_column_does_not_pop_item_from_errors(errors, expect_size):
     _ = errors.column
     assert len(errors) == expect_size

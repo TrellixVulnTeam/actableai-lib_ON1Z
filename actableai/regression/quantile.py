@@ -8,6 +8,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from actableai.third_parties.skgarden.quantile import ensemble
 from catboost import CatBoostRegressor
 
+
 def ag_quantile_hyperparameters(quantile_low=5, quantile_high=95):
     return {
         ExtraTreesQuantileRegressor: {
@@ -22,8 +23,8 @@ def ag_quantile_hyperparameters(quantile_low=5, quantile_high=95):
         },
     }
 
-class ExtraTreesQuantileRegressor(AbstractModel):
 
+class ExtraTreesQuantileRegressor(AbstractModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.model = ensemble.ExtraTreesQuantileRegressor(**kwargs)
@@ -40,7 +41,6 @@ class ExtraTreesQuantileRegressor(AbstractModel):
 
 
 class RandomForestQuantileRegressor(AbstractModel):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.model = ensemble.RandomForestQuantileRegressor(**kwargs)
@@ -57,7 +57,6 @@ class RandomForestQuantileRegressor(AbstractModel):
 
 
 class CatBoostQuantileRegressor(AbstractModel):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -74,15 +73,19 @@ class CatBoostQuantileRegressor(AbstractModel):
         self.quantile_low = params.pop("quantile_low")
         self.quantile_high = params.pop("quantile_high")
 
-        self.model = CatBoostRegressor(loss_function='Quantile:alpha=0.5', **params)
+        self.model = CatBoostRegressor(loss_function="Quantile:alpha=0.5", **params)
         self.model.fit(X, y)
 
         self.model_low = CatBoostRegressor(
-            loss_function='Quantile:alpha={:.2f}'.format(self.quantile_low/100.), **params)
+            loss_function="Quantile:alpha={:.2f}".format(self.quantile_low / 100.0),
+            **params
+        )
         self.model_low.fit(X, y)
 
         self.model_high = CatBoostRegressor(
-            loss_function='Quantile:alpha={:.2f}'.format(self.quantile_high/100.), **params)
+            loss_function="Quantile:alpha={:.2f}".format(self.quantile_high / 100.0),
+            **params
+        )
         self.model_high.fit(X, y)
 
     def _predict_proba(self, X, quantile=None, X_train=None, y_train=None, **kwargs):

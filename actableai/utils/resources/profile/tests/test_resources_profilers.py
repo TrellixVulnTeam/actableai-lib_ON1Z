@@ -3,13 +3,20 @@ import torch
 import logging
 
 from actableai.utils.resources.profile import ResourceProfilerType, profile_function
-from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetComputeRunningProcesses, \
-    NVMLError, nvmlShutdown
+from pynvml import (
+    nvmlInit,
+    nvmlDeviceGetCount,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetComputeRunningProcesses,
+    NVMLError,
+    nvmlShutdown,
+)
 
 
 def _function(sleep=False, n_child=0, child_sleep=False, cpu=True, gpu=False):
     import time
     from multiprocessing import Process
+
     if gpu:
         import torch
 
@@ -73,14 +80,18 @@ class TestResourcesProfilers:
         df_profiling_results = profiling_results.df_profiling_results
 
         if len(df_profiling_results) > 0:
-            assert (df_profiling_results["resource_type"].unique().sum() & resource_profiled) != 0
+            assert (
+                df_profiling_results["resource_type"].unique().sum() & resource_profiled
+            ) != 0
 
     def test_return_value(self):
         _, results = profile_function(ResourceProfilerType(0), False, _function)
         assert results
 
     def test_return_columns(self):
-        profiling_results, _ = profile_function(ResourceProfilerType.MEMORY, False, _function, sleep=True)
+        profiling_results, _ = profile_function(
+            ResourceProfilerType.MEMORY, False, _function, sleep=True
+        )
         df_profiling_results = profiling_results.df_profiling_results
         columns = df_profiling_results.columns
 
@@ -90,11 +101,15 @@ class TestResourcesProfilers:
         assert "child_process" in columns
 
     def test_memory_profiling_max(self):
-        profiling_results, _ = profile_function(ResourceProfilerType.MEMORY, False, _function)
+        profiling_results, _ = profile_function(
+            ResourceProfilerType.MEMORY, False, _function
+        )
         assert profiling_results.get_max_profiled(ResourceProfilerType.MEMORY) > 0
 
     def test_memory_profiling_len(self):
-        profiling_results, _ = profile_function(ResourceProfilerType.MEMORY, False, _function, sleep=True)
+        profiling_results, _ = profile_function(
+            ResourceProfilerType.MEMORY, False, _function, sleep=True
+        )
         assert len(profiling_results.df_profiling_results) > 0
 
     @pytest.mark.parametrize("n_child", [1, 2, 3])
@@ -104,7 +119,7 @@ class TestResourcesProfilers:
             True,
             _function,
             n_child=n_child,
-            child_sleep=True
+            child_sleep=True,
         )
         df_profiling_results = profiling_results.df_profiling_results
 
@@ -114,15 +129,13 @@ class TestResourcesProfilers:
     def test_gpu_memory_profiling_max(self, is_nvml_available):
         if is_nvml_available:
             profiling_results, _ = profile_function(
-                ResourceProfilerType.GPU_MEMORY,
-                False,
-                _function,
-                cpu=False,
-                gpu=True
+                ResourceProfilerType.GPU_MEMORY, False, _function, cpu=False, gpu=True
             )
             assert profiling_results.get_max_profiled(ResourceProfilerType.MEMORY) > 0
         else:
-            logging.warning("Skipping test `test_gpu_memory_profiling_max`, no GPU available or NVML not available")
+            logging.warning(
+                "Skipping test `test_gpu_memory_profiling_max`, no GPU available or NVML not available"
+            )
 
     def test_gpu_memory_profiling_len(self, is_nvml_available):
         if is_nvml_available:
@@ -132,11 +145,13 @@ class TestResourcesProfilers:
                 _function,
                 sleep=True,
                 cpu=False,
-                gpu=True
+                gpu=True,
             )
             assert len(profiling_results.df_profiling_results) > 0
         else:
-            logging.warning("Skipping test `test_gpu_memory_profiling_len`, no GPU available or NVML not available")
+            logging.warning(
+                "Skipping test `test_gpu_memory_profiling_len`, no GPU available or NVML not available"
+            )
 
     @pytest.mark.parametrize("n_child", [1, 2, 3])
     def test_gpu_memory_profiling_child(self, n_child, is_nvml_available):
@@ -149,11 +164,13 @@ class TestResourcesProfilers:
                 n_child=n_child,
                 child_sleep=True,
                 cpu=False,
-                gpu=True
+                gpu=True,
             )
             df_profiling_results = profiling_results.df_profiling_results
 
             assert len(df_profiling_results["pid"].unique()) >= n_child + 1
             assert len(df_profiling_results["child_process"].unique()) == 2
         else:
-            logging.warning("Skipping test `test_gpu_memory_profiling_child`, no GPU available or NVML not available")
+            logging.warning(
+                "Skipping test `test_gpu_memory_profiling_child`, no GPU available or NVML not available"
+            )

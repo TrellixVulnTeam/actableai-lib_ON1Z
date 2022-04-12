@@ -1,7 +1,10 @@
 import pandas as pd
 
 from actableai.utils.resources.predict import ResourcePredictorType
-from actableai.utils.resources.predict.features.common import extract_dataset_features, all_dataset_features
+from actableai.utils.resources.predict.features.common import (
+    extract_dataset_features,
+    all_dataset_features,
+)
 from actableai.utils.resources.predict.features.method import MethodFeaturesExtractor
 
 
@@ -12,12 +15,8 @@ class BayesianRegressionFeaturesExtractor(MethodFeaturesExtractor):
 
     # Dictionary used to filter the features to extract depending on the resource to predict
     resource_predicted_features_filter = {
-        ResourcePredictorType.MAX_MEMORY: [
-            *all_dataset_features
-        ],
-        ResourcePredictorType.MAX_GPU_MEMORY: [
-            *all_dataset_features
-        ],
+        ResourcePredictorType.MAX_MEMORY: [*all_dataset_features],
+        ResourcePredictorType.MAX_GPU_MEMORY: [*all_dataset_features],
     }
 
     def _filter_features(self, features: dict) -> dict:
@@ -33,12 +32,10 @@ class BayesianRegressionFeaturesExtractor(MethodFeaturesExtractor):
         -------
         The filtered features
         """
-        features_filter = self.resource_predicted_features_filter.get(self.resource_predicted, [])
-        return {
-            key: value
-            for key, value in features.items()
-            if key in features_filter
-        }
+        features_filter = self.resource_predicted_features_filter.get(
+            self.resource_predicted, []
+        )
+        return {key: value for key, value in features.items() if key in features_filter}
 
     @staticmethod
     def _extract_all_features(arguments: dict) -> dict:
@@ -54,7 +51,4 @@ class BayesianRegressionFeaturesExtractor(MethodFeaturesExtractor):
         -------
         The extracted features
         """
-        return {
-            **extract_dataset_features(arguments.get("df", pd.DataFrame()))
-        }
-
+        return {**extract_dataset_features(arguments.get("df", pd.DataFrame()))}

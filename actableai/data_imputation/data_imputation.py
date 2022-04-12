@@ -1,6 +1,8 @@
 def data_imputation(df, rules="", impute_nulls=True):
     from actableai.data_imputation.error_detector.null_detector import NullDetector
-    from actableai.data_imputation.error_detector.validation_detector import ValidationDetector
+    from actableai.data_imputation.error_detector.validation_detector import (
+        ValidationDetector,
+    )
     import time
     import pandas as pd
     import numpy as np
@@ -11,18 +13,18 @@ def data_imputation(df, rules="", impute_nulls=True):
     detectors = [ValidationDetector.from_constraints(rules)]
     if impute_nulls:
         detectors.append(NullDetector())
-    
+
     raw_df = DataFrame(df.copy())
     errors = raw_df.detect_error(*detectors)
     if not errors:
         return {
-            "messenger": "Unable to detect any errors", 
+            "messenger": "Unable to detect any errors",
             "status": "FAILURE",
             "runtime": time.time() - start,
             "data": {},
-            "validation": []
+            "validation": [],
         }
-    
+
     def diff(x):
         raw_v = x[0]
         fixed_v = x[1]
@@ -38,7 +40,7 @@ def data_imputation(df, rules="", impute_nulls=True):
             return ""
         else:
             return "highlight"
-    
+
     fixed_df = raw_df.auto_fix(errors, *detectors)
     df_highlight = pd.concat(
         [raw_df, fixed_df], axis="columns", keys=["raw_df", "fixed_df"], join="outer"
@@ -49,11 +51,13 @@ def data_imputation(df, rules="", impute_nulls=True):
     )
 
     records = []
-    for idx, (o, t, c) in enumerate(zip(
-        raw_df.to_dict("record"),
-        fixed_df.to_dict("record"),
-        df_highlight.to_dict("record"),
-    )):
+    for idx, (o, t, c) in enumerate(
+        zip(
+            raw_df.to_dict("record"),
+            fixed_df.to_dict("record"),
+            df_highlight.to_dict("record"),
+        )
+    ):
         records.append({"oldtext": o, "text": t, "class": c, "index": idx})
 
     data = {"columns": raw_df.columns.tolist(), "records": records}
@@ -63,5 +67,5 @@ def data_imputation(df, rules="", impute_nulls=True):
         "messenger": "",
         "data": data,
         "runtime": runtime,
-        "validations": []
+        "validations": [],
     }

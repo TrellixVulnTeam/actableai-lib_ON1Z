@@ -3,8 +3,14 @@ import pandas as pd
 import pytest
 
 from actableai.data_imputation.auto_fixer.fix_info import FixInfoList, FixInfo
-from actableai.data_imputation.auto_fixer.single_category_fixer import SingleCategoryFixer
-from actableai.data_imputation.error_detector.cell_erros import CellErrors, ErrorType, CellError
+from actableai.data_imputation.auto_fixer.single_category_fixer import (
+    SingleCategoryFixer,
+)
+from actableai.data_imputation.error_detector.cell_erros import (
+    CellErrors,
+    ErrorType,
+    CellError,
+)
 from actableai.data_imputation.meta.column import RichColumnMeta
 from actableai.data_imputation.meta.types import ColumnType
 from actableai.data_imputation.type_recon.type_detector import DfTypes

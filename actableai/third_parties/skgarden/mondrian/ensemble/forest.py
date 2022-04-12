@@ -22,6 +22,7 @@ def _single_tree_pfit(tree, X, y, classes=None):
         tree.partial_fit(X, y)
     return tree
 
+
 class BaseMondrian(object):
     def weighted_decision_path(self, X):
         """
@@ -46,10 +47,10 @@ class BaseMondrian(object):
             provides the weighted_decision_path of estimator i
         """
         X = self._validate_X_predict(X)
-        est_inds = np.cumsum(
-            [0] + [est.tree_.node_count for est in self.estimators_])
+        est_inds = np.cumsum([0] + [est.tree_.node_count for est in self.estimators_])
         paths = sparse.hstack(
-            [est.weighted_decision_path(X) for est in self.estimators_]).tocsr()
+            [est.weighted_decision_path(X) for est in self.estimators_]
+        ).tocsr()
         return paths, est_inds
 
     # XXX: This is mainly a stripped version of BaseForest.fit
@@ -98,10 +99,13 @@ class BaseMondrian(object):
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
-            warn("A column-vector y was passed when a 1d array was"
-                 " expected. Please change the shape of y to "
-                 "(n_samples,), for example using ravel().",
-                 DataConversionWarning, stacklevel=2)
+            warn(
+                "A column-vector y was passed when a 1d array was"
+                " expected. Please change the shape of y to "
+                "(n_samples,), for example using ravel().",
+                DataConversionWarning,
+                stacklevel=2,
+            )
 
         self.n_outputs_ = 1
 
@@ -118,10 +122,12 @@ class BaseMondrian(object):
         # XXX: Switch to threading backend when GIL is released.
         if isinstance(self, ClassifierMixin):
             self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_single_tree_pfit)(t, X, y, classes) for t in self.estimators_)
+                delayed(_single_tree_pfit)(t, X, y, classes) for t in self.estimators_
+            )
         else:
             self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_single_tree_pfit)(t, X, y) for t in self.estimators_)
+                delayed(_single_tree_pfit)(t, X, y) for t in self.estimators_
+            )
 
         return self
 
@@ -157,23 +163,26 @@ class MondrianForestRegressor(ForestRegressor, BaseMondrian):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
     """
-    def __init__(self,
-                 n_estimators=10,
-                 max_depth=None,
-                 min_samples_split=2,
-                 bootstrap=False,
-                 n_jobs=1,
-                 random_state=None,
-                 verbose=0):
+
+    def __init__(
+        self,
+        n_estimators=10,
+        max_depth=None,
+        min_samples_split=2,
+        bootstrap=False,
+        n_jobs=1,
+        random_state=None,
+        verbose=0,
+    ):
         super(MondrianForestRegressor, self).__init__(
             base_estimator=MondrianTreeRegressor(),
             n_estimators=n_estimators,
-            estimator_params=("max_depth", "min_samples_split",
-                              "random_state"),
+            estimator_params=("max_depth", "min_samples_split", "random_state"),
             bootstrap=bootstrap,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -243,7 +252,7 @@ class MondrianForestRegressor(ForestRegressor, BaseMondrian):
         for est in self.estimators_:
             if return_std:
                 mean, std = est.predict(X, return_std=True)
-                exp_y_sq += (std**2 + mean**2)
+                exp_y_sq += std**2 + mean**2
             else:
                 mean = est.predict(X, return_std=False)
             ensemble_mean += mean
@@ -315,23 +324,26 @@ class MondrianForestClassifier(ForestClassifier, BaseMondrian):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
     """
-    def __init__(self,
-                 n_estimators=10,
-                 max_depth=None,
-                 min_samples_split=2,
-                 bootstrap=False,
-                 n_jobs=1,
-                 random_state=None,
-                 verbose=0):
+
+    def __init__(
+        self,
+        n_estimators=10,
+        max_depth=None,
+        min_samples_split=2,
+        bootstrap=False,
+        n_jobs=1,
+        random_state=None,
+        verbose=0,
+    ):
         super(MondrianForestClassifier, self).__init__(
             base_estimator=MondrianTreeClassifier(),
             n_estimators=n_estimators,
-            estimator_params=("max_depth", "min_samples_split",
-                              "random_state"),
+            estimator_params=("max_depth", "min_samples_split", "random_state"),
             bootstrap=bootstrap,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -386,5 +398,4 @@ class MondrianForestClassifier(ForestClassifier, BaseMondrian):
         -------
         self: instance of MondrianForestClassifier
         """
-        return super(MondrianForestClassifier, self).partial_fit(
-            X, y, classes=classes)
+        return super(MondrianForestClassifier, self).partial_fit(X, y, classes=classes)

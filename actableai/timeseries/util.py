@@ -7,7 +7,7 @@ import pandas as pd
 
 
 def makeCorrectName(s):
-    return s.replace(' ', '_')
+    return s.replace(" ", "_")
 
 
 def returnDataTable(df):
@@ -41,10 +41,10 @@ def findFredForGluon(freq):
     return freq
 
 
-def findFred(pd_date:pd.Series) -> Optional[str]:  ## Need to sorted before.
+def findFred(pd_date: pd.Series) -> Optional[str]:  ## Need to sorted before.
     if len(pd_date) < 3:
         return None
-    pd_date = pd_date.sort_values() # Sorting them ?
+    pd_date = pd_date.sort_values()  # Sorting them ?
     freq = pd.infer_freq(pd_date)
     if freq == "MS":
         freq = "M"
@@ -55,7 +55,7 @@ def findFred(pd_date:pd.Series) -> Optional[str]:  ## Need to sorted before.
     infer_list = {}
     data_len = len(pd_date)
     for i in range(0, data_len - 3, 3):
-        freq = pd.infer_freq(pd_date[i: i + 3])
+        freq = pd.infer_freq(pd_date[i : i + 3])
         if freq is not None:
             if freq not in infer_list:
                 infer_list[str(freq)] = 0
@@ -82,19 +82,21 @@ def make_future_dataframe(periods, pd_date, freq, include_history=True):
     """
 
     if history_dates is None:
-        raise Exception('Model must be fit before this can be used.')
+        raise Exception("Model must be fit before this can be used.")
     last_date = history_dates.max()
     dates = pd.date_range(
         start=last_date,
         periods=periods + 1,  # An extra in case we include start
-        freq=freq)
+        freq=freq,
+    )
     dates = dates[dates > last_date]  # Drop start if equals last_date
     dates = dates[:periods]  # Return correct number of periods
 
     if include_history:
         dates = np.concatenate((np.array(history_dates), dates))
 
-    return pd.DataFrame({'ds': dates})
+    return pd.DataFrame({"ds": dates})
+
 
 def minmax_scaler_fit_transform(df):
     from sklearn.preprocessing import MinMaxScaler
@@ -107,6 +109,7 @@ def minmax_scaler_fit_transform(df):
 
     return x_scaled, scaler
 
+
 def minmax_scaler_transform(df, scaler):
 
     x = df.values
@@ -116,6 +119,7 @@ def minmax_scaler_transform(df, scaler):
 
     return x_scaled
 
+
 def inverse_transform(normalized_fc, scaler):
     fc_samples = normalized_fc[0].samples
     fc_shape = fc_samples.shape
@@ -123,6 +127,7 @@ def inverse_transform(normalized_fc, scaler):
     normalized_fc[0].samples = fc_samples.reshape(fc_shape)
 
     return normalized_fc
+
 
 def get_satisfied_formats(row, unique_formats):
     satisfied_formats = []
@@ -135,6 +140,7 @@ def get_satisfied_formats(row, unique_formats):
 
     return satisfied_formats
 
+
 def parse_datetime(dt_str, formats):
     for fm in formats:
         try:
@@ -143,6 +149,7 @@ def parse_datetime(dt_str, formats):
         except Exception:
             pass
     return None
+
 
 def parse_by_format_with_valid_frequency(series, formats):
     for fm in formats:
@@ -154,16 +161,26 @@ def parse_by_format_with_valid_frequency(series, formats):
             pass
     return pd.to_datetime(series, format=formats[0])
 
-def handle_datetime_column(series:pd.Series, min_parsed_rate:float=0.5) -> Tuple[pd.Series, str]:
+
+def handle_datetime_column(
+    series: pd.Series, min_parsed_rate: float = 0.5
+) -> Tuple[pd.Series, str]:
     from pandas._libs.tslibs.parsing import _guess_datetime_format
-    parsed_rate_check = lambda x : x.isna().sum() >= min_parsed_rate * len(series)
-    unique_formats = pd.concat([
-        series.astype(str).apply(_guess_datetime_format, dayfirst=False),
-        series.astype(str).apply(_guess_datetime_format, dayfirst=True)
-    ]).value_counts().index.to_list()
+
+    parsed_rate_check = lambda x: x.isna().sum() >= min_parsed_rate * len(series)
+    unique_formats = (
+        pd.concat(
+            [
+                series.astype(str).apply(_guess_datetime_format, dayfirst=False),
+                series.astype(str).apply(_guess_datetime_format, dayfirst=True),
+            ]
+        )
+        .value_counts()
+        .index.to_list()
+    )
     if len(unique_formats) < 1:
         try:
-            parsed_dt = pd.to_datetime(series, errors='coerce')
+            parsed_dt = pd.to_datetime(series, errors="coerce")
             if parsed_rate_check(parsed_dt):
                 return series, "others"
             return parsed_dt, "datetime"
@@ -175,14 +192,27 @@ def handle_datetime_column(series:pd.Series, min_parsed_rate:float=0.5) -> Tuple
     else:
         column_dtype = "datetime"
 
-    satisfied_formats = series.apply(get_satisfied_formats, unique_formats=unique_formats)
-    unique_satisfied_formats_sorted = pd.Series(sum(satisfied_formats.values.tolist(), [])).value_counts()
-    satisfied_formats_sorted = satisfied_formats.apply(lambda x: sorted(x, key=unique_satisfied_formats_sorted.get, reverse=True))
+    satisfied_formats = series.apply(
+        get_satisfied_formats, unique_formats=unique_formats
+    )
+    unique_satisfied_formats_sorted = pd.Series(
+        sum(satisfied_formats.values.tolist(), [])
+    ).value_counts()
+    satisfied_formats_sorted = satisfied_formats.apply(
+        lambda x: sorted(x, key=unique_satisfied_formats_sorted.get, reverse=True)
+    )
     if satisfied_formats_sorted.astype(str).nunique() == 1:
-        parsed_dt = parse_by_format_with_valid_frequency(series, satisfied_formats_sorted.values[0])
+        parsed_dt = parse_by_format_with_valid_frequency(
+            series, satisfied_formats_sorted.values[0]
+        )
         column_dtype = "datetime"
     else:
-        parsed_dt = pd.Series([parse_datetime(series[i], satisfied_formats_sorted[i]) for i in range(len(series))])
+        parsed_dt = pd.Series(
+            [
+                parse_datetime(series[i], satisfied_formats_sorted[i])
+                for i in range(len(series))
+            ]
+        )
 
     if parsed_rate_check(parsed_dt):
         return series, "others"

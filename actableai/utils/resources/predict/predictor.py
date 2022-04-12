@@ -11,15 +11,18 @@ class ResourcesPredictorsActor:
     Class used to store different resources predictors
     Is is assumed that this class will be used as a ray Actor
     """
+
     _version = "2.0"
 
     @classmethod
-    def get_actor(cls,
-                  s3_resources_predictors_bucket: str = None,
-                  s3_resources_predictors_prefix: str = None,
-                  resources_predictors_data_path: str = None,
-                  random_state: int = None,
-                  backup_state_probability: float = None) -> ray.actor.ActorHandle:
+    def get_actor(
+        cls,
+        s3_resources_predictors_bucket: str = None,
+        s3_resources_predictors_prefix: str = None,
+        resources_predictors_data_path: str = None,
+        random_state: int = None,
+        backup_state_probability: float = None,
+    ) -> ray.actor.ActorHandle:
         """
         Get the ray Actor, will create it if it does not exist already
 
@@ -48,24 +51,29 @@ class ResourcesPredictorsActor:
         try:
             resources_predictors_actor = ray.get_actor(name=cls.__name__)
         except ValueError:
-            resources_predictors_actor = ray.remote(cls) \
-                .options(name=cls.__name__,
-                         lifetime="detached") \
-                .remote(s3_resources_predictors_bucket=s3_resources_predictors_bucket,
-                        s3_resources_predictors_prefix=s3_resources_predictors_prefix,
-                        resources_predictors_data_path=resources_predictors_data_path,
-                        random_state=random_state,
-                        backup_state_probability=backup_state_probability)
+            resources_predictors_actor = (
+                ray.remote(cls)
+                .options(name=cls.__name__, lifetime="detached")
+                .remote(
+                    s3_resources_predictors_bucket=s3_resources_predictors_bucket,
+                    s3_resources_predictors_prefix=s3_resources_predictors_prefix,
+                    resources_predictors_data_path=resources_predictors_data_path,
+                    random_state=random_state,
+                    backup_state_probability=backup_state_probability,
+                )
+            )
 
         return resources_predictors_actor
 
-    def __init__(self,
-                 s3_resources_predictors_bucket: str = None,
-                 s3_resources_predictors_prefix: str = None,
-                 resources_predictors_data_path: str = None,
-                 random_state: int = None,
-                 backup_state_probability: float = None,
-                 override_models: bool = False):
+    def __init__(
+        self,
+        s3_resources_predictors_bucket: str = None,
+        s3_resources_predictors_prefix: str = None,
+        resources_predictors_data_path: str = None,
+        random_state: int = None,
+        backup_state_probability: float = None,
+        override_models: bool = False,
+    ):
         """
         Constructor for the Resources Predictors Actor
 
@@ -113,8 +121,13 @@ class ResourcesPredictorsActor:
         # Migrate if version file does not correspond to current version
         if self.bucket is not None and not override_models:
             version_file = self._read_file(self._get_version_path())
-            if version_file is None or json.loads(version_file).get("version", None) != self._version:
-                self.migrate(s3_resources_predictors_bucket, [s3_resources_predictors_prefix])
+            if (
+                version_file is None
+                or json.loads(version_file).get("version", None) != self._version
+            ):
+                self.migrate(
+                    s3_resources_predictors_bucket, [s3_resources_predictors_prefix]
+                )
 
         # Load all the models, when a model is not available it is represented by None
         # This is done to avoid keeping track of which models are implemented
@@ -126,7 +139,9 @@ class ResourcesPredictorsActor:
                 self.models_data[resource_predicted][task] = None
 
                 # Create or read the model
-                model = self._read_file(self._get_model_path(resource_predicted, task), True)
+                model = self._read_file(
+                    self._get_model_path(resource_predicted, task), True
+                )
                 if model is None or override_models:
                     model = create_pipeline(resource_predicted, task)
                 else:
@@ -137,7 +152,9 @@ class ResourcesPredictorsActor:
                     continue
 
                 # Create or read the model metrics
-                model_metrics = self._read_file(self._get_model_metrics_path(resource_predicted, task), True)
+                model_metrics = self._read_file(
+                    self._get_model_metrics_path(resource_predicted, task), True
+                )
                 if model_metrics is None or override_models:
                     model_metrics = Metrics([RMSE(), NRMSE(), R2()])
                 else:
@@ -146,15 +163,15 @@ class ResourcesPredictorsActor:
                 self.models_data[resource_predicted][task] = {
                     "model": model,
                     "model_metrics": model_metrics,
-                    "training_data_queue": Queue()
+                    "training_data_queue": Queue(),
                 }
 
         self.random_generator = np.random.default_rng(random_state)
         self.backup_state_probability = backup_state_probability
 
-    async def get_model_metrics(self,
-                                resource_predicted: ResourcePredictorType,
-                                task: TaskType) -> Dict[str, float]:
+    async def get_model_metrics(
+        self, resource_predicted: ResourcePredictorType, task: TaskType
+    ) -> Dict[str, float]:
         """
         Get the metrics of one specific model
 
@@ -173,14 +190,15 @@ class ResourcesPredictorsActor:
 
         model_data = self.models_data[resource_predicted][task]
         if model_data is None:
-            raise NotImplementedError(f"Predictor not implemented ({resource_predicted}, {task})")
+            raise NotImplementedError(
+                f"Predictor not implemented ({resource_predicted}, {task})"
+            )
 
         return metrics_to_dict(model_data["model_metrics"])
 
-    async def predict(self,
-                      resource_predicted: ResourcePredictorType,
-                      task: TaskType,
-                      features: dict) -> float:
+    async def predict(
+        self, resource_predicted: ResourcePredictorType, task: TaskType, features: dict
+    ) -> float:
         """
         Make a prediction for a resource usage
 
@@ -199,18 +217,22 @@ class ResourcesPredictorsActor:
         """
         model_data = self.models_data[resource_predicted][task]
         if model_data is None:
-            raise NotImplementedError(f"Predictor not implemented ({resource_predicted}, {task})")
+            raise NotImplementedError(
+                f"Predictor not implemented ({resource_predicted}, {task})"
+            )
 
         return model_data["model"].predict_one(features, learn_unsupervised=False)
 
-    def add_data(self,
-                 resource_predicted: ResourcePredictorType,
-                 task: TaskType,
-                 features: dict,
-                 target: float,
-                 prediction: float = None,
-                 timestamp: int = None,
-                 full_features: dict = None):
+    def add_data(
+        self,
+        resource_predicted: ResourcePredictorType,
+        task: TaskType,
+        features: dict,
+        target: float,
+        prediction: float = None,
+        timestamp: int = None,
+        full_features: dict = None,
+    ):
         """
         Add data to the prediction model (train)
 
@@ -239,10 +261,14 @@ class ResourcesPredictorsActor:
 
         model_data = self.models_data[resource_predicted][task]
         if model_data is None:
-            raise NotImplementedError(f"Predictor not implemented ({resource_predicted}, {task})")
+            raise NotImplementedError(
+                f"Predictor not implemented ({resource_predicted}, {task})"
+            )
 
         if prediction is None:
-            prediction = model_data["model"].predict_one(features, learn_unsupervised=False)
+            prediction = model_data["model"].predict_one(
+                features, learn_unsupervised=False
+            )
         model_data["model"].learn_one(features, target, learn_unsupervised=True)
 
         model_data["model_metrics"].update(target, prediction)
@@ -255,7 +281,7 @@ class ResourcesPredictorsActor:
             "X": features,
             "y": target,
             "y_pred": prediction,
-            "metrics": metrics_to_dict(model_data["model_metrics"])
+            "metrics": metrics_to_dict(model_data["model_metrics"]),
         }
 
         if full_features is not None:
@@ -284,10 +310,12 @@ class ResourcesPredictorsActor:
         return f"backup_{backup_timestamp}"
 
     @classmethod
-    def _get_model_data_folder_path(cls,
-                                    resource_predicted: ResourcePredictorType,
-                                    task: TaskType,
-                                    backup_timestamp: int = None) -> str:
+    def _get_model_data_folder_path(
+        cls,
+        resource_predicted: ResourcePredictorType,
+        task: TaskType,
+        backup_timestamp: int = None,
+    ) -> str:
         """
         Get the path where the resources predictors data are stored
 
@@ -312,10 +340,12 @@ class ResourcesPredictorsActor:
         return os.path.join(path, resource_predicted, task)
 
     @classmethod
-    def _get_model_path(cls,
-                        resource_predicted: ResourcePredictorType,
-                        task: TaskType,
-                        backup_timestamp: int = None) -> str:
+    def _get_model_path(
+        cls,
+        resource_predicted: ResourcePredictorType,
+        task: TaskType,
+        backup_timestamp: int = None,
+    ) -> str:
         """
         Get the path where the model object is stored
 
@@ -334,13 +364,18 @@ class ResourcesPredictorsActor:
         """
         import os
 
-        return os.path.join(cls._get_model_data_folder_path(resource_predicted, task, backup_timestamp), "model.p")
+        return os.path.join(
+            cls._get_model_data_folder_path(resource_predicted, task, backup_timestamp),
+            "model.p",
+        )
 
     @classmethod
-    def _get_model_metrics_path(cls,
-                                resource_predicted: ResourcePredictorType,
-                                task: TaskType,
-                                backup_timestamp: int = None) -> str:
+    def _get_model_metrics_path(
+        cls,
+        resource_predicted: ResourcePredictorType,
+        task: TaskType,
+        backup_timestamp: int = None,
+    ) -> str:
         """
         Get the path where the metrics object is stored
 
@@ -359,15 +394,19 @@ class ResourcesPredictorsActor:
         """
         import os
 
-        return os.path.join(cls._get_model_data_folder_path(resource_predicted, task, backup_timestamp),
-                            "model_metrics.p")
+        return os.path.join(
+            cls._get_model_data_folder_path(resource_predicted, task, backup_timestamp),
+            "model_metrics.p",
+        )
 
     @classmethod
-    def _get_training_data_path(cls,
-                                resource_predicted: ResourcePredictorType,
-                                task: TaskType,
-                                timestamp: str,
-                                backup_timestamp: int = None) -> str:
+    def _get_training_data_path(
+        cls,
+        resource_predicted: ResourcePredictorType,
+        task: TaskType,
+        timestamp: str,
+        backup_timestamp: int = None,
+    ) -> str:
         """
         Get the path where the training data are stored
 
@@ -388,9 +427,11 @@ class ResourcesPredictorsActor:
         """
         import os
 
-        return os.path.join(cls._get_model_data_folder_path(resource_predicted, task, backup_timestamp),
-                            "training_data",
-                            f"{timestamp}.json")
+        return os.path.join(
+            cls._get_model_data_folder_path(resource_predicted, task, backup_timestamp),
+            "training_data",
+            f"{timestamp}.json",
+        )
 
     @classmethod
     def _get_version_path(cls, backup_timestamp: int = None):
@@ -439,12 +480,11 @@ class ResourcesPredictorsActor:
         else:
             path = os.path.join(self.s3_resources_predictors_prefix, path)
 
-            self.bucket.put_object(
-                Key=path,
-                Body=file_content
-            )
+            self.bucket.put_object(Key=path, Body=file_content)
 
-    def _read_file(self, path: str, byte_file: bool = False) -> Optional[Union[str, bytes]]:
+    def _read_file(
+        self, path: str, byte_file: bool = False
+    ) -> Optional[Union[str, bytes]]:
         """
         Read a file from a specific path in either AWS S3 or the filesystem
 
@@ -500,21 +540,24 @@ class ResourcesPredictorsActor:
                     continue
 
                 model_path = self._get_model_path(resource_predicted, task)
-                model_metrics_path = self._get_model_metrics_path(resource_predicted, task)
+                model_metrics_path = self._get_model_metrics_path(
+                    resource_predicted, task
+                )
 
                 self._write_file(model_path, pickle.dumps(model_data["model"]))
-                self._write_file(model_metrics_path, pickle.dumps(model_data["model_metrics"]))
+                self._write_file(
+                    model_metrics_path, pickle.dumps(model_data["model_metrics"])
+                )
 
                 while not model_data["training_data_queue"].empty():
                     training_data = model_data["training_data_queue"].get()
-                    training_data_path = self._get_training_data_path(resource_predicted, task,
-                                                                      training_data["timestamp"])
+                    training_data_path = self._get_training_data_path(
+                        resource_predicted, task, training_data["timestamp"]
+                    )
                     self._write_file(training_data_path, json.dumps(training_data))
 
     @classmethod
-    def migrate(cls,
-                s3_bucket: str,
-                s3_prefix_list: List[str]):
+    def migrate(cls, s3_bucket: str, s3_prefix_list: List[str]):
         """
         Update models and backup old training data
 
@@ -563,26 +606,29 @@ class ResourcesPredictorsActor:
                 s3_resources_predictors_bucket=s3_bucket,
                 s3_resources_predictors_prefix=s3_prefix,
                 backup_state_probability=0.0,
-                override_models=True
+                override_models=True,
             )
 
             # Backup version file
-            version_file = resources_predictors._read_file(resources_predictors._get_version_path())
+            version_file = resources_predictors._read_file(
+                resources_predictors._get_version_path()
+            )
             if version_file is not None:
                 print(f"Backup version file")
                 resources_predictors._write_file(
-                    resources_predictors._get_version_path(backup_timestamp=backup_timestamp),
-                    version_file
+                    resources_predictors._get_version_path(
+                        backup_timestamp=backup_timestamp
+                    ),
+                    version_file,
                 )
 
             # Create new version file
             new_version = {
                 "version": str(cls._version),
-                "created_timestamp": backup_timestamp
+                "created_timestamp": backup_timestamp,
             }
             resources_predictors._write_file(
-                resources_predictors._get_version_path(),
-                json.dumps(new_version)
+                resources_predictors._get_version_path(), json.dumps(new_version)
             )
 
             for resource_predicted in ResourcePredictorType:
@@ -590,64 +636,82 @@ class ResourcesPredictorsActor:
                     # Backup model
                     model = resources_predictors._read_file(
                         resources_predictors._get_model_path(resource_predicted, task),
-                        True
+                        True,
                     )
                     if model is not None:
-                        print(f"Backup model, resource: {resource_predicted}, task: {task}")
+                        print(
+                            f"Backup model, resource: {resource_predicted}, task: {task}"
+                        )
                         model_backup_path = resources_predictors._get_model_path(
-                            resource_predicted,
-                            task,
-                            backup_timestamp=backup_timestamp
+                            resource_predicted, task, backup_timestamp=backup_timestamp
                         )
                         resources_predictors._write_file(model_backup_path, model)
 
                     # Backup model metrics
                     model_metrics = resources_predictors._read_file(
-                        resources_predictors._get_model_metrics_path(resource_predicted, task),
-                        True
+                        resources_predictors._get_model_metrics_path(
+                            resource_predicted, task
+                        ),
+                        True,
                     )
                     if model_metrics is not None:
-                        print(f"Backup model metrics, resource: {resource_predicted}, task: {task}")
-                        model_metrics_backup_path = resources_predictors._get_model_metrics_path(
-                            resource_predicted,
-                            task,
-                            backup_timestamp=backup_timestamp
+                        print(
+                            f"Backup model metrics, resource: {resource_predicted}, task: {task}"
                         )
-                        resources_predictors._write_file(model_metrics_backup_path, model_metrics)
+                        model_metrics_backup_path = (
+                            resources_predictors._get_model_metrics_path(
+                                resource_predicted,
+                                task,
+                                backup_timestamp=backup_timestamp,
+                            )
+                        )
+                        resources_predictors._write_file(
+                            model_metrics_backup_path, model_metrics
+                        )
 
                     # Backup training data and train new model
                     response = s3_client.list_objects_v2(
                         Bucket=s3_bucket,
-                        Prefix=f"{s3_prefix}/{resource_predicted}/{task}/training_data/"
+                        Prefix=f"{s3_prefix}/{resource_predicted}/{task}/training_data/",
                     )
                     if response is not None and "Contents" in response:
                         training_data_dict = {}
 
-                        print("Start backup training data" \
-                              + f", len: {len(response['Contents'])}" \
-                              + f", resource: {resource_predicted}" \
-                              + f", task: {task}")
+                        print(
+                            "Start backup training data"
+                            + f", len: {len(response['Contents'])}"
+                            + f", resource: {resource_predicted}"
+                            + f", task: {task}"
+                        )
 
                         # Backup training data
                         for obj in response["Contents"]:
                             bucket_obj = bucket.Object(obj["Key"])
                             training_data = json.load(bucket_obj.get()["Body"])
 
-                            training_data_backup_path = resources_predictors._get_training_data_path(
-                                resource_predicted,
-                                task,
-                                training_data["timestamp"],
-                                backup_timestamp=backup_timestamp
+                            training_data_backup_path = (
+                                resources_predictors._get_training_data_path(
+                                    resource_predicted,
+                                    task,
+                                    training_data["timestamp"],
+                                    backup_timestamp=backup_timestamp,
+                                )
                             )
-                            resources_predictors._write_file(training_data_backup_path, json.dumps(training_data))
+                            resources_predictors._write_file(
+                                training_data_backup_path, json.dumps(training_data)
+                            )
 
                             # Add training data to dict
-                            training_data_dict[training_data["timestamp"]] = training_data
+                            training_data_dict[
+                                training_data["timestamp"]
+                            ] = training_data
 
-                        print("Start training new model" \
-                              + f", len: {len(response['Contents'])}" \
-                              + f", resource: {resource_predicted}" \
-                              + f", task: {task}")
+                        print(
+                            "Start training new model"
+                            + f", len: {len(response['Contents'])}"
+                            + f", resource: {resource_predicted}"
+                            + f", task: {task}"
+                        )
                         # Train new model with training data
                         for timestamp in sorted(training_data_dict.keys()):
                             training_data = training_data_dict[timestamp]
@@ -658,7 +722,7 @@ class ResourcesPredictorsActor:
                                 training_data["X"],
                                 training_data["y"],
                                 timestamp=training_data["timestamp"],
-                                full_features=training_data.get("X_full", None)
+                                full_features=training_data.get("X_full", None),
                             )
 
             print(f"Save new models and new training data")

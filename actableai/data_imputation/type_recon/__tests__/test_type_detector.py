@@ -67,9 +67,7 @@ def test_detect(mock_build_detector, manual_data, type_detector):
 
 
 def test_df_types():
-    df_types = DfTypes(
-        [("integer", ColumnType.Integer), ("string", ColumnType.String)]
-    )
+    df_types = DfTypes([("integer", ColumnType.Integer), ("string", ColumnType.String)])
     assert df_types["integer"] == ColumnType.Integer
     assert df_types["string"] == ColumnType.String
 
@@ -188,9 +186,7 @@ def test_df_types_is_support_fix():
 
 
 def test_df_types_override():
-    df_types = DfTypes(
-        [("integer", ColumnType.Integer), ("string", ColumnType.String)]
-    )
+    df_types = DfTypes([("integer", ColumnType.Integer), ("string", ColumnType.String)])
     df_types.override("integer", ColumnType.Float)
     assert df_types["integer"] == ColumnType.Float
     assert df_types["string"] == ColumnType.String
@@ -203,8 +199,6 @@ def test_df_types_override_should_raise_error_when_column_not_present_in_origina
 
 
 def test_df_types_should_raise_key_error_when_column_not_found():
-    df_types = DfTypes(
-        [("integer", ColumnType.Integer), ("string", ColumnType.String)]
-    )
+    df_types = DfTypes([("integer", ColumnType.Integer), ("string", ColumnType.String)])
     with pytest.raises(KeyError):
         _ = df_types["non_exist"]

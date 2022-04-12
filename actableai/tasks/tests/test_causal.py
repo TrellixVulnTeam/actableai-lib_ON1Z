@@ -26,7 +26,9 @@ from actableai.tasks.causal_inference import (
 )
 from actableai.causal.tree_utils import make_pretty_tree
 from actableai.utils.testing import unittest_hyperparameters
-from actableai.data_validation.base import CAUSAL_INFERENCE_CATEGORICAL_MINIMUM_TREATMENT
+from actableai.data_validation.base import (
+    CAUSAL_INFERENCE_CATEGORICAL_MINIMUM_TREATMENT,
+)
 
 
 @pytest.fixture
@@ -179,9 +181,16 @@ def single_binary_treatment_dataset():
     common_causes = ["W" + str(c) for c in range(W.shape[1])]
     return pd_table, treatments, outcomes, effect_modifiers, common_causes
 
-def treatment_values_filler(pd_table : pd.DataFrame, treatment:str='v0') -> pd.DataFrame:
+
+def treatment_values_filler(
+    pd_table: pd.DataFrame, treatment: str = "v0"
+) -> pd.DataFrame:
     # Ensure there is enough treatment control values
-    chosen_idx = np.random.choice(pd_table.shape[0], size=CAUSAL_INFERENCE_CATEGORICAL_MINIMUM_TREATMENT * 2, replace=False)
+    chosen_idx = np.random.choice(
+        pd_table.shape[0],
+        size=CAUSAL_INFERENCE_CATEGORICAL_MINIMUM_TREATMENT * 2,
+        replace=False,
+    )
     true_idx, false_idx = np.array_split(chosen_idx, 2)
     for idx in true_idx:
         pd_table.at[idx, treatment] = True
@@ -345,12 +354,14 @@ class TestRemoteCausal:
             common_causes,
         ) = single_binary_treatment_dataset
 
-        model_params = [LinearDMLSingleBinaryTreatmentAGParams(
-            label_t=treatments[0],
-            label_y=outcomes[0],
-            model_directory=mkdtemp(),
-            presets="medium_quality_faster_train",
-        )]
+        model_params = [
+            LinearDMLSingleBinaryTreatmentAGParams(
+                label_t=treatments[0],
+                label_y=outcomes[0],
+                model_directory=mkdtemp(),
+                presets="medium_quality_faster_train",
+            )
+        ]
 
         results = infer_causal(
             pd_table=pd_table,
@@ -398,12 +409,14 @@ class TestRemoteCausal:
         pd_table[treatments[0]] = pd_table[treatments[0]].apply(
             lambda x: True if x == 1 else False
         )
-        model_params = [LinearDMLSingleBinaryTreatmentAGParams(
-            label_t=treatments[0],
-            label_y=outcomes[0],
-            model_directory=mkdtemp(),
-            presets="medium_quality_faster_train",
-        )]
+        model_params = [
+            LinearDMLSingleBinaryTreatmentAGParams(
+                label_t=treatments[0],
+                label_y=outcomes[0],
+                model_directory=mkdtemp(),
+                presets="medium_quality_faster_train",
+            )
+        ]
 
         results = infer_causal(
             pd_table=pd_table,
@@ -555,7 +568,7 @@ class TestRemoteCausal:
             model_params=model_params,
             ag_hyperparameters=unittest_hyperparameters(),
             cv=2,
-            mc_iters=2
+            mc_iters=2,
         )
         assert results["status"] == "FAILURE"
         assert len(results["validations"]) > 0
@@ -682,7 +695,9 @@ class TestRemoteCausal:
         ) = simple_linear_dataset
 
         model_params = [LinearDMLSingleBinaryTreatmentParams(min_samples_leaf=5)]
-        pd_table[outcomes] = (pd_table[outcomes] >= pd_table[outcomes].median()).astype(str)
+        pd_table[outcomes] = (pd_table[outcomes] >= pd_table[outcomes].median()).astype(
+            str
+        )
 
         # Ensure there is enough treatment control values
         pd_table = treatment_values_filler(pd_table=pd_table)
@@ -748,12 +763,14 @@ class TestRemoteCausal:
         )
 
     def test_categorical_outcome(self):
-        df = pd.DataFrame({
-            "t": [2, 2, 2, 2, 2, None, 3, 3, 4, 4] * 10,
-            "y": ["+", "-", "+", "-", "+", "-", "+", "-", "+", "-"] * 10,
-            "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] * 10,
-            "w": ["a", "a", "a", "a", "a", "b", "b", None, "b", "b"] * 10,
-        })
+        df = pd.DataFrame(
+            {
+                "t": [2, 2, 2, 2, 2, None, 3, 3, 4, 4] * 10,
+                "y": ["+", "-", "+", "-", "+", "-", "+", "-", "+", "-"] * 10,
+                "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] * 10,
+                "w": ["a", "a", "a", "a", "a", "b", "b", None, "b", "b"] * 10,
+            }
+        )
         r = infer_causal(
             df,
             treatments=["t"],
@@ -836,7 +853,11 @@ class TestRemoteCausal:
             effect_modifiers,
             common_causes,
         ) = simple_linear_dataset
-        pd_table = pd_table[pd_table['v0']].head(20).append(pd_table[pd_table['v0'] == False].head(10))
+        pd_table = (
+            pd_table[pd_table["v0"]]
+            .head(20)
+            .append(pd_table[pd_table["v0"] == False].head(10))
+        )
 
         model_params = [LinearDMLSingleBinaryTreatmentParams(min_samples_leaf=5)]
 
@@ -853,5 +874,11 @@ class TestRemoteCausal:
         )
         assert results["status"] == "FAILURE"
         assert len(results["validations"]) > 0
-        assert 'InsufficientCategoricalRows' in [results['validations'][i]['name'] for i in range(len(results['validations']))]
-        assert CheckLevels.CRITICAL in [results['validations'][i]['level'] for i in range(len(results['validations']))]
+        assert "InsufficientCategoricalRows" in [
+            results["validations"][i]["name"]
+            for i in range(len(results["validations"]))
+        ]
+        assert CheckLevels.CRITICAL in [
+            results["validations"][i]["level"]
+            for i in range(len(results["validations"]))
+        ]

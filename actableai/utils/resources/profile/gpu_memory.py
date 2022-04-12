@@ -2,8 +2,14 @@ import logging
 from typing import List, Tuple
 
 import psutil
-from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetComputeRunningProcesses, \
-    NVMLError, nvmlShutdown
+from pynvml import (
+    nvmlInit,
+    nvmlDeviceGetCount,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetComputeRunningProcesses,
+    NVMLError,
+    nvmlShutdown,
+)
 
 from actableai.utils.resources.profile import ResourceProfilerType
 from actableai.utils.resources.profile.base import ResourceProfiler
@@ -41,12 +47,16 @@ class GPUMemoryProfiler(ResourceProfiler):
             try:
                 handle = nvmlDeviceGetHandleByIndex(device_index)
             except NVMLError:
-                logging.warning("Error while trying to fetch nvidia Device, skipping ...")
+                logging.warning(
+                    "Error while trying to fetch nvidia Device, skipping ..."
+                )
                 continue
 
             yield handle
 
-    def __call__(self, process_list: List[psutil.Process]) -> List[Tuple[int, ResourceProfilerType, float]]:
+    def __call__(
+        self, process_list: List[psutil.Process]
+    ) -> List[Tuple[int, ResourceProfilerType, float]]:
         """
         Function called to profile processes
 
@@ -63,10 +73,7 @@ class GPUMemoryProfiler(ResourceProfiler):
         - The resource profiled
         - The profiled value
         """
-        process_pid_set = set({
-            process.pid
-            for process in process_list
-        })
+        process_pid_set = set({process.pid for process in process_list})
 
         profiled_gpu_memory = []
 
@@ -77,12 +84,17 @@ class GPUMemoryProfiler(ResourceProfiler):
                 process_info_list = nvmlDeviceGetComputeRunningProcesses(device_handle)
             except NVMLError:
                 logging.warning(
-                    "Error while trying to profile GPU memory, your OS is probably not compatible with this feature")
+                    "Error while trying to profile GPU memory, your OS is probably not compatible with this feature"
+                )
 
             for process_info in process_info_list:
                 if process_info.pid in process_pid_set:
                     profiled_gpu_memory.append(
-                        (process_info.pid, ResourceProfilerType.GPU_MEMORY, process_info.usedGpuMemory)
+                        (
+                            process_info.pid,
+                            ResourceProfilerType.GPU_MEMORY,
+                            process_info.usedGpuMemory,
+                        )
                     )
 
         return profiled_gpu_memory

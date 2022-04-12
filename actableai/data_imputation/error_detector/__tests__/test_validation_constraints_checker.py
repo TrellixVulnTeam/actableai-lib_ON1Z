@@ -14,9 +14,7 @@ from actableai.data_imputation.error_detector.validation_constraints_checker imp
     ValidationConstrainsChecker,
 )
 
-stub_path = (
-    "actableai.data_imputation.error_detector.validation_constraints_checker"
-)
+stub_path = "actableai.data_imputation.error_detector.validation_constraints_checker"
 
 
 @pytest.fixture(autouse=True)
@@ -94,8 +92,7 @@ class TestFindAllUnmatched:
         detector.find_all_unmatched(df)
         assert mock_ps.sqldf.call_count == expect_call_count
         assert [
-            mock_ps.sqldf.call_args_list[i][0][0]
-            for i in range(expect_call_count)
+            mock_ps.sqldf.call_args_list[i][0][0] for i in range(expect_call_count)
         ] == expect_sql
 
     @pytest.mark.parametrize(

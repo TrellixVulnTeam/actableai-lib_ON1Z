@@ -165,6 +165,4 @@ class ErrorCandidate:
 
     @property
     def potential_columns(self) -> Set[ColumnName]:
-        return self.columns.columns_from_when.union(
-            self.columns.columns_from_then
-        )
+        return self.columns.columns_from_when.union(self.columns.columns_from_then)

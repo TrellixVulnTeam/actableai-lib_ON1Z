@@ -77,9 +77,7 @@ def determine_fix_strategy(
         return FixStrategy.AUTOGLUON
 
 
-def determine_refine_strategy(
-    series: pd.Series, errors: ColumnErrors
-) -> FixStrategy:
+def determine_refine_strategy(series: pd.Series, errors: ColumnErrors) -> FixStrategy:
     remain_series = series[~series.index.isin([err.index for err in errors])]
 
     if len(set(remain_series[~pd.isnull(remain_series)])) == 1:

@@ -26,8 +26,10 @@ from sklearn.utils.testing import assert_true
 from actableai.third_parties.skgarden import MondrianTreeClassifier
 from actableai.third_parties.skgarden import MondrianTreeRegressor
 
-estimators = [MondrianTreeRegressor(random_state=0),
-              MondrianTreeClassifier(random_state=0)]
+estimators = [
+    MondrianTreeRegressor(random_state=0),
+    MondrianTreeClassifier(random_state=0),
+]
 
 
 def test_tree_predict():
@@ -109,14 +111,9 @@ def test_tree_predict():
             assert_array_almost_equal(T_predict, [-1.0, 1.0, 0.93134421])
             assert_array_almost_equal(T_std, np.sqrt([0.0, 0.0, 0.132597]))
         else:
-            last = (
-                0.0686 * np.array([0.5, 0.5]) +
-                0.93134421 * np.array([0.0 , 1.0])
-            )
+            last = 0.0686 * np.array([0.5, 0.5]) + 0.93134421 * np.array([0.0, 1.0])
             T_proba = est.predict_proba(T)
-            assert_array_almost_equal(
-                T_proba,
-                [[1.0, 0.0], [0.0, 1.0], last], 4)
+            assert_array_almost_equal(T_proba, [[1.0, 0.0], [0.0, 1.0], last], 4)
 
 
 def test_reg_boston():
@@ -156,17 +153,19 @@ def test_pure_set():
 
 
 def test_numerical_stability():
-    X = np.array([
-        [152.08097839, 140.40744019, 129.75102234, 159.90493774],
-        [142.50700378, 135.81935120, 117.82884979, 162.75781250],
-        [127.28772736, 140.40744019, 129.75102234, 159.90493774],
-        [132.37025452, 143.71923828, 138.35694885, 157.84558105],
-        [103.10237122, 143.71928406, 138.35696411, 157.84559631],
-        [127.71276855, 143.71923828, 138.35694885, 157.84558105],
-        [120.91514587, 140.40744019, 129.75102234, 159.90493774]])
+    X = np.array(
+        [
+            [152.08097839, 140.40744019, 129.75102234, 159.90493774],
+            [142.50700378, 135.81935120, 117.82884979, 162.75781250],
+            [127.28772736, 140.40744019, 129.75102234, 159.90493774],
+            [132.37025452, 143.71923828, 138.35694885, 157.84558105],
+            [103.10237122, 143.71928406, 138.35696411, 157.84559631],
+            [127.71276855, 143.71923828, 138.35694885, 157.84558105],
+            [120.91514587, 140.40744019, 129.75102234, 159.90493774],
+        ]
+    )
 
-    y = np.array(
-        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916, 0.49622521])
+    y = np.array([1.0, 0.70209277, 0.53896582, 0.0, 0.90914464, 0.48026916, 0.49622521])
 
     with np.errstate(all="raise"):
         for est in estimators:
@@ -295,8 +294,8 @@ def check_weighted_decision_path_regression(mtr, X_test):
     means1 = []
 
     for startptr, endptr in zip(weights.indptr[:-1], weights.indptr[1:]):
-        curr_nodes = weights.indices[startptr: endptr]
-        curr_weights = weights.data[startptr: endptr]
+        curr_nodes = weights.indices[startptr:endptr]
+        curr_weights = weights.data[startptr:endptr]
         curr_means = node_means[curr_nodes]
         curr_var = node_variances[curr_nodes]
 
@@ -322,14 +321,14 @@ def test_weighted_decision_path_regression():
 
 def check_weighted_decision_path_classif(mtc, X_test):
     weights = mtc.weighted_decision_path(X_test)
-    node_probas = (
-        mtc.tree_.value[:, 0, :] / np.expand_dims(mtc.tree_.n_node_samples, axis=1)
+    node_probas = mtc.tree_.value[:, 0, :] / np.expand_dims(
+        mtc.tree_.n_node_samples, axis=1
     )
     probas1 = []
 
     for startptr, endptr in zip(weights.indptr[:-1], weights.indptr[1:]):
-        curr_nodes = weights.indices[startptr: endptr]
-        curr_weights = np.expand_dims(weights.data[startptr: endptr], axis=1)
+        curr_nodes = weights.indices[startptr:endptr]
+        curr_weights = np.expand_dims(weights.data[startptr:endptr], axis=1)
         curr_probas = node_probas[curr_nodes]
         probas1.append(np.sum(curr_weights * curr_probas, axis=0))
 
@@ -353,15 +352,12 @@ def test_weighted_decision_path_classif():
 def test_std_positive():
     """Sometimes variance can be slightly negative due to numerical errors."""
     X = np.linspace(-np.pi, np.pi, 20.0)
-    y = 2*np.sin(X)
+    y = 2 * np.sin(X)
     X_train = np.reshape(X, (-1, 1))
     mr = MondrianTreeRegressor(random_state=0)
     mr.fit(X_train, y)
 
-    X_test = np.array(
-        [[2.87878788],
-         [2.97979798],
-         [3.08080808]])
+    X_test = np.array([[2.87878788], [2.97979798], [3.08080808]])
     _, y_std = mr.predict(X_test, return_std=True)
     assert_false(np.any(np.isnan(y_std)))
     assert_false(np.any(np.isinf(y_std)))
@@ -379,8 +375,9 @@ def check_mean_std_reg_convergence(est, X_train, y_train):
     # For points completely far away from the training data, this
     # should converge to the empirical mean and variance.
     # X is scaled between to -1.0 and 1.0
-    X_inf = np.vstack((20.0 * np.ones(X_train.shape[1]),
-                       -20.0 * np.ones(X_train.shape[1])))
+    X_inf = np.vstack(
+        (20.0 * np.ones(X_train.shape[1]), -20.0 * np.ones(X_train.shape[1]))
+    )
     inf_mean, inf_std = est.predict(X_inf, return_std=True)
     assert_array_almost_equal(inf_mean, y_train.mean(), 1)
     assert_array_almost_equal(inf_std, y_train.std(), 2)
@@ -413,8 +410,9 @@ def check_proba_classif_convergence(X_train, y_train, mc):
     # For points completely far away from the training data, this
     # should converge to the empirical distribution of labels.
     # X is scaled between to -1.0 and 1.0
-    X_inf = np.vstack((30.0 * np.ones(X_train.shape[1]),
-                       -30.0 * np.ones(X_train.shape[1])))
+    X_inf = np.vstack(
+        (30.0 * np.ones(X_train.shape[1]), -30.0 * np.ones(X_train.shape[1]))
+    )
     inf_proba = mc.predict_proba(X_inf)
     emp_proba = np.bincount(y_enc) / float(len(y_enc))
     assert_array_almost_equal(inf_proba, [emp_proba, emp_proba])
@@ -445,12 +443,14 @@ def check_tree_attributes(X, y, node_id, tree, check_impurity=True):
     if left_child != -1:
         left_ind = X[:, tree.feature[node_id]] < tree.threshold[node_id]
         check_tree_attributes(
-            X[left_ind], y[left_ind], left_child, tree, check_impurity)
+            X[left_ind], y[left_ind], left_child, tree, check_impurity
+        )
 
     if right_child != -1:
         right_ind = X[:, tree.feature[node_id]] > tree.threshold[node_id]
         check_tree_attributes(
-            X[right_ind], y[right_ind], right_child, tree, check_impurity)
+            X[right_ind], y[right_ind], right_child, tree, check_impurity
+        )
 
 
 def test_tree_attributes():
@@ -480,6 +480,7 @@ def test_apply():
         test_leaves = est_clone.tree_.children_left[est_clone.apply(X_test)]
         assert_true(np.all(train_leaves == -1))
         assert_true(np.all(test_leaves == -1))
+
 
 def check_pickle(est, X, y):
     score1 = est.score(X, y)
@@ -517,7 +518,7 @@ def test_tree_identical_labels():
             assert_equal(c_est.tree_.value, [[[1.0]]])
 
         X = np.reshape(np.linspace(0.0, 1.0, 100), (-1, 1))
-        y = np.array([0.0]*50 + [1.0]*50)
+        y = np.array([0.0] * 50 + [1.0] * 50)
         c_est.fit(X, y)
         leaf_ids = c_est.tree_.children_left == -1
         assert_true(np.any(c_est.tree_.n_node_samples[leaf_ids] > 2))

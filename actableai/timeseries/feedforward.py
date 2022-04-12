@@ -14,9 +14,9 @@ from gluonts.transform import (
 
 
 class FeedForwardEstimator(SimpleFeedForwardEstimator):
-    """ In addition to the overridden model, this model:
-        - Works with inputs with NaN values.
-        - Adds time and age features.
+    """In addition to the overridden model, this model:
+    - Works with inputs with NaN values.
+    - Adds time and age features.
     """
 
     def create_transformation(self) -> Transformation:
@@ -44,7 +44,7 @@ class FeedForwardEstimator(SimpleFeedForwardEstimator):
                 ),
                 VstackFeatures(
                     output_field=FieldName.FEAT_TIME,
-                    input_fields=[FieldName.FEAT_TIME, FieldName.FEAT_AGE]
+                    input_fields=[FieldName.FEAT_TIME, FieldName.FEAT_AGE],
                 ),
                 InstanceSplitter(
                     target_field=FieldName.TARGET,
@@ -58,6 +58,6 @@ class FeedForwardEstimator(SimpleFeedForwardEstimator):
                         FieldName.FEAT_TIME,
                         FieldName.OBSERVED_VALUES,
                     ],
-                )
+                ),
             ]
         )

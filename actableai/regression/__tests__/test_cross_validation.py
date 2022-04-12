@@ -5,18 +5,31 @@ from actableai.regression.cross_validation import run_cross_validation
 from actableai.tasks.regression import _AAIRegressionTrainTask
 from actableai.utils.testing import unittest_hyperparameters
 
+
 def test_cross_validation():
     task = _AAIRegressionTrainTask()
-    df_train = pd.DataFrame({
-        'x': [x for x in range(0, 100)],
-        'y': [y for y in range(100, 200)],
-    })
-    df_test = pd.DataFrame({
-        'x': [x for x in range(0, 100)],
-        'y': [y for y in range(100, 200)],
-    })
-    important_features, evaluate, predictions, prediction_low, \
-    prediction_high, predict_shap_values, df_val, leaderboard = run_cross_validation(
+    df_train = pd.DataFrame(
+        {
+            "x": [x for x in range(0, 100)],
+            "y": [y for y in range(100, 200)],
+        }
+    )
+    df_test = pd.DataFrame(
+        {
+            "x": [x for x in range(0, 100)],
+            "y": [y for y in range(100, 200)],
+        }
+    )
+    (
+        important_features,
+        evaluate,
+        predictions,
+        prediction_low,
+        prediction_high,
+        predict_shap_values,
+        df_val,
+        leaderboard,
+    ) = run_cross_validation(
         regression_train_task=task,
         kfolds=5,
         cross_validation_max_concurrency=1,
@@ -24,8 +37,8 @@ def test_cross_validation():
         presets="medium_quality_faster_train",
         hyperparameters=unittest_hyperparameters(),
         model_directory=mkdtemp(prefix="autogluon_model"),
-        target='y',
-        features=['x'],
+        target="y",
+        features=["x"],
         run_model=False,
         df_train=df_train,
         df_test=df_test,
@@ -37,7 +50,7 @@ def test_cross_validation():
         debiased_features=[],
         residuals_hyperparameters=None,
         num_gpus=0,
-        eval_metric="r2"
+        eval_metric="r2",
     )
 
     assert important_features is not None

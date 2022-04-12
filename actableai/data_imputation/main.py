@@ -43,13 +43,16 @@ if __name__ == "__main__":
                             },
                         },
                         {
-                            "column": {"value": "initial_price", "label": "initial_price"},
+                            "column": {
+                                "value": "initial_price",
+                                "label": "initial_price",
+                            },
                             "operator": {"label": ">", "value": ">"},
                             "comparedColumn": {
                                 "value": "initial_price",
                                 "label": "initial_price",
                             },
-                        }
+                        },
                     ],
                 },
             ],

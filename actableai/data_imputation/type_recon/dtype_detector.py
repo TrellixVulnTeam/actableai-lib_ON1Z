@@ -88,9 +88,7 @@ class DtypeDetector(ABC):
         raise NotImplementedError
 
     def _match_row_pass_threshold(self, match: pd.Series) -> bool:
-        if len(self._series) * MATCH_ROW_NUM_THRESHOLD <= len(
-            self._series[match]
-        ):
+        if len(self._series) * MATCH_ROW_NUM_THRESHOLD <= len(self._series[match]):
             return True
         return False
 

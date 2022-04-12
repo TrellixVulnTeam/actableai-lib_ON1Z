@@ -118,22 +118,25 @@ def test_float64_detector(series, expect_type):
 def test_detect_possible_type_for_column(series, expect_types):
     assert detect_possible_type_for_column(series) == expect_types
 
-@pytest.mark.parametrize('value, match', [
-    ['yes:22', True],
-    ['yes : 22', True],
-    ['22yes', True],
-    ['22 yes', True],
-    ['yes     :   1234567998765.1234', True],
-    ['    -12123123yes', True],
-    ['bibou:123', True],
-    ['mango            123', True],
-    ['22.2memo', True],
 
-    ['22', False],
-    ['     -123 : pear', False],
-    ['22.swing', False],
-    ['', False]
-])
+@pytest.mark.parametrize(
+    "value, match",
+    [
+        ["yes:22", True],
+        ["yes : 22", True],
+        ["22yes", True],
+        ["22 yes", True],
+        ["yes     :   1234567998765.1234", True],
+        ["    -12123123yes", True],
+        ["bibou:123", True],
+        ["mango            123", True],
+        ["22.2memo", True],
+        ["22", False],
+        ["     -123 : pear", False],
+        ["22.swing", False],
+        ["", False],
+    ],
+)
 def test_regex_num_with_tag(value, match):
     objd = ObjectDetector(pd.Series(value))
     actual = objd._ObjectDetector__is_num_with_tag()

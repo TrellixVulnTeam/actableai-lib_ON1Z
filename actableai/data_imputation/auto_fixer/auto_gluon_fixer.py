@@ -36,9 +36,7 @@ class _ProblemType(Enum):
 class AutoGluonFixer(AutoFixer):
     def __init__(self):
         super(AutoGluonFixer, self).__init__()
-        self._model_location = (
-            _MODEL_LOCATION
-        ) = f"./AutogluonModels_{time.time()}"
+        self._model_location = _MODEL_LOCATION = f"./AutogluonModels_{time.time()}"
 
     @staticmethod
     def _decide_problem_type(
@@ -96,7 +94,6 @@ class AutoGluonFixer(AutoFixer):
             excluded_model_types=["CAT"],
         )
         pd.set_option("chained_assignment", "warn")
-
 
         df_to_test = get_df_with_only_error(
             dataset[columns_to_train], all_errors[column_to_predict.name]

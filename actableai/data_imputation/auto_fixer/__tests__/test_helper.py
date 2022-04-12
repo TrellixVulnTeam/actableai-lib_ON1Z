@@ -306,9 +306,7 @@ def test_merge_num_with_tag_columns(df, column_types, expect_df):
             DfTypes([("a", ColumnType.NumWithTag)]),
             "a",
             "int",
-            pd.DataFrame(
-                data={"a": ["1300 south montgomery avenue", np.nan, np.nan]}
-            ),
+            pd.DataFrame(data={"a": ["1300 south montgomery avenue", np.nan, np.nan]}),
         ),
     ],
 )

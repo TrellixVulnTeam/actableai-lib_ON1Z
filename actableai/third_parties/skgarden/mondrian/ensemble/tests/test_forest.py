@@ -30,7 +30,8 @@ X = scaler.fit_transform(X)
 
 ensembles = [
     MondrianForestRegressor(random_state=0),
-    MondrianForestClassifier(random_state=0)]
+    MondrianForestClassifier(random_state=0),
+]
 
 
 def check_boston(est):
@@ -88,12 +89,16 @@ def test_pickle():
 def test_parallel_train():
     for curr_est in ensembles:
         est = clone(curr_est)
-        y_pred = ([est.set_params(n_jobs=n_jobs).fit(X, y).predict(X)
-                   for n_jobs in [1, 2, 4, 8]])
+        y_pred = [
+            est.set_params(n_jobs=n_jobs).fit(X, y).predict(X)
+            for n_jobs in [1, 2, 4, 8]
+        ]
         for pred1, pred2 in zip(y_pred, y_pred[1:]):
             assert_array_equal(pred1, pred2)
-        y_pred = ([est.set_params(n_jobs=n_jobs).partial_fit(X, y).predict(X)
-                   for n_jobs in [1, 2, 4, 8]])
+        y_pred = [
+            est.set_params(n_jobs=n_jobs).partial_fit(X, y).predict(X)
+            for n_jobs in [1, 2, 4, 8]
+        ]
         for pred1, pred2 in zip(y_pred, y_pred[1:]):
             assert_array_equal(pred1, pred2)
 
@@ -102,8 +107,7 @@ def test_min_samples_split():
     min_samples_split = 4
     for curr_ensemble in ensembles:
         ensemble = clone(curr_ensemble)
-        ensemble.set_params(
-            min_samples_split=min_samples_split, n_estimators=100)
+        ensemble.set_params(min_samples_split=min_samples_split, n_estimators=100)
         ensemble.fit(X, y)
         for est in ensemble.estimators_:
             n_samples = est.tree_.n_node_samples
@@ -135,9 +139,11 @@ def test_memory_layout():
             X_curr = np.array(X[::2], dtype=dtype)
             y_curr = np.asarray(y[::2])
             assert_array_almost_equal(
-                est.fit(X_curr, y_curr).predict(X_curr), y_curr, 3)
+                est.fit(X_curr, y_curr).predict(X_curr), y_curr, 3
+            )
             assert_array_almost_equal(
-                est.partial_fit(X_curr, y_curr).predict(X_curr), y_curr, 3)
+                est.partial_fit(X_curr, y_curr).predict(X_curr), y_curr, 3
+            )
 
 
 def check_decision_path(ensemble):
@@ -152,7 +158,7 @@ def check_decision_path(ensemble):
     # Check that all leaf nodes are in the decision path.
     leaf_indices = ensemble.apply(X) + np.reshape(col_inds[:-1], (1, -1))
     for sample_ind, curr_leaf in enumerate(leaf_indices):
-        sample_indices = indices[indptr[sample_ind]: indptr[sample_ind + 1]]
+        sample_indices = indices[indptr[sample_ind] : indptr[sample_ind + 1]]
         assert_true(np.all(np.in1d(curr_leaf, sample_indices)))
 
 
@@ -179,19 +185,22 @@ def check_weighted_decision_path(ensemble, X_train, X_test):
     # the weights should be concentrated at the leaves.
     leaf_indices = ensemble.apply(X_train)
     for est_ind, curr_leaf_indices in enumerate(leaf_indices.T):
-        curr_path = weight_paths[:, col_inds[est_ind]:col_inds[est_ind + 1]].toarray()
+        curr_path = weight_paths[:, col_inds[est_ind] : col_inds[est_ind + 1]].toarray()
         assert_array_equal(np.where(curr_path)[1], curr_leaf_indices)
 
         # Sum of the weights across all the nodes in each estimator
         # for each sample should sum up to 1.0
         assert_array_almost_equal(
-        np.ravel(ensemble.weighted_decision_path(X_test)[0].sum(axis=1)),
-        ensemble.n_estimators * np.ones(X_test.shape[0]), 5)
+            np.ravel(ensemble.weighted_decision_path(X_test)[0].sum(axis=1)),
+            ensemble.n_estimators * np.ones(X_test.shape[0]),
+            5,
+        )
 
 
 def test_weighted_decision_path():
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=0.6, test_size=0.4)
+        X, y, train_size=0.6, test_size=0.4
+    )
 
     for ensemble in ensembles:
         ensemble.fit(X_train, y_train)
@@ -212,8 +221,7 @@ def check_mean_std_forest_regressor(est):
     # For points completely far away from the training data, this
     # should converge to the empirical mean and variance.
     # X is scaled between to -1.0 and 1.0
-    X_inf = np.vstack((30.0 * np.ones(X.shape[1]),
-                       -30.0 * np.ones(X.shape[1])))
+    X_inf = np.vstack((30.0 * np.ones(X.shape[1]), -30.0 * np.ones(X.shape[1])))
     inf_mean, inf_std = est.predict(X_inf, return_std=True)
     assert_array_almost_equal(inf_mean, y.mean(), 1)
     assert_array_almost_equal(inf_std, y.std(), 2)
@@ -240,8 +248,9 @@ def check_proba_classif_convergence(est, X_train, y_train):
 
     # For points completely far away from the training data, this
     # should converge to the empirical distribution of labels.
-    X_inf = np.vstack((30.0 * np.ones(X_train.shape[1]),
-                       -30.0 * np.ones(X_train.shape[1])))
+    X_inf = np.vstack(
+        (30.0 * np.ones(X_train.shape[1]), -30.0 * np.ones(X_train.shape[1]))
+    )
     inf_proba = est.predict_proba(X_inf)
     emp_proba = np.bincount(y_enc) / float(len(y_enc))
     assert_array_almost_equal(inf_proba, [emp_proba, emp_proba], 3)
@@ -249,7 +258,8 @@ def check_proba_classif_convergence(est, X_train, y_train):
 
 def test_proba_classif_convergence():
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=0.6, test_size=0.4)
+        X, y, train_size=0.6, test_size=0.4
+    )
     mfc = MondrianForestClassifier(random_state=0)
     mfc.fit(X_train, y_train)
     check_proba_classif_convergence(mfc, X_train, y_train)
@@ -272,7 +282,7 @@ def test_tree_identical_labels():
                 assert_equal(est.tree_.value, [[[1.0]]])
 
         X = np.reshape(np.linspace(0.0, 1.0, 100), (-1, 1))
-        y = np.array([0.0]*50 + [1.0]*50)
+        y = np.array([0.0] * 50 + [1.0] * 50)
         ensemble.fit(X, y)
         for est in ensemble.estimators_:
             leaf_ids = est.tree_.children_left == -1

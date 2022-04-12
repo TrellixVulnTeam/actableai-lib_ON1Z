@@ -27,9 +27,7 @@ class CorrelationCalculator:
             source = df[col]
         return source
 
-    def _calculate_correlation(
-        self, df: pd.DataFrame, source_column: ColumnName
-    ):
+    def _calculate_correlation(self, df: pd.DataFrame, source_column: ColumnName):
         if source_column not in self._correlation_scores:
             for col in df.columns:
                 if col == source_column:
@@ -39,9 +37,7 @@ class CorrelationCalculator:
                 target = self._normalize_column(df, col)
                 if source.size == 0 or target.size == 0:
                     continue
-                self._correlation_scores[source_column][col] = source.corr(
-                    target
-                )
+                self._correlation_scores[source_column][col] = source.corr(target)
 
         return self._correlation_scores[source_column]
 
@@ -49,9 +45,9 @@ class CorrelationCalculator:
         self, df: pd.DataFrame, col: ColumnName, top: int
     ) -> List[ColumnName]:
         scores = self._calculate_correlation(df, col).items()
-        return [
-            k for k, v in sorted(scores, key=lambda x: abs(x[1]), reverse=True)
-        ][:top]
+        return [k for k, v in sorted(scores, key=lambda x: abs(x[1]), reverse=True)][
+            :top
+        ]
 
     def calculate_correlations_for_all_column_pairs(
         self, df: pd.DataFrame
@@ -70,9 +66,7 @@ class CorrelationCalculator:
 
         for col1 in self._correlation_scores:
             for col2 in self._correlation_scores[col1]:
-                correlations.at[col1, col2] = self._correlation_scores[col1][
-                    col2
-                ]
+                correlations.at[col1, col2] = self._correlation_scores[col1][col2]
 
         return correlations
 

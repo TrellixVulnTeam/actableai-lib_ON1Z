@@ -161,9 +161,7 @@ class TestMostCorrelatedColumns:
         mock_correlation_func = MagicMock()
         self._calculator._calculate_correlation = mock_correlation_func
         mock_correlation_func.return_value = mock_correlation
-        result = self._calculator.most_correlate_columns(
-            MagicMock(), "anything", top=2
-        )
+        result = self._calculator.most_correlate_columns(MagicMock(), "anything", top=2)
         assert result == ["History", "Math"]
 
 
@@ -212,9 +210,7 @@ class TestCalculateCorrelationsForAllColumnPairs:
 
         self._calculator._calculate_correlation = MagicMock()
 
-        result = self._calculator.calculate_correlations_for_all_column_pairs(
-            df
-        )
+        result = self._calculator.calculate_correlations_for_all_column_pairs(df)
 
         assert result.equals(expected)
 
@@ -231,9 +227,7 @@ class TestCalculateCorrelationsForAllColumnPairs:
         ],
     )
     def test_calc_integration(self, df):
-        result = self._calculator.calculate_correlations_for_all_column_pairs(
-            df
-        )
+        result = self._calculator.calculate_correlations_for_all_column_pairs(df)
 
         for col1 in df.columns:
             for col2 in df.columns:

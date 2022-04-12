@@ -19,17 +19,23 @@ def _create_default_pipeline() -> MultiOutputPipeline:
     """
     numerical_pre_processing = SelectType(Number) | AdaptiveStandardScaler()
     categorical_pre_processing = SelectType(str) | OneHotEncoder(sparse=True)
-    pre_processing = (numerical_pre_processing + categorical_pre_processing) | Normalizer()
+    pre_processing = (
+        numerical_pre_processing + categorical_pre_processing
+    ) | Normalizer()
 
-    regressor = MultiOutputRegressor([
-        AdaptiveRandomForestRegressor(leaf_prediction="adaptive"),
-        StatisticRegressor(Mean())
-    ])
+    regressor = MultiOutputRegressor(
+        [
+            AdaptiveRandomForestRegressor(leaf_prediction="adaptive"),
+            StatisticRegressor(Mean()),
+        ]
+    )
 
     return MultiOutputPipeline(pre_processing | regressor, RMSE)
 
 
-def create_pipeline(resource_predicted: ResourcePredictorType, task: TaskType) -> Optional[MultiOutputPipeline]:
+def create_pipeline(
+    resource_predicted: ResourcePredictorType, task: TaskType
+) -> Optional[MultiOutputPipeline]:
     """
     Create a pipeline (model) for resource prediction
 

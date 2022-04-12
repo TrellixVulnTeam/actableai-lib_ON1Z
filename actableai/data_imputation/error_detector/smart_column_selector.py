@@ -67,9 +67,7 @@ class SmartErrorCellSelector:
         return distance[0]
 
     @staticmethod
-    def _find_columns_with_uniq_value(
-        df: pd.DataFrame, index: int
-    ) -> Set[ColumnName]:
+    def _find_columns_with_uniq_value(df: pd.DataFrame, index: int) -> Set[ColumnName]:
         if df.empty:
             return set()
 
@@ -108,13 +106,9 @@ class SmartErrorCellSelector:
         distance_column_pair = {}  # column to distance pair
         for col in sorted(non_nan_potential_columns):
             most_correlate_columns = (
-                self._correlation_calculator.most_correlate_columns(
-                    df, col, top=5
-                )
+                self._correlation_calculator.most_correlate_columns(df, col, top=5)
             )
-            columns = set(most_correlate_columns).intersection(
-                set(focused_columns)
-            )
+            columns = set(most_correlate_columns).intersection(set(focused_columns))
             columns = columns.difference(columns_with_uniq_value)
 
             if len(columns) == 0:
@@ -159,9 +153,7 @@ class SmartErrorCellSelector:
         non_inf_distances = np.asarray([v[1] for v in non_inf_list])
         if len(set(non_inf_distances)) <= 1:
             return
-        non_inf_distances = non_inf_distances / np.linalg.norm(
-            [non_inf_distances]
-        )
+        non_inf_distances = non_inf_distances / np.linalg.norm([non_inf_distances])
         max_distance = np.max(non_inf_distances)
         for col, distance in zip(non_inf_cols, non_inf_distances):
             if max_distance - distance < 0.1:

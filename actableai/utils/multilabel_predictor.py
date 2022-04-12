@@ -210,7 +210,6 @@ class MultilabelPredictor:
         else:
             return predproba_dict
 
-
     def persist_models(self):
         """
         TODO write documentation
@@ -220,7 +219,6 @@ class MultilabelPredictor:
                 self.predictors[label] = self.get_predictor(label)
             self.predictors[label].persist_models()
 
-
     def unpersist_models(self):
         """
         TODO write documentation
@@ -229,4 +227,3 @@ class MultilabelPredictor:
             if not isinstance(self.predictors[label], str):
                 self.predictors[label].unpersist_models()
                 self.predictors[label] = self.predictors[label].path
-

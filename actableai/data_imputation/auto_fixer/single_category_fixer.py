@@ -27,10 +27,7 @@ class SingleCategoryFixer(AutoFixer):
         while (
             (category_fix_value is None)
             or (category_fix_value == "nan")
-            or (
-                isinstance(category_fix_value, float)
-                and np.isnan(category_fix_value)
-            )
+            or (isinstance(category_fix_value, float) and np.isnan(category_fix_value))
         ):
             category_fix_value = all_category.pop()
 
@@ -39,9 +36,7 @@ class SingleCategoryFixer(AutoFixer):
                 FixInfo(
                     col=err.column,
                     index=err.index,
-                    options=FixValueOptions(
-                        options=[FixValue(category_fix_value, 1)]
-                    ),
+                    options=FixValueOptions(options=[FixValue(category_fix_value, 1)]),
                 )
             )
 

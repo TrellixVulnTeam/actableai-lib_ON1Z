@@ -24,7 +24,9 @@ class ResourceProfiler(ABC):
         self.resource_profiled = resource_profiled
 
     @abstractmethod
-    def __call__(self, process_list: List[psutil.Process]) -> List[Tuple[int, ResourceProfilerType, float]]:
+    def __call__(
+        self, process_list: List[psutil.Process]
+    ) -> List[Tuple[int, ResourceProfilerType, float]]:
         """
         Function called to profile processes
 

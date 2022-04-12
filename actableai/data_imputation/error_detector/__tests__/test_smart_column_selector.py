@@ -76,8 +76,7 @@ class TestDistanceToCenter:
 
         self._selector._distance_to_center(df, dftypes, column, index)
         assert (
-            mock_distance_func.call_args_list[0][0][0][0]
-            == np.array([90, 69, 78])
+            mock_distance_func.call_args_list[0][0][0][0] == np.array([90, 69, 78])
         ).all()
         assert mock_distance_func.call_args_list[0][0][1] == [mock_center]
 
@@ -231,15 +230,11 @@ class TestFindActualErrorColumn:
         mock_most_correlate_columns = MagicMock()
         mock_distance_to_center = MagicMock()
         mock_correlation_calculator = MagicMock()
-        mock_correlation_calculator_mod.return_value = (
-            mock_correlation_calculator
-        )
+        mock_correlation_calculator_mod.return_value = mock_correlation_calculator
 
         self._selector = SmartErrorCellSelector()
         self._selector.reset()
-        mock_correlation_calculator.most_correlate_columns = (
-            mock_most_correlate_columns
-        )
+        mock_correlation_calculator.most_correlate_columns = mock_most_correlate_columns
         self._selector._distance_to_center = mock_distance_to_center
         self._most_correlate_columns = mock_most_correlate_columns
         self._distance_to_center = mock_distance_to_center
@@ -274,9 +269,7 @@ class TestFindActualErrorColumn:
     ):
         mock_find_columns_with_uniq_value = MagicMock()
         mock_find_columns_with_uniq_value.return_value = set("a")
-        self._selector._find_columns_with_uniq_value = (
-            mock_find_columns_with_uniq_value
-        )
+        self._selector._find_columns_with_uniq_value = mock_find_columns_with_uniq_value
         df = pd.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3]})
         candidates = MagicMock(ErrorCandidate)
         candidates.index = 0
@@ -299,9 +292,7 @@ class TestFindActualErrorColumn:
     ):
         mock_find_columns_with_uniq_value = MagicMock()
         mock_find_columns_with_uniq_value.return_value = set("a")
-        self._selector._find_columns_with_uniq_value = (
-            mock_find_columns_with_uniq_value
-        )
+        self._selector._find_columns_with_uniq_value = mock_find_columns_with_uniq_value
         df = pd.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3]})
         candidates = MagicMock(ErrorCandidate)
         candidates.index = 0
@@ -321,9 +312,7 @@ class TestFindActualErrorColumn:
     def test_find_when_most_correlate_columns_is_empty(self):
         mock_find_columns_with_uniq_value = MagicMock()
         mock_find_columns_with_uniq_value.return_value = set()
-        self._selector._find_columns_with_uniq_value = (
-            mock_find_columns_with_uniq_value
-        )
+        self._selector._find_columns_with_uniq_value = mock_find_columns_with_uniq_value
         self._most_correlate_columns.side_effect = [["b"], []]
         self._distance_to_center.side_effect = [1]
         df = pd.DataFrame({"a": [1, 2, np.nan], "b": [1, 2, 3]})
@@ -355,9 +344,7 @@ class TestFindActualErrorColumn:
     def test_find(self, distances, expect_errors):
         mock_find_columns_with_uniq_value = MagicMock()
         mock_find_columns_with_uniq_value.return_value = set()
-        self._selector._find_columns_with_uniq_value = (
-            mock_find_columns_with_uniq_value
-        )
+        self._selector._find_columns_with_uniq_value = mock_find_columns_with_uniq_value
         self._most_correlate_columns.return_value = ["b"]
         self._distance_to_center.side_effect = distances
         df = pd.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3], "c": [3, 4, 5]})

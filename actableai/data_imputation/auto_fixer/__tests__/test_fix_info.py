@@ -521,9 +521,7 @@ def test_fix_info_list_append(fix_info_list, expect_fix_info_list):
         ),
     ],
 )
-def test_fix_info_list_extend(
-    fix_info_list_1, fix_info_list_2, expect_fix_info_list
-):
+def test_fix_info_list_extend(fix_info_list_1, fix_info_list_2, expect_fix_info_list):
     actual_list = FixInfoList()
     actual_list.extend(FixInfoList(fix_info_list_1))
     actual_list.extend(FixInfoList(fix_info_list_2))
@@ -558,9 +556,7 @@ def test_fix_info_list_extend(
             FixInfo(
                 col="A",
                 index=1,
-                options=FixValueOptions(
-                    options=[FixValue(value="a", confidence=1)]
-                ),
+                options=FixValueOptions(options=[FixValue(value="a", confidence=1)]),
             ),
         ),
         (
@@ -649,9 +645,7 @@ def test_fix_info_list_get_item(fix_info_list, index, column, expect_fix_info):
         ),
     ],
 )
-def test_fix_info_list_get_via_index(
-    fix_info_list, index, expect_fix_info_list
-):
+def test_fix_info_list_get_via_index(fix_info_list, index, expect_fix_info_list):
     assert list(fix_info_list.get_via_index(index)) == expect_fix_info_list
 
 
@@ -809,9 +803,7 @@ def test_fix_info_list_find(fix_info_list, index, column, value, expect):
         ),
     ],
 )
-def test_fix_info_list_replace(
-    fix_info_list, replace_list, expect_fix_info_list
-):
+def test_fix_info_list_replace(fix_info_list, replace_list, expect_fix_info_list):
     fix_info_list.replace(*replace_list)
 
     assert_fix_info_list(fix_info_list, expect_fix_info_list)

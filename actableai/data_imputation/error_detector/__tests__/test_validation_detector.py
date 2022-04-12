@@ -36,9 +36,7 @@ class TestDetectCell:
         mock_dftypes = MagicMock()
         mock_err_1 = MagicMock(CellErrors)
         mock_err_2 = MagicMock(CellErrors)
-        mock_selector.find_actual_errors.return_value = iter(
-            [mock_err_1, mock_err_2]
-        )
+        mock_selector.find_actual_errors.return_value = iter([mock_err_1, mock_err_2])
 
         detector = ValidationDetector()
         detector._df = mock_df

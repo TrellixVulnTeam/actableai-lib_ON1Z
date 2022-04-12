@@ -123,10 +123,7 @@ class MultiOutputPipeline:
         self.output_size = len(last_element) if hasattr(last_element, "__len__") else 0
 
         # Instantiate one metric per output/model
-        self.metric_list = [
-            metric_class()
-            for _ in range(self.output_size)
-        ]
+        self.metric_list = [metric_class() for _ in range(self.output_size)]
 
     def learn_one(self, x: dict, y, learn_unsupervised=False, **params):
         """

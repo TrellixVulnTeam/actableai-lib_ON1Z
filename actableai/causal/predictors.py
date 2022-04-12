@@ -27,6 +27,7 @@ class DataFrameTransformer(TransformerMixin):
     Args:
         TransformerMixin (_type_): Base Class Transformer of SKLearn
     """
+
     def fit_transform(self, X, y=None, x_w_columns=None, **fit_params):
         if isinstance(X, np.ndarray):
             df = pd.DataFrame(X.tolist())
@@ -44,24 +45,24 @@ class DataFrameTransformer(TransformerMixin):
 
 
 class LinearRegressionWrapper(LinearRegression):
-
     def score(self, X, y, sample_weight=None):
         y_pred = self.predict(X)
         return {
             "r2": r2_score(y, y_pred, sample_weight=sample_weight),
             "y": y,
             "y_pred": y_pred,
-            "sample_weight": sample_weight
+            "sample_weight": sample_weight,
         }
+
 
 class SKLearnWrapper:
     def __init__(
         self,
         ag_predictor: TabularPredictor,
-        x_w_columns:Optional[List]=None,
-        hyperparameters:Optional[List]=None,
-        presets:Optional[str]="best_quality",
-        ag_args_fit:Optional[List]=None
+        x_w_columns: Optional[List] = None,
+        hyperparameters: Optional[List] = None,
+        presets: Optional[str] = "best_quality",
+        ag_args_fit: Optional[List] = None,
     ):
         """Construct a sklearn wrapper object
 
@@ -86,7 +87,7 @@ class SKLearnWrapper:
         self._df_transformer = DataFrameTransformer()
         self.ag_args_fit = ag_args_fit
         self.train_data = None
-        self.x_w_columns=x_w_columns
+        self.x_w_columns = x_w_columns
 
     def fit(self, X, y, sample_weight=None):
         label = self.ag_predictor.label
@@ -127,14 +128,14 @@ class SKLearnWrapper:
                 "accuracy": accuracy_score(y, y_pred, sample_weight=sample_weight),
                 "y": y,
                 "y_pred": y_pred,
-                "sample_weight": sample_weight
+                "sample_weight": sample_weight,
             }
         elif self.ag_predictor.problem_type == "regression":
             return {
                 "r2": r2_score(y, y_pred, sample_weight=sample_weight),
                 "y": y,
                 "y_pred": y_pred,
-                "sample_weight": sample_weight
+                "sample_weight": sample_weight,
             }
         else:
             raise UnsupportedProblemType()

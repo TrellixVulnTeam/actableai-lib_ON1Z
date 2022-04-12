@@ -83,9 +83,7 @@ def test_neighbor_fixer(broken_df, column, expect_fix_info_list):
 @pytest.mark.parametrize(
     "broken_df",
     [
-        DataFrame.from_dict(
-            {"A": [None, None, None, None], "B": [30, 30, 30, 30]}
-        ),
+        DataFrame.from_dict({"A": [None, None, None, None], "B": [30, 30, 30, 30]}),
         DataFrame.from_dict(
             {"A": [np.nan, None, np.nan, None], "B": [30, 30, 30, None]}
         ),

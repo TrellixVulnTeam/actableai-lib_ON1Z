@@ -31,8 +31,9 @@ class DebiasingModel(AbstractModel):
         self.features = self.params_aux["features"]
         self.biased_groups = self.params_aux["biased_groups"]
         self.debiased_features = self.params_aux["debiased_features"]
-        self.non_residuals_features = list(set(self.features).difference(set(self.debiased_features)))
-
+        self.non_residuals_features = list(
+            set(self.features).difference(set(self.debiased_features))
+        )
 
         # Initialize Models
         # Residuals Model is computing the residuals of the debiased_features
@@ -41,19 +42,21 @@ class DebiasingModel(AbstractModel):
         self.residuals_model = ResidualsModel(
             path=os.path.join(self.path, "residuals"),
             biased_groups=self.biased_groups,
-            debiased_features=self.debiased_features
+            debiased_features=self.debiased_features,
         )
 
         # Non-residuals Model is handling all the features which are not debiased
         # If there is no non-residuals features we do not use this model
-        self.hyperparameters_non_residuals = self.params_aux["hyperparameters_non_residuals"]
+        self.hyperparameters_non_residuals = self.params_aux[
+            "hyperparameters_non_residuals"
+        ]
         self.presets_non_residuals = self.params_aux["presets_non_residuals"]
         self.non_residuals_model = None
         if len(self.non_residuals_features) > 0:
             self.non_residuals_model = TabularPredictor(
                 label=self.label,
                 path=os.path.join(self.path, "non_residuals"),
-                problem_type=self.problem_type
+                problem_type=self.problem_type,
             )
 
         # Final Model to handle Residuals + Non-residuals
@@ -61,16 +64,14 @@ class DebiasingModel(AbstractModel):
         self.final_model = TabularPredictor(
             label=self.label,
             path=os.path.join(self.path, "final"),
-            problem_type=self.problem_type
+            problem_type=self.problem_type,
         )
-
 
     def is_fit(self):
         """
         TODO write documentation
         """
         return self.models_fit
-
 
     def _get_default_auxiliary_params(self):
         """
@@ -88,13 +89,12 @@ class DebiasingModel(AbstractModel):
             "presets_residuals": "medium_quality_faster_train",
             "hyperparameters_non_residuals": "default",
             "presets_non_residuals": "medium_quality_faster_train",
-            "presets_final": "medium_quality_faster_train"
+            "presets_final": "medium_quality_faster_train",
         }
 
         default_auxiliary_params.update(extra_auxiliary_params)
 
         return default_auxiliary_params
-
 
     def _fit_residuals(self, train_data):
         """
@@ -108,9 +108,8 @@ class DebiasingModel(AbstractModel):
         residuals_model.fit(
             train_data,
             hyperparameters=self.hyperparameters_residuals,
-            presets=self.presets_residuals
+            presets=self.presets_residuals,
         )
-
 
     def _fit_non_residuals(self, train_data, tuning_data=None):
         """
@@ -130,16 +129,10 @@ class DebiasingModel(AbstractModel):
             train_data=train_data,
             tuning_data=tuning_data,
             hyperparameters=self.hyperparameters_non_residuals,
-            presets=self.presets_non_residuals
+            presets=self.presets_non_residuals,
         )
 
-
-    def _fit(self,
-             X,
-             y,
-             X_val=None,
-             y_val=None,
-             **kwargs):
+    def _fit(self, X, y, X_val=None, y_val=None, **kwargs):
         """
         TODO write documentation
         """
@@ -161,16 +154,19 @@ class DebiasingModel(AbstractModel):
         self._persist_non_residuals_model()
 
         # Prepare training data
-        final_train_data, categorical_residuals_count = self._predict_residuals(train_data)
+        final_train_data, categorical_residuals_count = self._predict_residuals(
+            train_data
+        )
         if self.non_residuals_model is not None:
-            final_train_data = pd.concat([
-                final_train_data,
-                self._predict_non_residuals(train_data)
-            ], axis=1)
+            final_train_data = pd.concat(
+                [final_train_data, self._predict_non_residuals(train_data)], axis=1
+            )
 
-            final_train_data.rename(columns={
-                self.label: "non_residuals_pred"
-            }, inplace=True, errors="ignore")
+            final_train_data.rename(
+                columns={self.label: "non_residuals_pred"},
+                inplace=True,
+                errors="ignore",
+            )
 
         final_train_data[self.label] = train_data[self.label]
 
@@ -179,14 +175,16 @@ class DebiasingModel(AbstractModel):
         if tuning_data is not None:
             final_tuning_data, _ = self._predict_residuals(tuning_data)
             if self.non_residuals_model is not None:
-                final_tuning_data = pd.concat([
-                    final_tuning_data,
-                    self._predict_non_residuals(tuning_data)
-                ], axis=1)
+                final_tuning_data = pd.concat(
+                    [final_tuning_data, self._predict_non_residuals(tuning_data)],
+                    axis=1,
+                )
 
-                final_tuning_data.rename(columns={
-                    self.label: "non_residuals_pred"
-                }, inplace=True, errors="ignore")
+                final_tuning_data.rename(
+                    columns={self.label: "non_residuals_pred"},
+                    inplace=True,
+                    errors="ignore",
+                )
 
             final_tuning_data[self.label] = tuning_data[self.label]
 
@@ -200,11 +198,10 @@ class DebiasingModel(AbstractModel):
             train_data=final_train_data,
             tuning_data=final_tuning_data,
             hyperparameters=hyperparameters_final,
-            presets=self.presets_final
+            presets=self.presets_final,
         )
 
         self.models_fit = True
-
 
     def _predict_residuals(self, data):
         """
@@ -215,12 +212,14 @@ class DebiasingModel(AbstractModel):
 
         # Predict
         residuals_model = self._get_residuals_model()
-        df_residuals, residuals_features_dict, categorical_residuals_count \
-            = residuals_model.predict(data)
+        (
+            df_residuals,
+            residuals_features_dict,
+            categorical_residuals_count,
+        ) = residuals_model.predict(data)
 
         residuals_features = list(residuals_features_dict.keys())
         return df_residuals[residuals_features], categorical_residuals_count
-
 
     def _predict_non_residuals(self, data):
         """
@@ -236,7 +235,6 @@ class DebiasingModel(AbstractModel):
         non_residuals_model = self._get_non_residuals_model()
         return non_residuals_model.predict_proba(data, as_multiclass=True)
 
-
     def _predict_proba(self, X, **kwargs):
         """
         TODO write documentation
@@ -244,14 +242,13 @@ class DebiasingModel(AbstractModel):
         # Prepare data
         final_data, _ = self._predict_residuals(X)
         if self.non_residuals_model is not None:
-            final_data = pd.concat([
-                final_data,
-                self._predict_non_residuals(X)
-            ], axis=1)
+            final_data = pd.concat([final_data, self._predict_non_residuals(X)], axis=1)
 
-            final_data.rename(columns={
-                self.label: "non_residuals_pred"
-            }, inplace=True, errors="ignore")
+            final_data.rename(
+                columns={self.label: "non_residuals_pred"},
+                inplace=True,
+                errors="ignore",
+            )
 
         # Predict
         final_model = self._get_final_model()
@@ -260,7 +257,6 @@ class DebiasingModel(AbstractModel):
 
         final_pred_proba = final_model.predict_proba(final_data, as_pandas=False)
         return self._convert_proba_to_unified_form(final_pred_proba)
-
 
     def convert_to_template(self):
         """
@@ -283,7 +279,6 @@ class DebiasingModel(AbstractModel):
 
         return template
 
-
     def _get_residuals_model(self):
         """
         TODO write documentation
@@ -292,7 +287,6 @@ class DebiasingModel(AbstractModel):
         if isinstance(residuals_model, str):
             return ResidualsModel.load(path=residuals_model)
         return residuals_model
-
 
     def _get_non_residuals_model(self):
         """
@@ -303,7 +297,6 @@ class DebiasingModel(AbstractModel):
             return TabularPredictor.load(path=non_residuals_model)
         return non_residuals_model
 
-
     def _get_final_model(self):
         """
         TODO write documentation
@@ -313,7 +306,6 @@ class DebiasingModel(AbstractModel):
             return TabularPredictor.load(path=final_model)
         return final_model
 
-
     def _persist_residuals_model(self):
         """
         TODO write documentation
@@ -321,7 +313,6 @@ class DebiasingModel(AbstractModel):
         if isinstance(self.residuals_model, str):
             self.residuals_model = self._get_residuals_model()
         self.residuals_model.persist_models()
-
 
     def _persist_non_residuals_model(self):
         """
@@ -334,7 +325,6 @@ class DebiasingModel(AbstractModel):
             self.non_residuals_model = self._get_non_residuals_model()
         self.non_residuals_model.persist_models()
 
-
     def _persist_final_model(self):
         """
         TODO write documentation
@@ -343,7 +333,6 @@ class DebiasingModel(AbstractModel):
             self.final_model = self._get_final_model()
         self.final_model.persist_models()
 
-
     def persist_models(self):
         """
         TODO write documentation
@@ -351,7 +340,6 @@ class DebiasingModel(AbstractModel):
         self._persist_residuals_model()
         self._persist_non_residuals_model()
         self._persist_final_model()
-
 
     def unpersist_models(self):
         """
@@ -363,7 +351,9 @@ class DebiasingModel(AbstractModel):
             self.residuals_model = self.residuals_model.path
 
         # Unpersist non residuals model
-        if self.non_residuals_model is not None and not isinstance(self.non_residuals_model, str):
+        if self.non_residuals_model is not None and not isinstance(
+            self.non_residuals_model, str
+        ):
             self.non_residuals_model.unpersist_models()
             self.non_residuals_model = self.non_residuals_model.path
 
@@ -372,14 +362,12 @@ class DebiasingModel(AbstractModel):
             self.final_model.unpersist_models()
             self.final_model = self.final_model.path
 
-
     def save(self, path=None, verbose=True):
         """
         TODO write documentation
         """
         self.unpersist_models()
         return super().save(path=path, verbose=verbose)
-
 
     @classmethod
     def load(cls, path: str, reset_paths=True, verbose=True):
@@ -389,4 +377,3 @@ class DebiasingModel(AbstractModel):
         model = super().load(path=path, reset_paths=reset_paths, verbose=verbose)
         model.persist_models()
         return model
-

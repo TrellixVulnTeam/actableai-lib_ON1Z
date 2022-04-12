@@ -6,6 +6,7 @@ from actableai.tasks.base import AAITask
 from actableai.tasks.regression import _AAIRegressionTrainTask
 from actableai.classification.utils import leaderboard_cross_val
 
+
 def run_cross_validation(
     regression_train_task: _AAIRegressionTrainTask,
     kfolds: int,
@@ -28,7 +29,7 @@ def run_cross_validation(
     residuals_hyperparameters: Dict[str, Dict],
     num_gpus: int,
     eval_metric: str,
-    ) -> Tuple[Dict, Dict, List, float, float, List, List, List]:
+) -> Tuple[Dict, Dict, List, float, float, List, List, List]:
     """Run cross validation on Regression Task. Data is divided in kfold groups and each
     run a regression. The returned values are means or lists of values from
     each sub regression task.
@@ -87,7 +88,9 @@ def run_cross_validation(
                 "explain_samples": explain_samples,
                 "presets": presets,
                 "hyperparameters": hyperparameters,
-                "model_directory": os.path.join(model_directory, f"trainer_{kfold_index}"),
+                "model_directory": os.path.join(
+                    model_directory, f"trainer_{kfold_index}"
+                ),
                 "target": target,
                 "features": features,
                 "run_model": run_model,
@@ -103,15 +106,12 @@ def run_cross_validation(
                 "residuals_hyperparameters": residuals_hyperparameters,
                 "num_gpus": num_gpus,
                 "eval_metric": eval_metric,
-            }
+            },
         )
         for kfold_index, (train_index, val_index) in enumerate(kfolds_index_list)
     ]
 
-    cross_val_results = [
-        results.get()
-        for results in cross_val_async_results
-    ]
+    cross_val_results = [results.get() for results in cross_val_async_results]
 
     kfold_pool.close()
 
@@ -127,16 +127,18 @@ def run_cross_validation(
     df_val = pd.DataFrame()
 
     for kfold_index, cv_results in enumerate(cross_val_results):
-        predictor, \
-        important_features, \
-        evaluate, \
-        y_pred, \
-        _, \
-        predictions, \
-        prediction_low, \
-        prediction_high, \
-        predict_shap_values, \
-        leaderboard = cv_results
+        (
+            predictor,
+            important_features,
+            evaluate,
+            y_pred,
+            _,
+            predictions,
+            prediction_low,
+            prediction_high,
+            predict_shap_values,
+            leaderboard,
+        ) = cv_results
 
         _, val_index = kfolds_index_list[kfold_index]
 
@@ -150,7 +152,9 @@ def run_cross_validation(
         for feature in important_features:
             if feature["feature"] not in cross_val_important_features:
                 cross_val_important_features[feature["feature"]] = []
-            cross_val_important_features[feature["feature"]].append(feature["importance"])
+            cross_val_important_features[feature["feature"]].append(
+                feature["importance"]
+            )
 
         for metric in evaluate:
             if metric not in cross_val_evaluates:
@@ -165,30 +169,39 @@ def run_cross_validation(
                 if cross_val_prediction_low is None:
                     cross_val_prediction_low = prediction_low
                 else:
-                    cross_val_prediction_low = pd.concat([cross_val_prediction_low, prediction_low], axis=1)
+                    cross_val_prediction_low = pd.concat(
+                        [cross_val_prediction_low, prediction_low], axis=1
+                    )
             if prediction_quantile_high is not None:
                 if cross_val_prediction_high is None:
                     cross_val_prediction_high = prediction_high
                 else:
-                    cross_val_prediction_high = pd.concat([cross_val_prediction_high, prediction_high], axis=1)
+                    cross_val_prediction_high = pd.concat(
+                        [cross_val_prediction_high, prediction_high], axis=1
+                    )
 
     # Evaluate
     sqrt_k = sqrt(kfolds)
     important_features = []
     for k in cross_val_important_features.keys():
-        important_features.append({
-            "feature": k,
-            "importance": np.mean(cross_val_important_features[k]),
-            "importance_std_err": np.std(cross_val_important_features[k]) / sqrt_k
-        })
-    important_features = sorted(important_features, key=lambda k: k["importance"], reverse=True)
+        important_features.append(
+            {
+                "feature": k,
+                "importance": np.mean(cross_val_important_features[k]),
+                "importance_std_err": np.std(cross_val_important_features[k]) / sqrt_k,
+            }
+        )
+    important_features = sorted(
+        important_features, key=lambda k: k["importance"], reverse=True
+    )
 
     evaluate = {
         "RMSE": np.mean(cross_val_evaluates["RMSE"]),
         "RMSE_std_err": np.std(cross_val_evaluates["RMSE"]) / sqrt_k,
-        "R2": np.mean(cross_val_evaluates["R2"]), "R2_std_err": np.std(cross_val_evaluates["R2"]) / sqrt_k,
+        "R2": np.mean(cross_val_evaluates["R2"]),
+        "R2_std_err": np.std(cross_val_evaluates["R2"]) / sqrt_k,
         "MAE": np.mean(cross_val_evaluates["MAE"]),
-        "MAE_std_err": np.std(cross_val_evaluates["MAE"]) / sqrt_k
+        "MAE_std_err": np.std(cross_val_evaluates["MAE"]) / sqrt_k,
     }
 
     predictions = []
@@ -197,7 +210,9 @@ def run_cross_validation(
     prediction_high = None
     if run_model:
         if explain_samples:
-            predict_shap_values = np.mean(cross_val_predict_shap_values, axis=0).tolist()
+            predict_shap_values = np.mean(
+                cross_val_predict_shap_values, axis=0
+            ).tolist()
 
         predictions = np.mean(cross_val_predictions, axis=0).tolist()
         if prediction_quantile_low is not None:
@@ -207,11 +222,13 @@ def run_cross_validation(
 
     leaderboard = leaderboard_cross_val(cross_val_leaderboard)
 
-    return important_features, \
-           evaluate, \
-           predictions, \
-           prediction_low, \
-           prediction_high, \
-           predict_shap_values, \
-           df_val, \
-           leaderboard
+    return (
+        important_features,
+        evaluate,
+        predictions,
+        prediction_low,
+        prediction_high,
+        predict_shap_values,
+        df_val,
+        leaderboard,
+    )

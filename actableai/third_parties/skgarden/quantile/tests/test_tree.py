@@ -10,12 +10,13 @@ from actableai.third_parties.skgarden import weighted_percentile
 boston = load_boston()
 X, y = boston.data, boston.target
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=0.6, test_size=0.4, random_state=0)
+    X, y, train_size=0.6, test_size=0.4, random_state=0
+)
 X_train = np.array(X_train, dtype=np.float32)
 X_test = np.array(X_test, dtype=np.float32)
 estimators = [
     DecisionTreeQuantileRegressor(random_state=0),
-    ExtraTreeQuantileRegressor(random_state=0)
+    ExtraTreeQuantileRegressor(random_state=0),
 ]
 
 
@@ -57,7 +58,9 @@ def test_max_depth_None():
             for curr_X in [X_train, X_test]:
                 assert_array_almost_equal(
                     est.predict(curr_X, quantile=None),
-                    est.predict(curr_X, quantile=quantile), 1)
+                    est.predict(curr_X, quantile=quantile),
+                    1,
+                )
 
 
 def test_tree_toy_data():
@@ -77,8 +80,8 @@ def test_tree_toy_data():
         est.fit(X, y)
         for quantile in [20, 30, 40, 50, 60, 70, 80]:
             assert_array_almost_equal(
-                est.predict(x1, quantile=quantile),
-                [np.percentile(y1, quantile)], 3)
+                est.predict(x1, quantile=quantile), [np.percentile(y1, quantile)], 3
+            )
             assert_array_almost_equal(
-                est.predict(x2, quantile=quantile),
-                [np.percentile(y2, quantile)], 3)
+                est.predict(x2, quantile=quantile), [np.percentile(y2, quantile)], 3
+            )

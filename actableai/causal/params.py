@@ -138,13 +138,17 @@ class LinearDMLSingleContTreatmentAGParams(BaseCausalEstimatorParams):
             label=self.label_t,
             problem_type="regression",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_y = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_y,
             problem_type="regression",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         return LinearDML(
             model_y=model_y,
             model_t=model_t,
@@ -244,13 +248,17 @@ class SparseLinearDMLSingleContTreatmentAGParams(BaseCausalEstimatorParams):
             label=self.label_t,
             problem_type="regression",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_y = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_y,
             problem_type="regression",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         return SparseLinearDML(
             model_y=model_y,
             model_t=model_t,
@@ -413,13 +421,17 @@ class LinearDMLSingleBinaryTreatmentAGParams(BaseCausalEstimatorParams):
             label=self.label_t,
             problem_type="multiclass",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_y = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_y,
             problem_type="regression",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         return LinearDML(
             model_y=model_y,
             model_t=model_t,
@@ -513,13 +525,17 @@ class LinearDMLSingleBinaryOutcomeAGParams(BaseCausalEstimatorParams):
             label=self.label_t,
             problem_type="regression",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_y = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_y,
             problem_type="binary",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
 
         return LinearDML(
             model_y=model_y,
@@ -632,13 +648,17 @@ class SparseLinearDMLSingleBinaryTreatmentAGParams(BaseCausalEstimatorParams):
             label=self.label_t,
             problem_type="binary",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_y = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_y,
             problem_type="regression",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
 
         return SparseLinearDML(
             model_y=model_y,
@@ -755,13 +775,17 @@ class SparseLinearDMLSingleBinaryOutcomeAGParams(BaseCausalEstimatorParams):
             label=self.label_y,
             problem_type="binary",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="regression",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
 
         return SparseLinearDML(
             model_t=model_t,
@@ -860,13 +884,17 @@ class LinearDMLCategoricalTreatmentAGParams(BaseCausalEstimatorParams):
             label=self.label_y,
             problem_type="regression",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="multiclass",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         return LinearDML(
             model_y=model_y,
             model_t=model_t,
@@ -960,13 +988,17 @@ class LinearDMLCategoricalOutcomeAGParams(BaseCausalEstimatorParams):
             label=self.label_y,
             problem_type="multiclass",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="regression",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         return LinearDML(
             model_t=model_t,
             model_y=model_y,
@@ -1070,13 +1102,17 @@ class LinearDMLCategoricalTreatmentAndOutcomeAGParams(BaseCausalEstimatorParams)
             label=self.label_y,
             problem_type="multiclass",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="multiclass",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         return LinearDML(
             model_t=model_t,
             model_y=model_y,
@@ -1188,13 +1224,17 @@ class SparseLinearDMLCategoricalTreatmentAGParams(BaseCausalEstimatorParams):
             label=self.label_y,
             problem_type="regression",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="multiclass",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
 
         return SparseLinearDML(
             model_y=model_y,
@@ -1311,13 +1351,17 @@ class SparseLinearDMLCategoricalOutcomeAGParams(BaseCausalEstimatorParams):
             label=self.label_y,
             problem_type="multiclass",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="regression",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
 
         return SparseLinearDML(
             model_t=model_t,
@@ -1444,13 +1488,17 @@ class SparseLinearDMLCategoricalTreatmentAndOutcomeAGParams(BaseCausalEstimatorP
             label=self.label_y,
             problem_type="multiclass",
         )
-        model_y = SKLearnWrapper(model_y, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_y = SKLearnWrapper(
+            model_y, hyperparameters=self.hyperparameters, presets=self.presets
+        )
         model_t = TabularPredictor(
             path=random_directory(self.model_directory),
             label=self.label_t,
             problem_type="multiclass",
         )
-        model_t = SKLearnWrapper(model_t, hyperparameters=self.hyperparameters, presets=self.presets)
+        model_t = SKLearnWrapper(
+            model_t, hyperparameters=self.hyperparameters, presets=self.presets
+        )
 
         return SparseLinearDML(
             model_t=model_t,
@@ -1703,33 +1751,33 @@ def get_model_params(
         model_params = [
             LinearDMLSingleContTreatmentParams(cv=cv, mc_iters=mc_iters),
             # LinearDMLSingleContTreatmentAGParams(
-                # label_t=label_t,
-                # label_y=label_y,
-                # model_directory=model_directory,
-                # hyperparameters=hyperparameters,
-                # presets=presets,
-                # cv=cv,
-                # featurizer=featurizer,
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # presets=presets,
+            # cv=cv,
+            # featurizer=featurizer,
             # ),
             # SparseLinearDMLSingleContTreatmentParams(),
         ]
         # if has_effect_modifiers_and_common_causes:
-            # model_params.extend(
-                # [
-                    # LinearDMLSingleContTreatmentAGParams(
-                        # label_t=label_t,
-                        # label_y=label_y,
-                        # model_directory=model_directory,
-                        # hyperparameters=hyperparameters,
-                    # ),
-                    # SparseLinearDMLSingleContTreatmentAGParams(
-                        # label_t=label_t,
-                        # label_y=label_y,
-                        # model_directory=model_directory,
-                        # hyperparameters=hyperparameters,
-                    # ),
-                # ]
-            # )
+        # model_params.extend(
+        # [
+        # LinearDMLSingleContTreatmentAGParams(
+        # label_t=label_t,
+        # label_y=label_y,
+        # model_directory=model_directory,
+        # hyperparameters=hyperparameters,
+        # ),
+        # SparseLinearDMLSingleContTreatmentAGParams(
+        # label_t=label_t,
+        # label_y=label_y,
+        # model_directory=model_directory,
+        # hyperparameters=hyperparameters,
+        # ),
+        # ]
+        # )
     elif (
         ((not is_single_treatment) or has_categorical_treatment)
         and is_single_outcome
@@ -1748,22 +1796,22 @@ def get_model_params(
                 # SparseLinearDMLSingleBinaryTreatmentParams(),
             ]
             # if has_effect_modifiers_and_common_causes:
-                # model_params.extend(
-                    # [
-                        # LinearDMLSingleBinaryTreatmentAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                        # SparseLinearDMLSingleBinaryTreatmentAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                    # ]
-                # )
+            # model_params.extend(
+            # [
+            # LinearDMLSingleBinaryTreatmentAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # SparseLinearDMLSingleBinaryTreatmentAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # ]
+            # )
         else:
             model_params = [
                 LinearDMLCategoricalTreatmentAGParams(
@@ -1777,22 +1825,22 @@ def get_model_params(
                 # SparseLinearDMLCategoricalTreatmentParams(),
             ]
             # if has_effect_modifiers_and_common_causes:
-                # model_params.extend(
-                    # [
-                        # LinearDMLCategoricalTreatmentAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                        # SparseLinearDMLCategoricalTreatmentAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                    # ]
-                # )
+            # model_params.extend(
+            # [
+            # LinearDMLCategoricalTreatmentAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # SparseLinearDMLCategoricalTreatmentAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # ]
+            # )
     elif (
         is_single_treatment
         and (not has_categorical_treatment)
@@ -1811,22 +1859,22 @@ def get_model_params(
                 # SparseLinearDMLSingleBinaryOutcomeParams(),
             ]
             # if has_effect_modifiers_and_common_causes:
-                # model_params.extend(
-                    # [
-                        # LinearDMLSingleBinaryOutcomeAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                        # SparseLinearDMLSingleBinaryOutcomeAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                    # ]
-                # )
+            # model_params.extend(
+            # [
+            # LinearDMLSingleBinaryOutcomeAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # SparseLinearDMLSingleBinaryOutcomeAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # ]
+            # )
         else:
             model_params = [
                 LinearDMLCategoricalOutcomeAGParams(
@@ -1840,22 +1888,22 @@ def get_model_params(
                 # SparseLinearDMLCategoricalOutcomeParams(),
             ]
             # if has_effect_modifiers_and_common_causes:
-                # model_params.extend(
-                    # [
-                        # LinearDMLCategoricalOutcomeAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                        # SparseLinearDMLCategoricalOutcomeAGParams(
-                            # label_t=label_t,
-                            # label_y=label_y,
-                            # model_directory=model_directory,
-                            # hyperparameters=hyperparameters,
-                        # ),
-                    # ]
-                # )
+            # model_params.extend(
+            # [
+            # LinearDMLCategoricalOutcomeAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # SparseLinearDMLCategoricalOutcomeAGParams(
+            # label_t=label_t,
+            # label_y=label_y,
+            # model_directory=model_directory,
+            # hyperparameters=hyperparameters,
+            # ),
+            # ]
+            # )
     else:
         model_params = [
             LinearDMLCategoricalTreatmentAndOutcomeAGParams(
@@ -1869,24 +1917,25 @@ def get_model_params(
             # SparseLinearDMLCategoricalTreatmentAndOutcomeParams(),
         ]
         # if has_effect_modifiers_and_common_causes:
-            # model_params.extend(
-                # [
-                    # LinearDMLCategoricalTreatmentAndOutcomeAGParams(
-                        # label_t=label_t,
-                        # label_y=label_y,
-                        # model_directory=model_directory,
-                        # hyperparameters=hyperparameters,
-                    # ),
-                    # SparseLinearDMLCategoricalTreatmentAndOutcomeAGParams(
-                        # label_t=label_t,
-                        # label_y=label_y,
-                        # model_directory=model_directory,
-                        # hyperparameters=hyperparameters,
-                    # ),
-                # ]
-            # )
+        # model_params.extend(
+        # [
+        # LinearDMLCategoricalTreatmentAndOutcomeAGParams(
+        # label_t=label_t,
+        # label_y=label_y,
+        # model_directory=model_directory,
+        # hyperparameters=hyperparameters,
+        # ),
+        # SparseLinearDMLCategoricalTreatmentAndOutcomeAGParams(
+        # label_t=label_t,
+        # label_y=label_y,
+        # model_directory=model_directory,
+        # hyperparameters=hyperparameters,
+        # ),
+        # ]
+        # )
 
     return model_params
+
 
 def get_rscorer(
     is_single_treatment,

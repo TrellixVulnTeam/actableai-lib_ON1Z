@@ -110,16 +110,14 @@ class TestDetermineFixStrategy:
         mock_config.UNABLE_TO_FIX_DISTINCT_SIZE_THRESHOLD = 100
         series = pd.Series(data=["a", "b", "a"])
         assert (
-            determine_fix_strategy(
-                series, ColumnType.Category, ColumnErrors(set())
-            )
+            determine_fix_strategy(series, ColumnType.Category, ColumnErrors(set()))
             == FixStrategy.SINGLE_CATEGORY
         )
 
     @patch(f"{stub}.config")
     def test_should_return_unable_to_fix_strategy_when_there_are_no_correct_rows_remain_after_error_filter(
-            self,
-            mock_config,
+        self,
+        mock_config,
     ):
         series = pd.Series(data=["a", "b", "a"])
         errors = ColumnErrors(
@@ -130,8 +128,8 @@ class TestDetermineFixStrategy:
             }
         )
         assert (
-                determine_fix_strategy(series, ColumnType.Category, errors)
-                == FixStrategy.UNABLE_TO_FIX
+            determine_fix_strategy(series, ColumnType.Category, errors)
+            == FixStrategy.UNABLE_TO_FIX
         )
 
 
@@ -156,7 +154,5 @@ class TestDetermineRefineStrategy:
             ),
         ],
     )
-    def test_should_return_correct_strategy(
-        self, series, errors, expect_fix_strategy
-    ):
+    def test_should_return_correct_strategy(self, series, errors, expect_fix_strategy):
         assert determine_refine_strategy(series, errors) == expect_fix_strategy

@@ -8,7 +8,10 @@ from sklearn.compose import ColumnTransformer
 def sklearn_canonical_pipeline(df, clf):
     numeric_features = df.select_dtypes(include=np.number).columns
     numeric_transformer = Pipeline(
-        steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
     )
 
     categorical_features = df.select_dtypes(exclude=np.number).columns
@@ -16,7 +19,8 @@ def sklearn_canonical_pipeline(df, clf):
         steps=[
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ])
+        ]
+    )
 
     preprocessor = ColumnTransformer(
         transformers=[
@@ -27,6 +31,4 @@ def sklearn_canonical_pipeline(df, clf):
 
     # Append classifier to preprocessing pipeline.
     # Now we have a full prediction pipeline.
-    return Pipeline(
-        steps=[("preprocessor", preprocessor), ("classifier", clf)]
-    )
+    return Pipeline(steps=[("preprocessor", preprocessor), ("classifier", clf)])

@@ -29,34 +29,22 @@ from actableai.data_imputation.type_recon.helper import as_datetime
         (
             pd.Series(data=["2021-02-01T01:10:23Z"]),
             pd.Series(
-                data=[
-                    datetime(
-                        year=2021, month=2, day=1, hour=1, minute=10, second=23
-                    )
-                ]
+                data=[datetime(year=2021, month=2, day=1, hour=1, minute=10, second=23)]
             ),
         ),
         (
             pd.Series(data=["01/02/2021 01:10:23", "1/2/2021 1:10:23"]),
             pd.Series(
                 data=[
-                    datetime(
-                        year=2021, month=2, day=1, hour=1, minute=10, second=23
-                    ),
-                    datetime(
-                        year=2021, month=2, day=1, hour=1, minute=10, second=23
-                    ),
+                    datetime(year=2021, month=2, day=1, hour=1, minute=10, second=23),
+                    datetime(year=2021, month=2, day=1, hour=1, minute=10, second=23),
                 ]
             ),
         ),
         (
             pd.Series(data=["2021-02-01 01:10:23"]),
             pd.Series(
-                data=[
-                    datetime(
-                        year=2021, month=2, day=1, hour=1, minute=10, second=23
-                    )
-                ]
+                data=[datetime(year=2021, month=2, day=1, hour=1, minute=10, second=23)]
             ),
         ),
         (

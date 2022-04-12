@@ -58,8 +58,8 @@ def infer_causal(
     validation_ratio: float = 0.2,
     trials: Optional[int] = 1,
     verbose: Optional[int] = 0,
-    cv: int="auto",
-    feature_importance: bool=False,
+    cv: int = "auto",
+    feature_importance: bool = False,
     mc_iters="auto",
     seed=123,
     num_gpus=0,
@@ -106,7 +106,8 @@ def infer_causal(
         LinearDMLSingleContTreatmentParams,
         SparseLinearDMLSingleBinaryTreatmentParams,
         SparseLinearDMLSingleContTreatmentParams,
-        get_model_params, get_rscorer
+        get_model_params,
+        get_rscorer,
     )
     from actableai.causal.tree_utils import make_pretty_tree
     from actableai.causal import has_categorical_column
@@ -137,11 +138,7 @@ def infer_causal(
         controls = {}
     columns = effect_modifiers + common_causes
     data_validation_results = CausalDataValidator().validate(
-        treatments,
-        outcomes,
-        pd_table,
-        effect_modifiers,
-        common_causes
+        treatments, outcomes, pd_table, effect_modifiers, common_causes
     )
     failed_checks = [x for x in data_validation_results if x is not None]
 
@@ -157,7 +154,8 @@ def infer_causal(
         }
 
     pd_table = prepare_sanitize_data(
-        pd_table, treatments, outcomes, effect_modifiers, common_causes)
+        pd_table, treatments, outcomes, effect_modifiers, common_causes
+    )
 
     is_single_treatment = len(treatments) == 1
     is_single_outcome = len(outcomes) == 1
@@ -190,7 +188,10 @@ def infer_causal(
             is_single_binary_treatment = True
     is_single_binary_outcome = False
     if is_single_outcome and has_categorical_outcome:
-        if len(pd_table[outcomes[0]].unique()) == 2 or positive_outcome_value is not None:
+        if (
+            len(pd_table[outcomes[0]].unique()) == 2
+            or positive_outcome_value is not None
+        ):
             is_single_binary_outcome = True
 
     # construct the dictionary of control values for categorical treatments
@@ -234,7 +235,9 @@ def infer_causal(
         ]
 
     if positive_outcome_value is not None:
-        pd_table[outcomes[0]] = (pd_table[outcomes[0]]==positive_outcome_value).astype(int)
+        pd_table[outcomes[0]] = (
+            pd_table[outcomes[0]] == positive_outcome_value
+        ).astype(int)
     Y = pd_table[outcomes]
 
     pd_table[treatments], tm_transformers = convert_categorical_to_numeric(
@@ -270,9 +273,12 @@ def infer_causal(
     else:
         has_effect_modifiers_and_common_causes = True
 
-    ce = AAICausalEstimator(model_params=model_params, scorer=rscorer,
-                            has_categorical_treatment=has_categorical_treatment,
-                            has_binary_outcome=is_single_binary_outcome)
+    ce = AAICausalEstimator(
+        model_params=model_params,
+        scorer=rscorer,
+        has_categorical_treatment=has_categorical_treatment,
+        has_binary_outcome=is_single_binary_outcome,
+    )
     ce.fit(
         Y,
         T,
@@ -421,30 +427,40 @@ def infer_causal(
             model_t_scores.append(
                 (accuracy_score if has_categorical_treatment else r2_score)(
                     np.concatenate([n["y"] for n in ce.estimator.nuisance_scores_t[i]]),
-                    np.concatenate([n["y_pred"] for n in ce.estimator.nuisance_scores_t[i]]),
-                ))
+                    np.concatenate(
+                        [n["y_pred"] for n in ce.estimator.nuisance_scores_t[i]]
+                    ),
+                )
+            )
             model_y_scores.append(
                 (accuracy_score if is_single_binary_outcome else r2_score)(
                     np.concatenate([n["y"] for n in ce.estimator.nuisance_scores_y[i]]),
-                    np.concatenate([n["y_pred"] for n in ce.estimator.nuisance_scores_y[i]]),
-                ))
+                    np.concatenate(
+                        [n["y_pred"] for n in ce.estimator.nuisance_scores_y[i]]
+                    ),
+                )
+            )
 
         estimation_results["model_t_scores"] = {
             "values": model_t_scores,
             "mean": np.mean(model_t_scores),
-            "stderr": np.std(model_t_scores)/np.sqrt(len(model_t_scores)),
-            "metric": "accuracy" if has_categorical_treatment else "r2"
+            "stderr": np.std(model_t_scores) / np.sqrt(len(model_t_scores)),
+            "metric": "accuracy" if has_categorical_treatment else "r2",
         }
 
         estimation_results["model_y_scores"] = {
             "values": model_y_scores,
             "mean": np.mean(model_y_scores),
-            "stderr": np.std(model_y_scores)/np.sqrt(len(model_y_scores)),
-            "metric": "accuracy" if is_single_binary_outcome else "r2"
+            "stderr": np.std(model_y_scores) / np.sqrt(len(model_y_scores)),
+            "metric": "accuracy" if is_single_binary_outcome else "r2",
         }
         if feature_importance:
-            estimation_results["model_t_feature_importances"] = ce.model_t_feature_importances
-            estimation_results["model_y_feature_importances"] = ce.model_y_feature_importances
+            estimation_results[
+                "model_t_feature_importances"
+            ] = ce.model_t_feature_importances
+            estimation_results[
+                "model_y_feature_importances"
+            ] = ce.model_y_feature_importances
 
     runtime = time.time() - start
     return {

@@ -12,6 +12,7 @@ from .tree import DecisionTreeQuantileRegressor
 from .tree import ExtraTreeQuantileRegressor
 from .utils import weighted_percentile
 
+
 def generate_sample_indices(random_state, n_samples):
     """
     Generates bootstrap indices for each tree fit.
@@ -76,7 +77,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         # apply method requires X to be of dtype np.float32
         X, y = check_X_y(
-            X, y, accept_sparse="csc", dtype=np.float32, multi_output=False)
+            X, y, accept_sparse="csc", dtype=np.float32, multi_output=False
+        )
         super(BaseForestQuantileRegressor, self).fit(X, y)
 
         self.y_train_ = y
@@ -85,8 +87,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         for i, est in enumerate(self.estimators_):
             if self.bootstrap:
-                bootstrap_indices = generate_sample_indices(
-                    est.random_state, len(y))
+                bootstrap_indices = generate_sample_indices(est.random_state, len(y))
             else:
                 bootstrap_indices = np.arange(len(y))
 
@@ -94,10 +95,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y_train_leaves = est.y_train_leaves_
             for curr_leaf in np.unique(y_train_leaves):
                 y_ind = y_train_leaves == curr_leaf
-                self.y_weights_[i, y_ind] = (
-                    est_weights[y_ind] / np.sum(est_weights[y_ind]))
+                self.y_weights_[i, y_ind] = est_weights[y_ind] / np.sum(
+                    est_weights[y_ind]
+                )
 
-            self.y_train_leaves_[i, bootstrap_indices] = y_train_leaves[bootstrap_indices]
+            self.y_train_leaves_[i, bootstrap_indices] = y_train_leaves[
+                bootstrap_indices
+            ]
         return self
 
     def predict(self, X, quantile=None, **kwargs):
@@ -137,8 +141,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             mask = self.y_train_leaves_ != np.expand_dims(x_leaf, 1)
             x_weights = ma.masked_array(self.y_weights_, mask)
             weights = x_weights.sum(axis=0)
-            quantiles[i] = weighted_percentile(
-                self.y_train_, quantile, weights, sorter)
+            quantiles[i] = weighted_percentile(self.y_train_, quantile, weights, sorter)
         return quantiles
 
 
@@ -276,35 +279,45 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     .. [1] Nicolai Meinshausen, Quantile Regression Forests
         http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
     """
-    def __init__(self,
-                 n_estimators=10,
-                 criterion='mse',
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.0,
-                 max_features='auto',
-                 max_leaf_nodes=None,
-                 bootstrap=True,
-                 oob_score=False,
-                 n_jobs=1,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False,
-                 **kwargs):
+
+    def __init__(
+        self,
+        n_estimators=10,
+        criterion="mse",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features="auto",
+        max_leaf_nodes=None,
+        bootstrap=True,
+        oob_score=False,
+        n_jobs=1,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+        **kwargs
+    ):
         super(RandomForestQuantileRegressor, self).__init__(
             base_estimator=DecisionTreeQuantileRegressor(),
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes",
-                              "random_state"),
+            estimator_params=(
+                "criterion",
+                "max_depth",
+                "min_samples_split",
+                "min_samples_leaf",
+                "min_weight_fraction_leaf",
+                "max_features",
+                "max_leaf_nodes",
+                "random_state",
+            ),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+        )
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -446,35 +459,45 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     .. [1] Nicolai Meinshausen, Quantile Regression Forests
         http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
     """
-    def __init__(self,
-                 n_estimators=10,
-                 criterion='mse',
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.0,
-                 max_features='auto',
-                 max_leaf_nodes=None,
-                 bootstrap=True,
-                 oob_score=False,
-                 n_jobs=1,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False,
-                 **kwargs):
+
+    def __init__(
+        self,
+        n_estimators=10,
+        criterion="mse",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features="auto",
+        max_leaf_nodes=None,
+        bootstrap=True,
+        oob_score=False,
+        n_jobs=1,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+        **kwargs
+    ):
         super(ExtraTreesQuantileRegressor, self).__init__(
             base_estimator=ExtraTreeQuantileRegressor(),
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes",
-                              "random_state"),
+            estimator_params=(
+                "criterion",
+                "max_depth",
+                "min_samples_split",
+                "min_samples_leaf",
+                "min_weight_fraction_leaf",
+                "max_features",
+                "max_leaf_nodes",
+                "random_state",
+            ),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+        )
 
         self.criterion = criterion
         self.max_depth = max_depth

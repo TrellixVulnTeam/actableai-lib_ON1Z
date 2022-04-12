@@ -10,7 +10,9 @@ from actableai.data_imputation.error_detector.column_format import (
     MatchNumRule,
 )
 from actableai.data_imputation.error_detector.match_condition import ConditionOp
-from actableai.data_imputation.error_detector.misplaced_detector import MisplacedDetector
+from actableai.data_imputation.error_detector.misplaced_detector import (
+    MisplacedDetector,
+)
 from actableai.data_imputation.meta import ColumnType
 from actableai.data_imputation.type_recon.regex_consts import REGEX_CONSTS
 from actableai.data_imputation.type_recon.type_detector import DfTypes
@@ -50,9 +52,7 @@ class TestMisplacedDetector:
             ),
             (
                 pd.DataFrame(data={"a": [], "b": []}),
-                DfTypes(
-                    [("a", ColumnType.Temperature), ("b", ColumnType.String)]
-                ),
+                DfTypes([("a", ColumnType.Temperature), ("b", ColumnType.String)]),
                 [PresetRuleName.SmartTemperature],
                 MatchRules(
                     [
@@ -81,9 +81,7 @@ class TestMisplacedDetector:
             ),
         ],
     )
-    def test_construct(
-        self, df, dftypes, preset_rules, customize_rules, expect_format
-    ):
+    def test_construct(self, df, dftypes, preset_rules, customize_rules, expect_format):
         detector = MisplacedDetector(
             preset_rules=preset_rules, customize_rules=customize_rules
         )

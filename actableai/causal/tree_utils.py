@@ -1,7 +1,12 @@
 class Node:
     def __init__(
-        self, left=None, right=None, label=None, conditions=[], is_right_child=False,
-        num_right_ancestors = 0
+        self,
+        left=None,
+        right=None,
+        label=None,
+        conditions=[],
+        is_right_child=False,
+        num_right_ancestors=0,
     ):
         self.left = left
         self.right = right
@@ -54,7 +59,9 @@ def parse_tree_dot(tree_dot):
                     node_dict[parent_k].right = node_dict[child_k]
                     node_dict[child_k].is_right_child = True
                 if node_dict[parent_k].is_right_child:
-                    node_dict[child_k].num_right_ancestors = node_dict[parent_k].num_right_ancestors+1
+                    node_dict[child_k].num_right_ancestors = (
+                        node_dict[parent_k].num_right_ancestors + 1
+                    )
         new_lines.append(l)
     return "\n".join(new_lines), node_dict
 
@@ -129,7 +136,7 @@ def convert_label_to_categorical(root_node, cat_name, cat_vals):
             and (cur_node.is_right_child)
             and len(constraints) > 0
         ):
-            for i in range(cur_node.num_right_ancestors+1):
+            for i in range(cur_node.num_right_ancestors + 1):
                 constraints.pop()
 
 

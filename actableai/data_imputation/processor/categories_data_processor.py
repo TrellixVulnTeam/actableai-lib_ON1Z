@@ -29,7 +29,9 @@ class CategoriesDataProcessor:
 
         self.__ordinal_encoder.fit(df_only_category)
         predict_result = self.__ordinal_encoder.transform(df_only_category)
-        df_result = pd.DataFrame(data=dict(zip(self.__categories_columns, predict_result.T)))
+        df_result = pd.DataFrame(
+            data=dict(zip(self.__categories_columns, predict_result.T))
+        )
         df_result[self.__non_categories_columns] = df[self.__non_categories_columns]
         return df_result[columns]
 
@@ -38,7 +40,9 @@ class CategoriesDataProcessor:
         if len(self.__categories_columns) == 0:
             return df
 
-        df[self.__categories_columns] = df[self.__categories_columns].apply(round).astype("int")
+        df[self.__categories_columns] = (
+            df[self.__categories_columns].apply(round).astype("int")
+        )
 
         for i, col in enumerate(self.__categories_columns):
             min_value, max_value = (
@@ -60,7 +64,9 @@ class CategoriesDataProcessor:
             data=dict(
                 zip(
                     self.__categories_columns,
-                    self.__ordinal_encoder.inverse_transform(df[self.__categories_columns]).T,
+                    self.__ordinal_encoder.inverse_transform(
+                        df[self.__categories_columns]
+                    ).T,
                 )
             )
         )

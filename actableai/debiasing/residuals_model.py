@@ -20,10 +20,7 @@ class ResidualsModel:
 
     residuals_file = "residuals_predictor.pkl"
 
-    def __init__(self,
-                 path,
-                 biased_groups,
-                 debiased_features):
+    def __init__(self, path, biased_groups, debiased_features):
         """
         TODO write documentation
         """
@@ -35,9 +32,8 @@ class ResidualsModel:
             labels=self.debiased_features,
             path=self.path,
             consider_labels_correlation=False,
-            problem_types=["regression"] * len(self.debiased_features)
+            problem_types=["regression"] * len(self.debiased_features),
         )
-
 
     def _get_model(self):
         """
@@ -48,11 +44,10 @@ class ResidualsModel:
             return MultilabelPredictor.load(path=model)
         return model
 
-
     def _preprocess(self, X):
         """
         TODO write documentation
-            """
+        """
         X_clean = X.copy()
 
         for column in X_clean.columns:
@@ -63,10 +58,12 @@ class ResidualsModel:
             if X_clean[column].isna().sum() > 0:
                 if X_clean[column].dtype.name == "category":
                     X_clean[column] = X_clean[column].cat.add_categories(["NaN"])
-                    X_clean[column] = X_clean[column].cat.rename_categories({
-                        category: str(category)
-                        for category in X_clean[column].cat.categories
-                    })
+                    X_clean[column] = X_clean[column].cat.rename_categories(
+                        {
+                            category: str(category)
+                            for category in X_clean[column].cat.categories
+                        }
+                    )
 
                 X_clean[column] = X_clean[column].fillna("NaN")
 
@@ -76,10 +73,7 @@ class ResidualsModel:
 
         return X_clean
 
-    def fit(self,
-            X,
-            hyperparameters=None,
-            presets=None):
+    def fit(self, X, hyperparameters=None, presets=None):
         """
         TODO write documentation
         """
@@ -91,12 +85,11 @@ class ResidualsModel:
             hyperparameters=hyperparameters,
             presets=presets,
             refit_full="all",
-            keep_only_best=True
+            keep_only_best=True,
         )
         pd.set_option("chained_assignment", "warn")
 
         self.save()
-
 
     def predict(self, X):
         """
@@ -120,30 +113,34 @@ class ResidualsModel:
             nan_mask = X[debiased_feature].isna()
 
             if problem_type == "regression":
-                df_residuals[residuals_feature] = X[debiased_feature] - pred_proba[debiased_feature]
+                df_residuals[residuals_feature] = (
+                    X[debiased_feature] - pred_proba[debiased_feature]
+                )
                 df_residuals[residuals_feature][nan_mask] = 0
 
                 residuals_features_dict[residuals_feature] = debiased_feature
             else:
                 for class_label in model.get_predictor(debiased_feature).class_labels:
                     class_residuals_feature = f"{residuals_feature}_{class_label}"
-                    df_residuals[class_residuals_feature] = (X[debiased_feature] == class_label).apply(lambda row: 1 if row else 0)
-                    df_residuals[class_residuals_feature] -= pred_proba[debiased_feature][class_label]
+                    df_residuals[class_residuals_feature] = (
+                        X[debiased_feature] == class_label
+                    ).apply(lambda row: 1 if row else 0)
+                    df_residuals[class_residuals_feature] -= pred_proba[
+                        debiased_feature
+                    ][class_label]
 
                     residuals_features_dict[class_residuals_feature] = debiased_feature
                     categorical_residuals_count += 1
 
         residuals_features_list = list(residuals_features_dict.keys())
-        df_residuals[residuals_features_list] = df_residuals[residuals_features_list].astype(float)
+        df_residuals[residuals_features_list] = df_residuals[
+            residuals_features_list
+        ].astype(float)
 
         return df_residuals, residuals_features_dict, categorical_residuals_count
 
-
     @staticmethod
-    def _per_sample_log_loss(y_true,
-                             y_pred,
-                             eps=1e-15,
-                             labels=None):
+    def _per_sample_log_loss(y_true, y_pred, eps=1e-15, labels=None):
         """
         TODO write documentation
         https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/metrics/_classification.py#L2309
@@ -217,7 +214,6 @@ class ResidualsModel:
 
         return loss
 
-
     def persist_models(self):
         """
         TODO write documentation
@@ -226,7 +222,6 @@ class ResidualsModel:
             self.model = self._get_model()
         self.model.persist_models()
 
-
     def unpersist_models(self):
         """
         TODO write documentation
@@ -234,7 +229,6 @@ class ResidualsModel:
         if not isinstance(self.model, str):
             self.model.unpersist_models()
             self.model = self.model.path
-
 
     def save(self, path=None):
         """
@@ -250,7 +244,6 @@ class ResidualsModel:
 
         return path
 
-
     @classmethod
     def load(cls, path):
         """
@@ -264,4 +257,3 @@ class ResidualsModel:
         model.persist_models()
 
         return model
-

@@ -42,9 +42,7 @@ class FixInfo:
     @property
     def sorted_options(self) -> List[FixValue]:
         return list(
-            sorted(
-                self.options.options, key=lambda x: x.confidence, reverse=True
-            )
+            sorted(self.options.options, key=lambda x: x.confidence, reverse=True)
         )
 
     @property
@@ -54,9 +52,7 @@ class FixInfo:
 
 class FixInfoList:
     def __init__(self, fix_info_list: List[FixInfo] = ()):
-        self.__info_list_dict: Dict[ColumnName, List[FixInfo]] = defaultdict(
-            list
-        )
+        self.__info_list_dict: Dict[ColumnName, List[FixInfo]] = defaultdict(list)
         self.__info_index_to_list_index_dict: Dict[
             ColumnName, Dict[int, int]
         ] = defaultdict(dict)
@@ -107,9 +103,7 @@ class FixInfoList:
         )
         if len(bucket) == 0:
             self.__info_list_dict[fix_info.col].append(fix_info)
-            self.__info_index_to_list_index_dict[fix_info.col][
-                fix_info.index
-            ] = 0
+            self.__info_index_to_list_index_dict[fix_info.col][fix_info.index] = 0
             return
 
         if fix_info.index in index_map_in_bucket.keys():
@@ -138,9 +132,7 @@ class FixInfoList:
             self.append(v)
 
     @lru_cache(maxsize=100)
-    def find(
-        self, index: int, column: ColumnName, value: ValueType
-    ) -> FixValue:
+    def find(self, index: int, column: ColumnName, value: ValueType) -> FixValue:
         unable_to_fix = FixValue(UNABLE_TO_FIX_PLACEHOLDER, -inf)
 
         fix_info = self.get_item(index, column)

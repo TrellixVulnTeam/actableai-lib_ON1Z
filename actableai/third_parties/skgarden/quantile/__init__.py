@@ -7,4 +7,5 @@ __all__ = [
     "ExtraTreeQuantileRegressor",
     "DecisionTreeQuantileRegressor",
     "ExtraTreesQuantileRegressor",
-    "RandomForestQuantileRegressor"]
+    "RandomForestQuantileRegressor",
+]

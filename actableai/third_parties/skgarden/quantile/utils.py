@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def weighted_percentile(a, q, weights=None, sorter=None):
     """
     Returns the weighted percentile of a at q given weights.
@@ -40,8 +41,7 @@ def weighted_percentile(a, q, weights=None, sorter=None):
     if weights is None:
         weights = np.ones_like(a)
     if q > 100 or q < 0:
-        raise ValueError("q should be in-between 0 and 100, "
-                         "got %d" % q)
+        raise ValueError("q should be in-between 0 and 100, " "got %d" % q)
 
     a = np.asarray(a, dtype=np.float32)
     weights = np.asarray(weights, dtype=np.float32)

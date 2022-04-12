@@ -6,9 +6,7 @@ import pandas as pd
 def evaluate(data_name, new_version: int = 0):
     CLEAN_CSV = f"../experiments/data/{data_name}/{data_name}.csv"
     MY_FIXED_CSV = f"../experiments/data/{data_name}/repaired-from-my{f'-version-{new_version}'  if new_version > 0 else ''}.csv"
-    HOLOCLEAN_FIXED_CSV = (
-        f"../experiments/data/{data_name}/repaired-from-holoclean.csv"
-    )
+    HOLOCLEAN_FIXED_CSV = f"../experiments/data/{data_name}/repaired-from-holoclean.csv"
 
     clean_csv = pd.read_csv(CLEAN_CSV)
     hc_fixed_csv = pd.read_csv(HOLOCLEAN_FIXED_CSV)

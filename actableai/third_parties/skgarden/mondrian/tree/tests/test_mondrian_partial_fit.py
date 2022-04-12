@@ -87,10 +87,12 @@ def check_and_return_children(tree, node, val, var=None):
 
 
 def test_partial_fit_toy_data1():
-    X = [[2.0, 1.0, 3.0],
-         [-1.0, 2.0, 2.0],
-         [1.0, 1.5, 2.5],   # inside the bounds of the first two samples.
-         [10.0, 5.0, 6.0]]  # induces a split and creates a new root.
+    X = [
+        [2.0, 1.0, 3.0],
+        [-1.0, 2.0, 2.0],
+        [1.0, 1.5, 2.5],  # inside the bounds of the first two samples.
+        [10.0, 5.0, 6.0],
+    ]  # induces a split and creates a new root.
 
     #             [0, 1, 2, 3]
     #                 /\
@@ -115,14 +117,16 @@ def test_partial_fit_toy_data1():
     tree_clf = mtc.tree_
 
     l, r = check_and_return_children(
-        tree_reg, tree_reg.root, np.mean(y_reg), np.var(y_reg))
+        tree_reg, tree_reg.root, np.mean(y_reg), np.var(y_reg)
+    )
     ll, lr = check_and_return_children(
-        tree_reg, l, np.mean(y_reg[:3]), np.var(y_reg[:3]))
+        tree_reg, l, np.mean(y_reg[:3]), np.var(y_reg[:3])
+    )
     check_and_return_children(tree_reg, r, 4.0, 0.0)
     check_and_return_children(tree_reg, ll, 1.0, 0.0)
     lrl, lrr = check_and_return_children(
-        tree_reg, lr, (y_reg[0] + y_reg[2]) / 2.0,
-        np.var([y_reg[0], y_reg[2]]))
+        tree_reg, lr, (y_reg[0] + y_reg[2]) / 2.0, np.var([y_reg[0], y_reg[2]])
+    )
     check_and_return_children(tree_reg, lrl, y_reg[2], 0.0)
     check_and_return_children(tree_reg, lrr, y_reg[0], 0.0)
 
@@ -136,10 +140,7 @@ def test_partial_fit_toy_data1():
 
 
 def test_partial_fit_toy_data2():
-    X = [[2.0, 1.0, 3.0],
-         [-1.0, 2.0, 2.0],
-         [11.0, 7.0, 4.5],
-         [10.0, 5.0, 6.0]]
+    X = [[2.0, 1.0, 3.0], [-1.0, 2.0, 2.0], [11.0, 7.0, 4.5], [10.0, 5.0, 6.0]]
     X = np.array(X)
 
     #            [0, 1, 2, 3]
@@ -155,12 +156,9 @@ def test_partial_fit_toy_data2():
     mtr = MondrianTreeRegressor(random_state=1)
     mtr.partial_fit(X, y_reg)
     tree = mtr.tree_
-    l, r = check_and_return_children(
-        tree, tree.root, np.mean(y_reg), np.var(y_reg))
-    ll, lr = check_and_return_children(
-        tree, l, np.mean(y_reg[:2]), np.var(y_reg[:2]))
-    rl, rr = check_and_return_children(
-        tree, r, np.mean(y_reg[2:]), np.var(y_reg[:2]))
+    l, r = check_and_return_children(tree, tree.root, np.mean(y_reg), np.var(y_reg))
+    ll, lr = check_and_return_children(tree, l, np.mean(y_reg[:2]), np.var(y_reg[:2]))
+    rl, rr = check_and_return_children(tree, r, np.mean(y_reg[2:]), np.var(y_reg[:2]))
     check_and_return_children(tree, ll, y_reg[1], 0.0)
     check_and_return_children(tree, lr, y_reg[0], 0.0)
     check_and_return_children(tree, rl, y_reg[3], 0.0)
@@ -298,12 +296,12 @@ def test_min_samples_split():
     for mss in [2, 4, 10, 20]:
         mtr = MondrianTreeRegressor(random_state=0, min_samples_split=mss)
         mtr.partial_fit(X_r[: X_r.shape[0] // 2], y_r[: X_r.shape[0] // 2])
-        mtr.partial_fit(X_r[X_r.shape[0] // 2:], y_r[X_r.shape[0] // 2:])
+        mtr.partial_fit(X_r[X_r.shape[0] // 2 :], y_r[X_r.shape[0] // 2 :])
         n_node_samples = mtr.tree_.n_node_samples[mtr.tree_.children_left != -1]
         assert_greater(np.min(n_node_samples) + 1, mss)
 
         mtc = MondrianTreeClassifier(random_state=0, min_samples_split=mss)
         mtc.partial_fit(X_c[: X_c.shape[0] // 2], y_c[: X_c.shape[0] // 2])
-        mtc.partial_fit(X_c[X_c.shape[0] // 2:], y_c[X_c.shape[0] // 2:])
+        mtc.partial_fit(X_c[X_c.shape[0] // 2 :], y_c[X_c.shape[0] // 2 :])
         n_node_samples = mtc.tree_.n_node_samples[mtc.tree_.children_left != -1]
         assert_greater(np.min(n_node_samples) + 1, mss)

@@ -33,13 +33,11 @@ class NeighborFixer(AutoFixer):
 
         if self.__cached_matrix_after_fit is None:
             df_to_matrix = df.select_dtypes(exclude=["datetime"]).to_numpy()
-            self.__cached_matrix_after_fit = self._imp.fit_transform(
-                df_to_matrix
-            )
+            self.__cached_matrix_after_fit = self._imp.fit_transform(df_to_matrix)
 
-        column_index_to_fix = df.select_dtypes(
-            exclude=["datetime"]
-        ).columns.get_loc(current_column.name)
+        column_index_to_fix = df.select_dtypes(exclude=["datetime"]).columns.get_loc(
+            current_column.name
+        )
 
         fix_info_list = FixInfoList()
         for err in all_errors[current_column.name]:
