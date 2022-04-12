@@ -72,10 +72,10 @@ This project started in 2020 and is maintained by [Actable](https://www.linkedin
 
 ### Built With
 
-* [Autogluon](https://reactjs.org/)
-* [Ray](https://angular.io/)
-* [Sklearn](https://nextjs.org/)
-* [Pandas](https://vuejs.org/)
+* [Autogluon](https://auto.gluon.ai/)
+* [Ray](https://docs.ray.io/)
+* [Sklearn](https://scikit-learn.org/)
+* [Pandas](https://pandas.pydata.org//)
 
 
 <!-- GETTING STARTED -->
