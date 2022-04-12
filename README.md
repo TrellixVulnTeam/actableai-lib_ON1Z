@@ -19,9 +19,9 @@
     <br />
     <a href="https://app.actable.ai/superset/explore/?form_data=%7B%22datasource%22%3A%2228506__table%22%2C%22viz_type%22%3A%22plotly_correlation%22%2C%22slice_id%22%3A623%2C%22url_params%22%3A%7B%7D%2C%22time_range_endpoints%22%3A%5B%22inclusive%22%2C%22exclusive%22%5D%2C%22adhoc_filters%22%3A%5B%5D%2C%22correlation_target%22%3A%22two_year_recid%22%2C%22columns_name%22%3A%5B%22compas_screening_date%22%2C%22sex%22%2C%22dob%22%2C%22age%22%2C%22age_cat%22%2C%22race%22%2C%22juv_fel_count%22%2C%22juv_misd_count%22%2C%22juv_other_count%22%2C%22priors_count%22%2C%22days_b_screening_arrest%22%2C%22c_jail_in%22%2C%22c_jail_out%22%2C%22c_case_number%22%2C%22c_offense_date%22%2C%22c_arrest_date%22%2C%22c_days_from_compas%22%2C%22c_charge_degree%22%2C%22c_charge_desc%22%2C%22r_days_from_arrest%22%2C%22r_offense_date%22%2C%22r_charge_desc%22%2C%22r_jail_in%22%2C%22r_jail_out%22%2C%22violent_recid%22%2C%22is_violent_recid%22%2C%22vr_case_number%22%2C%22vr_charge_degree%22%2C%22vr_offense_date%22%2C%22vr_charge_desc%22%2C%22type_of_assessment%22%2C%22screening_date%22%2C%22in_custody%22%2C%22out_custody%22%2C%22start%22%2C%22end%22%2C%22event%22%5D%2C%22correlation_control%22%3A%5B%5D%2C%22number_factors%22%3A20%2C%22show_bar_value%22%3Afalse%2C%22taskId%22%3A%22f1e3c2e7-b093-460f-9801-d69c98dbcd54%22%2C%22sql%22%3Anull%2C%22databaseName%22%3A%22actableai%22%7D" target="_blank">View Demo</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues" target="_blank">Report Bug</a>
+    <a href="https://github.com/Actable-AI/actableai-lib/issues" target="_blank">Report Bug</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues" target="_blank">Request Feature</a>
+    <a href="https://github.com/Actable-AI/actableai-lib/issues" target="_blank">Request Feature</a>
   </p>
 </div>
 
@@ -154,7 +154,7 @@ See the [open issues](https://github.com/Actable-AI/actableai-lib/issues) for a 
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+If you have a suggestion that would make this better, please create a pull request. You can also simply open an issue with the tag "enhancement".
 Don't forget to give the project a star! Thanks again!
 
 1. Create an Issue with bug or feature label
