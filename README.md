@@ -157,11 +157,15 @@ Contributions are what make the open source community such an amazing place to l
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 Don't forget to give the project a star! Thanks again!
 
-1. Create an Issue with Bug or Feature label
-2. Create your Feature/BugFix Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Create an Issue with bug or feature label
+2. Install our git hooks by running locally :
+```sh
+chmod +x scripts/setup_hooks.sh && scripts/setup_hooks.sh
+```
+3. Create your Feature/BugFix Branch (`git checkout -b feature/AmazingFeature`)
+4. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+5. Push to the Branch (`git push origin feature/AmazingFeature`)
+6. Open a Pull Request
 
 <!-- LICENSE -->
 ## License
