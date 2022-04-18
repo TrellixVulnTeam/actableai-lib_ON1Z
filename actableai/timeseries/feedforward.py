@@ -25,7 +25,6 @@ class FeedForwardEstimator(SimpleFeedForwardEstimator):
                 AddObservedValuesIndicator(
                     target_field=FieldName.TARGET,
                     output_field=FieldName.OBSERVED_VALUES,
-                    dummy_value=self.distr_output.value_in_support,
                     dtype=self.dtype,
                 ),
                 AddTimeFeatures(
@@ -42,22 +41,5 @@ class FeedForwardEstimator(SimpleFeedForwardEstimator):
                     log_scale=True,
                     dtype=self.dtype,
                 ),
-                VstackFeatures(
-                    output_field=FieldName.FEAT_TIME,
-                    input_fields=[FieldName.FEAT_TIME, FieldName.FEAT_AGE]
-                ),
-                InstanceSplitter(
-                    target_field=FieldName.TARGET,
-                    is_pad_field=FieldName.IS_PAD,
-                    start_field=FieldName.START,
-                    forecast_start_field=FieldName.FORECAST_START,
-                    train_sampler=ExpectedNumInstanceSampler(num_instances=1),
-                    past_length=self.context_length,
-                    future_length=self.prediction_length,
-                    time_series_fields=[
-                        FieldName.FEAT_TIME,
-                        FieldName.OBSERVED_VALUES,
-                    ],
-                )
             ]
         )

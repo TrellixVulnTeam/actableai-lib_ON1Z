@@ -205,27 +205,119 @@ class TimeSeriesDataValidator:
     def __init__(self):
         pass
 
-    def validate(self, feature, target, df, prediction_length):
-        return [
+    def validate(self,
+                 df,
+                 date_column,
+                 predicted_columns,
+                 feature_columns,
+                 group_by):
+        validation_results = [
             ColumnsExistChecker(level=CheckLevels.CRITICAL).check(
-                df, [feature] + target
+                df, [date_column] + predicted_columns + feature_columns
             ),
-            DoNotContainEmptyColumnsChecker(level=CheckLevels.WARNING).check(
-                df, [feature] + target
+            DoNotContainEmptyColumnsChecker(level=CheckLevels.CRITICAL).check(
+                df, [date_column] + predicted_columns + feature_columns
             ),
-            IsSufficientDataChecker(level=CheckLevels.CRITICAL).check(
-                df, n_sample=MINIMUM_NUMBER_OF_SAMPLE
-            ),
-            IsDatetimeChecker(level=CheckLevels.CRITICAL).check(df[feature])
-            if ((feature in df.columns) and not pd.isnull(df[feature]).all())
-            else None,
-            DoNotContainMixedChecker(level=CheckLevels.CRITICAL).check(df, target),
-            IsValidPredictionLengthChecker(level=CheckLevels.CRITICAL).check(df, prediction_length=prediction_length),
-            CategoryChecker(level=CheckLevels.CRITICAL).check(df, target),
-            IsValidFrequencyChecker(level=CheckLevels.CRITICAL).check(df[feature]) \
-                if ((feature in df.columns) and not pd.isnull(df[feature]).all()) else None,
-            UniqueDateTimeChecker(level=CheckLevels.CRITICAL).check(df[feature]),
         ]
+
+        df_dict = {}
+        if len(group_by) > 0:
+            for group, grouped_df in df.groupby(group_by):
+                df_dict[group] = grouped_df
+        else:
+            df_dict["data"] = df
+
+        for group in df_dict.keys():
+            df_group = df_dict[group].reset_index(drop=True)
+
+            validation_results += [
+                IsSufficientDataChecker(level=CheckLevels.CRITICAL).check(
+                    df_group, n_sample=MINIMUM_NUMBER_OF_SAMPLE
+                ),
+                DoNotContainMixedChecker(level=CheckLevels.CRITICAL).check(df_group, predicted_columns),
+                CategoryChecker(level=CheckLevels.CRITICAL).check(df_group, predicted_columns),
+                DoNotContainTextChecker(level=CheckLevels.CRITICAL).check(df_group, feature_columns)
+            ]
+
+            if (date_column in df_group.columns) and not pd.isnull(df_group[date_column]).all():
+                validation_results += [
+                    IsDatetimeChecker(level=CheckLevels.CRITICAL).check(df_group[date_column]),
+                    UniqueDateTimeChecker(level=CheckLevels.CRITICAL).check(df_group[date_column]),
+                    IsValidFrequencyChecker(level=CheckLevels.CRITICAL).check(df_group[date_column])
+                ]
+
+        return validation_results
+
+
+class TimeSeriesPredictionDataValidator:
+    def validate(self,
+                 df_train_dict,
+                 df_valid_dict,
+                 df_predict_dict,
+                 freq_dict,
+                 feature_columns,
+                 predicted_columns,
+                 prediction_length):
+        validation_results = []
+        len_predict = None
+        invalid_groups_pred_len = []
+
+        freq = None
+        invalid_groups_freq = []
+        for group, df_train in df_train_dict.items():
+            df_valid = df_valid_dict.get(group)
+
+            if freq is None:
+                freq = freq_dict[group]
+            elif freq_dict[group] != freq:
+                invalid_groups_freq.append(group)
+
+            df_predict = df_predict_dict.get(group)
+
+            if df_predict is not None:
+                df_predict_cut = df_predict.loc[~df_predict.index.isin(df_valid.index)]
+
+                if len_predict is None:
+                    len_predict = len(df_predict_cut)
+                elif len_predict != len(df_predict_cut):
+                    invalid_groups_pred_len.append(group)
+
+            if prediction_length is not None:
+                validation_results.append(IsValidPredictionLengthChecker(level=CheckLevels.CRITICAL).check(
+                    df_train, prediction_length=prediction_length
+                ))
+
+            # df_predict cannot be None if there are features
+            if len(feature_columns) > 0 and (df_predict is None or len(df_predict_cut) == 0):
+                validation_results.append(CheckResult(
+                    name="PredictionFeaturesChecker",
+                    level=CheckLevels.CRITICAL,
+                    message="Features for the prediction must be provided"
+                ))
+
+            if df_predict is not None and len(feature_columns) > 0:
+                if  df_predict_cut[predicted_columns].notna().any(axis=None):
+                    validation_results.append(CheckResult(
+                        name="PredictionLengthChecker",
+                        level=CheckLevels.CRITICAL,
+                        message="When forecasting with future features, all future values of target prediction columns must be empty",
+                    ))
+
+        if len(invalid_groups_pred_len) > 0:
+            validation_results.append(CheckResult(
+                name="PredictionLengthChecker",
+                level=CheckLevels.CRITICAL,
+                message="Prediction length must be the same for all the groups"
+            ))
+
+        if len(invalid_groups_freq) > 0:
+            validation_results.append(CheckResult(
+                name="FrequenciesChecker",
+                level=CheckLevels.CRITICAL,
+                messge="Frequencies must be the same for all the groups"
+            ))
+
+        return validation_results
 
 
 class ClusteringDataValidator:

@@ -203,3 +203,5 @@ autogluon-contrib-nlp==0.0.1b20210201
 
 dowhy==0.6
 econml==0.11.1
+
+gluonts==0.9.1
