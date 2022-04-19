@@ -68,7 +68,8 @@ class TestAAITimeSeriesForecaster:
                         "cpu": 1,
                         "gpu": 0,
                     },
-                    "raise_on_failed_trial": False
+                    "raise_on_failed_trial": False,
+                    "max_concurrent_trials": 1 if use_ray else None
                 },
                 max_concurrent=4 if not use_ray else None,
                 tune_samples=3,

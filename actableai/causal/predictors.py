@@ -115,6 +115,7 @@ class SKLearnWrapper:
             hyperparameters=self.hyperparameters,
             ag_args_fit=self.ag_args_fit or {},
         )
+        pd.set_option("chained_assignment", "warn")
         self.train_data = train_data
         return self
 

@@ -49,7 +49,7 @@ class TestRemoteClassification:
         assert len(r["data"]["validation_explanations"]) == 0
         assert len(r["data"]["predict_explanations"]) == 0
 
-    def test_ray(self, tmp_path):
+    def test_ray(self, tmp_path, init_ray):
         df = pd.DataFrame({
             "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] * 2,
             "y": [1, 2, 1, 2, 1, None, 1, 2, 1, 2] * 2
@@ -362,7 +362,7 @@ class TestRemoteClassification:
         assert r["validations"][0]["name"] == "CorrectAnalyticChecker"
         assert r["validations"][0]["level"] == CheckLevels.WARNING
 
-    def test_explain_bool_sample_with_nan(self, classification_task, tmp_path):
+    def test_explain_bool_sample_with_nan(self, classification_task, tmp_path, init_ray):
         df = pd.DataFrame({
             "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] * 2,
             "y": [1, 2, 1, 3, 1, None, 3, 2, None, 2] * 2,
@@ -896,7 +896,7 @@ class TestDebiasing:
                     assert "x" in chart
                     assert type(chart["x"]) is list
 
-    def test_simple_debiasing_feature_explain_samples(self, classification_task, tmp_path):
+    def test_simple_debiasing_feature_explain_samples(self, classification_task, tmp_path, init_ray):
         df = pd.DataFrame({
             "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] * 3,
             "y": [1, 2, 1, 2, 1, None, 1, 2, 1, 2] * 3,

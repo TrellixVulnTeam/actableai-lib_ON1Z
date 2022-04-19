@@ -309,7 +309,7 @@ class TestTimeSeries:
 
 
     @pytest.mark.parametrize("freq", ["T"])
-    def test_ray(self, np_rng, freq):
+    def test_ray(self, np_rng, init_ray, freq):
         prediction_length = np_rng.integers(1, 3)
         df, date_column, target_columns, _, _, _ = generate_forecast_df(
             np_rng,
