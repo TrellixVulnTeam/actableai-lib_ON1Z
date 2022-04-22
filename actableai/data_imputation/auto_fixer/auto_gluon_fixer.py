@@ -2,7 +2,7 @@ import os.path
 import shutil
 import time
 from enum import Enum
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Optional
 
 import pandas as pd
 from actableai.utils import memory_efficient_hyperparameters
@@ -37,9 +37,7 @@ class AutoGluonFixer(AutoFixer):
     def __init__(self):
         """AutoGluonFixer is a fixer that uses AutoGluon to predict missing values"""
         super(AutoGluonFixer, self).__init__()
-        self._model_location = (
-            _MODEL_LOCATION
-        ) = f"./AutogluonModels_{time.time()}"
+        self._model_location = _MODEL_LOCATION = f"./AutogluonModels_{time.time()}"
 
     @staticmethod
     def _decide_problem_type(
@@ -84,6 +82,7 @@ class AutoGluonFixer(AutoFixer):
         columns_to_train: List[ColumnName],
         all_errors: CellErrors,
         column_to_predict: RichColumnMeta,
+        hyperparameters: Optional[Tuple[str, dict]] = None,
     ) -> Tuple[_ProblemType, pd.Series]:
         """Predicts the missing values for a single column
 
@@ -102,6 +101,9 @@ class AutoGluonFixer(AutoFixer):
                 - _description_
         """
         dataset = df[columns_to_train + [column_to_predict.name]]
+
+        if hyperparameters is None:
+            hyperparameters = memory_efficient_hyperparameters()
 
         df_without_error = get_df_without_error(
             dataset, all_errors[column_to_predict.name]
@@ -123,11 +125,10 @@ class AutoGluonFixer(AutoFixer):
         )
         predictor.fit(
             df_to_train,
-            hyperparameters=memory_efficient_hyperparameters(),
+            hyperparameters=hyperparameters,
             excluded_model_types=["CAT"],
         )
         pd.set_option("chained_assignment", "warn")
-
 
         df_to_test = get_df_with_only_error(
             dataset[columns_to_train], all_errors[column_to_predict.name]
@@ -142,6 +143,7 @@ class AutoGluonFixer(AutoFixer):
         df: pd.DataFrame,
         all_errors: CellErrors,
         current_column: RichColumnMeta,
+        ag_hyperparameters: Optional[Tuple[str, dict]] = None,
     ) -> FixInfoList:
         """Fixes the missing values for a single column
 
@@ -158,7 +160,7 @@ class AutoGluonFixer(AutoFixer):
         columns_to_train = set(df.columns)
         columns_to_train.discard(current_column.name)
         problem_type, series_with_fix = self._predict_missing_for_single_column(
-            df, list(columns_to_train), all_errors, current_column
+            df, list(columns_to_train), all_errors, current_column, ag_hyperparameters
         )
         fix_info_list = FixInfoList()
         for err in all_errors[current_column.name]:
