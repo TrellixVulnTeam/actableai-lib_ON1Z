@@ -14,9 +14,9 @@ from gluonts.transform import (
 
 
 class FeedForwardEstimator(SimpleFeedForwardEstimator):
-    """ In addition to the overridden model, this model:
-        - Works with inputs with NaN values.
-        - Adds time and age features.
+    """In addition to the overridden model, this model:
+    - Works with inputs with NaN values.
+    - Adds time and age features.
     """
 
     def create_transformation(self) -> Transformation:

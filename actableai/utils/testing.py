@@ -16,21 +16,19 @@ def unittest_hyperparameters():
 
 def init_ray(**kwargs):
     num_cpus = psutil.cpu_count()
-    ray.init(
-        num_cpus=num_cpus,
-        namespace="aai",
-        **kwargs
-    )
+    ray.init(num_cpus=num_cpus, namespace="aai", **kwargs)
 
 
-def generate_random_date(np_rng=None,
-                         min_year=1900,
-                         min_month=1,
-                         min_day=1,
-                         max_year=2000,
-                         max_month=1,
-                         max_day=1,
-                         random_state=None):
+def generate_random_date(
+    np_rng=None,
+    min_year=1900,
+    min_month=1,
+    min_day=1,
+    max_year=2000,
+    max_month=1,
+    max_day=1,
+    random_state=None,
+):
     """
     TODO write documentation
     """
@@ -48,12 +46,14 @@ def generate_random_date(np_rng=None,
     return min_date + datetime.timedelta(days=int(days_delta))
 
 
-def generate_date_range(np_rng=None,
-                        start_date=None,
-                        min_periods=10,
-                        max_periods=60,
-                        periods=None,
-                        freq=None):
+def generate_date_range(
+    np_rng=None,
+    start_date=None,
+    min_periods=10,
+    max_periods=60,
+    periods=None,
+    freq=None,
+):
     """
     TODO write documentation
     """
@@ -71,13 +71,15 @@ def generate_date_range(np_rng=None,
     return pd.date_range(start_date, periods=periods, freq=freq)
 
 
-def generate_forecast_df_dict(np_rng,
-                              n_groups=1,
-                              n_targets=1,
-                              freq=None,
-                              n_real_features=0,
-                              n_cat_features=0,
-                              date_range_kwargs=None):
+def generate_forecast_df_dict(
+    np_rng,
+    n_groups=1,
+    n_targets=1,
+    freq=None,
+    n_real_features=0,
+    n_cat_features=0,
+    date_range_kwargs=None,
+):
     """
     TODO write documentation
     """
@@ -109,16 +111,18 @@ def generate_forecast_df_dict(np_rng,
     return df_dict, target_list, real_feature_list, cat_feature_list
 
 
-def generate_forecast_df(np_rng,
-                         prediction_length,
-                         n_group_by=0,
-                         n_targets=1,
-                         freq=None,
-                         n_real_static_features=0,
-                         n_cat_static_features=0,
-                         n_real_dynamic_features=0,
-                         n_cat_dynamic_features=0,
-                         date_range_kwargs=None):
+def generate_forecast_df(
+    np_rng,
+    prediction_length,
+    n_group_by=0,
+    n_targets=1,
+    freq=None,
+    n_real_static_features=0,
+    n_cat_static_features=0,
+    n_real_dynamic_features=0,
+    n_cat_dynamic_features=0,
+    date_range_kwargs=None,
+):
     """
     TODO write documentation
     """
@@ -134,27 +138,40 @@ def generate_forecast_df(np_rng,
             group_values_list.append([f"group_val_{i}" for i in range(n_group_cat)])
 
     group_by = [f"group_{i}" for i in range(n_group_by)]
-    real_static_feature_list = [f"real_static_feat_{i}" for i in range(n_real_static_features)]
-    cat_static_feature_list = [f"cat_static_feat_{i}" for i in range(n_cat_static_features)]
+    real_static_feature_list = [
+        f"real_static_feat_{i}" for i in range(n_real_static_features)
+    ]
+    cat_static_feature_list = [
+        f"cat_static_feat_{i}" for i in range(n_cat_static_features)
+    ]
 
-    df_dict, target_list, real_dynamic_feature_list, cat_dynamic_feature_list = generate_forecast_df_dict(
+    (
+        df_dict,
+        target_list,
+        real_dynamic_feature_list,
+        cat_dynamic_feature_list,
+    ) = generate_forecast_df_dict(
         np_rng,
         n_groups=n_groups,
         n_targets=n_targets,
         freq=freq,
         n_real_features=n_real_dynamic_features,
         n_cat_features=n_cat_dynamic_features,
-        date_range_kwargs=date_range_kwargs
+        date_range_kwargs=date_range_kwargs,
     )
 
-    feature_list = real_static_feature_list \
-        + cat_static_feature_list \
-        + real_dynamic_feature_list \
+    feature_list = (
+        real_static_feature_list
+        + cat_static_feature_list
+        + real_dynamic_feature_list
         + cat_dynamic_feature_list
+    )
 
     df = pd.DataFrame()
 
-    for (group, df_group), group_values in zip(df_dict.items(), itertools.product(*group_values_list)):
+    for (group, df_group), group_values in zip(
+        df_dict.items(), itertools.product(*group_values_list)
+    ):
         df_group["date"] = df_group.index
 
         if has_groups:
@@ -169,15 +186,6 @@ def generate_forecast_df(np_rng,
         if len(feature_list) > 0:
             df_group.loc[-prediction_length:, target_list] = np.nan
 
-        df = pd.concat([
-            df,
-            df_group
-        ], ignore_index=True)
+        df = pd.concat([df, df_group], ignore_index=True)
 
-    return df, \
-           "date", \
-           target_list, \
-           group_by, \
-           feature_list, \
-           n_groups
-
+    return df, "date", target_list, group_by, feature_list, n_groups

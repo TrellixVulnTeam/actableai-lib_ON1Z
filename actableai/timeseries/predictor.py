@@ -8,12 +8,14 @@ class AAITimeSeriesPredictor:
     Custom Wrapper around GluonTS Predictor
     """
 
-    def __init__(self,
-                 predictor,
-                 keep_feat_static_real=True,
-                 keep_feat_static_cat=True,
-                 keep_feat_dynamic_real=True,
-                 keep_feat_dynamic_cat=True):
+    def __init__(
+        self,
+        predictor,
+        keep_feat_static_real=True,
+        keep_feat_static_cat=True,
+        keep_feat_dynamic_real=True,
+        keep_feat_dynamic_cat=True,
+    ):
         """
         TODO write documentation
         """
@@ -33,11 +35,10 @@ class AAITimeSeriesPredictor:
             self.keep_feat_static_real,
             self.keep_feat_static_cat,
             self.keep_feat_dynamic_real,
-            self.keep_feat_dynamic_cat
+            self.keep_feat_dynamic_cat,
         )
 
         return make_evaluation_predictions(data, self.predictor, num_samples)
-
 
     def predict(self, data, **kwargs):
         """
@@ -48,8 +49,7 @@ class AAITimeSeriesPredictor:
             self.keep_feat_static_real,
             self.keep_feat_static_cat,
             self.keep_feat_dynamic_real,
-            self.keep_feat_dynamic_cat
+            self.keep_feat_dynamic_cat,
         )
 
         return self.predictor.predict(data, **kwargs)
-

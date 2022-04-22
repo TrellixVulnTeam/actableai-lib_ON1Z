@@ -18,9 +18,25 @@ class TestTimeSeries:
     @pytest.mark.parametrize("use_features", [True, False])
     @pytest.mark.parametrize("sorted_data", [True, False])
     @pytest.mark.parametrize("freq", ["T"])
-    def test_simple(self, np_rng, forecast_task, n_group_by, n_targets, use_features, sorted_data, freq):
+    def test_simple(
+        self,
+        np_rng,
+        forecast_task,
+        n_group_by,
+        n_targets,
+        use_features,
+        sorted_data,
+        freq,
+    ):
         prediction_length = np_rng.integers(1, 3)
-        df, date_column, target_columns, group_by, feature_columns, n_groups = generate_forecast_df(
+        (
+            df,
+            date_column,
+            target_columns,
+            group_by,
+            feature_columns,
+            n_groups,
+        ) = generate_forecast_df(
             np_rng,
             prediction_length,
             n_group_by=n_group_by,
@@ -30,7 +46,7 @@ class TestTimeSeries:
             n_cat_static_features=np_rng.integers(1, 10) if use_features else 0,
             n_real_dynamic_features=np_rng.integers(1, 10) if use_features else 0,
             n_cat_dynamic_features=np_rng.integers(1, 10) if use_features else 0,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         df_original = df
@@ -46,7 +62,7 @@ class TestTimeSeries:
             feature_columns=feature_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -90,17 +106,25 @@ class TestTimeSeries:
                     date_list = df_group[date_column].iloc[-prediction_length:]
                 else:
                     first_date = df_group[date_column].iloc[-1]
-                    date_list = pd.date_range(start=first_date, freq=freq, periods=prediction_length + 1)[1:]
+                    date_list = pd.date_range(
+                        start=first_date, freq=freq, periods=prediction_length + 1
+                    )[1:]
 
                 for target in target_columns:
-                    df_group_target_predict = df_group_predict[df_group_predict["target"] == target]
-                    assert (df_group_target_predict[date_column].values == date_list.values).all()
+                    df_group_target_predict = df_group_predict[
+                        df_group_predict["target"] == target
+                    ]
+                    assert (
+                        df_group_target_predict[date_column].values == date_list.values
+                    ).all()
         else:
             if use_features:
                 date_list = df_original[date_column].iloc[-prediction_length:]
             else:
                 first_date = df_original[date_column].iloc[-1]
-                date_list = pd.date_range(start=first_date, freq=freq, periods=prediction_length + 1)[1:]
+                date_list = pd.date_range(
+                    start=first_date, freq=freq, periods=prediction_length + 1
+                )[1:]
 
             for target in target_columns:
                 df_target_predict = df_predict[df_predict["target"] == target]
@@ -126,16 +150,24 @@ class TestTimeSeries:
 
                 date_list = None
                 if use_features:
-                    date_list = df_group[date_column].iloc[-2 * prediction_length:-prediction_length]
+                    date_list = df_group[date_column].iloc[
+                        -2 * prediction_length : -prediction_length
+                    ]
                 else:
                     date_list = df_group[date_column].iloc[-prediction_length:]
 
                 for target in target_columns:
-                    df_group_target_predict = df_group_predict[df_group_predict["target"] == target]
-                    assert (df_group_target_predict[date_column].values == date_list.values).all()
+                    df_group_target_predict = df_group_predict[
+                        df_group_predict["target"] == target
+                    ]
+                    assert (
+                        df_group_target_predict[date_column].values == date_list.values
+                    ).all()
         else:
             if use_features:
-                date_list = df_original[date_column].iloc[-2 * prediction_length:-prediction_length]
+                date_list = df_original[date_column].iloc[
+                    -2 * prediction_length : -prediction_length
+                ]
             else:
                 date_list = df_original[date_column].iloc[-prediction_length:]
 
@@ -184,17 +216,23 @@ class TestTimeSeries:
                 if n_group_by <= 0:
                     df_group_target = df_original
                 else:
-                    df_group_target = dict(df_original.groupby(group_by).__iter__())[group]
+                    df_group_target = dict(df_original.groupby(group_by).__iter__())[
+                        group
+                    ]
 
                 df_group_target_train = None
                 future_date_list = None
                 if use_features:
                     df_group_target_train = df_group_target.iloc[:-prediction_length]
-                    future_date_list = df_group_target[date_column].iloc[-prediction_length:]
+                    future_date_list = df_group_target[date_column].iloc[
+                        -prediction_length:
+                    ]
                 else:
                     df_group_target_train = df_group_target
                     first_date = df_group_target[date_column].iloc[-1]
-                    future_date_list = pd.date_range(start=first_date, freq=freq, periods=prediction_length + 1)[1:]
+                    future_date_list = pd.date_range(
+                        start=first_date, freq=freq, periods=prediction_length + 1
+                    )[1:]
 
                 value = pred_target_group["value"]
                 assert "data" in value
@@ -207,9 +245,12 @@ class TestTimeSeries:
                 assert len(data["date"]) == 4 * prediction_length
                 assert len(data["value"]) == 4 * prediction_length
 
-                date_list = df_group_target_train[date_column][-4 * prediction_length:]
+                date_list = df_group_target_train[date_column][-4 * prediction_length :]
                 assert (pd.to_datetime(data["date"]).values == date_list.values).all()
-                assert (data["value"] == df_group_target_train[target][-4 * prediction_length:]).all()
+                assert (
+                    data["value"]
+                    == df_group_target_train[target][-4 * prediction_length :]
+                ).all()
 
                 prediction = value["prediction"]
                 assert "date" in prediction
@@ -222,7 +263,9 @@ class TestTimeSeries:
                 assert len(prediction["median"]) == prediction_length
                 assert len(prediction["max"]) == prediction_length
 
-                assert (pd.to_datetime(prediction["date"]).values == future_date_list.values).all()
+                assert (
+                    pd.to_datetime(prediction["date"]).values == future_date_list.values
+                ).all()
 
             group_list.append(group)
 
@@ -249,12 +292,13 @@ class TestTimeSeries:
 
             date_list = None
             if use_features:
-                date_list = df_group[date_column].iloc[-2 * prediction_length:-prediction_length]
+                date_list = df_group[date_column].iloc[
+                    -2 * prediction_length : -prediction_length
+                ]
             else:
                 date_list = df_group[date_column].iloc[-prediction_length:]
 
             assert (pd.to_datetime(val_date).values == date_list.values).all()
-
 
         assert len(evaluate["values"]) == n_groups
         for val_group in evaluate["values"]:
@@ -278,7 +322,6 @@ class TestTimeSeries:
         for metric_dict in item_metrics.values():
             assert len(metric_dict) == n_targets
 
-
     @pytest.mark.parametrize("freq", ["T"])
     def test_hyperopt(self, np_rng, forecast_task, freq):
         prediction_length = np_rng.integers(1, 3)
@@ -286,7 +329,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         results = forecast_task.run(
@@ -295,7 +338,7 @@ class TestTimeSeries:
             predicted_columns=target_columns,
             prediction_length=prediction_length,
             trials=10,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -307,7 +350,6 @@ class TestTimeSeries:
 
         assert results["status"] == "SUCCESS"
 
-
     @pytest.mark.parametrize("freq", ["T"])
     def test_ray(self, np_rng, init_ray, freq):
         prediction_length = np_rng.integers(1, 3)
@@ -315,7 +357,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         forecast_task = AAIForecastTask(use_ray=True)
@@ -328,7 +370,7 @@ class TestTimeSeries:
             trials=1,
             use_ray=True,
             RAY_CPU_PER_TRIAL=1,
-            RAY_MAX_CONCURRENT=None
+            RAY_MAX_CONCURRENT=None,
         )
 
         assert results is not None
@@ -340,7 +382,6 @@ class TestTimeSeries:
 
         assert results["status"] == "SUCCESS"
 
-
     @pytest.mark.parametrize("freq", ["T"])
     def test_mix_target_column(self, np_rng, forecast_task, freq):
         prediction_length = np_rng.integers(1, 3)
@@ -348,7 +389,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         df_cat_1 = df.sample(int(len(df) * 0.2), random_state=0)
@@ -363,7 +404,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -374,14 +415,10 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "DoNotContainMixedChecker" in validations_dict
         assert validations_dict["DoNotContainMixedChecker"] == CheckLevels.CRITICAL
-
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_invalid_date_column(self, np_rng, forecast_task, freq):
@@ -390,7 +427,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         df[date_column] = np_rng.choice(["a", "b", "c"], size=len(df))
@@ -402,7 +439,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -413,14 +450,10 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "IsDatetimeChecker" in validations_dict
         assert validations_dict["IsDatetimeChecker"] == CheckLevels.CRITICAL
-
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_insufficient_data(self, np_rng, forecast_task, freq):
@@ -429,7 +462,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 10, "max_periods": 11}
+            date_range_kwargs={"min_periods": 10, "max_periods": 11},
         )
 
         results = forecast_task.run(
@@ -439,7 +472,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -450,14 +483,10 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "IsSufficientDataChecker" in validations_dict
         assert validations_dict["IsSufficientDataChecker"] == CheckLevels.CRITICAL
-
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_invalid_prediction_length(self, np_rng, forecast_task, freq):
@@ -466,7 +495,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         results = forecast_task.run(
@@ -476,7 +505,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -487,14 +516,12 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "IsValidPredictionLengthChecker" in validations_dict
-        assert validations_dict["IsValidPredictionLengthChecker"] == CheckLevels.CRITICAL
-
+        assert (
+            validations_dict["IsValidPredictionLengthChecker"] == CheckLevels.CRITICAL
+        )
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_cat_features(self, np_rng, forecast_task, freq):
@@ -503,7 +530,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         df[target_columns] = np_rng.choice(["a", "b", "c"], size=len(df))
@@ -515,7 +542,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -526,14 +553,10 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "CategoryChecker" in validations_dict
         assert validations_dict["CategoryChecker"] == CheckLevels.CRITICAL
-
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_invalid_column(self, np_rng, forecast_task, freq):
@@ -542,7 +565,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         results = forecast_task.run(
@@ -552,7 +575,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -563,14 +586,10 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "ColumnsExistChecker" in validations_dict
         assert validations_dict["ColumnsExistChecker"] == CheckLevels.CRITICAL
-
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_empty_column(self, np_rng, forecast_task, freq):
@@ -579,7 +598,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         df[target_columns] = np.nan
@@ -591,7 +610,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -602,14 +621,12 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "DoNotContainEmptyColumnsChecker" in validations_dict
-        assert validations_dict["DoNotContainEmptyColumnsChecker"] == CheckLevels.CRITICAL
-
+        assert (
+            validations_dict["DoNotContainEmptyColumnsChecker"] == CheckLevels.CRITICAL
+        )
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_invalid_frequency(self, np_rng, forecast_task, freq):
@@ -618,7 +635,7 @@ class TestTimeSeries:
             np_rng,
             prediction_length,
             freq=freq,
-            date_range_kwargs={"min_periods": 30, "max_periods": 60}
+            date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )
 
         df = df.append(df).sort_index()
@@ -630,7 +647,7 @@ class TestTimeSeries:
             prediction_length=prediction_length,
             model_params=[params.ConstantValueParams()],
             trials=1,
-            use_ray=False
+            use_ray=False,
         )
 
         assert results is not None
@@ -641,11 +658,7 @@ class TestTimeSeries:
 
         assert len(results["validations"]) > 0
 
-        validations_dict = {
-            val["name"]: val["level"]
-            for val in results["validations"]
-        }
+        validations_dict = {val["name"]: val["level"] for val in results["validations"]}
 
         assert "IsValidFrequencyChecker" in validations_dict
         assert validations_dict["IsValidFrequencyChecker"] == CheckLevels.CRITICAL
-

@@ -19,13 +19,15 @@ class BaseParams:
     Base class for Time Series Model Parameters
     """
 
-    def __init__(self,
-                 model_name,
-                 has_estimator=True,
-                 handle_feat_static_real=True,
-                 handle_feat_static_cat=True,
-                 handle_feat_dynamic_real=False,
-                 handle_feat_dynamic_cat=False):
+    def __init__(
+        self,
+        model_name,
+        has_estimator=True,
+        handle_feat_static_real=True,
+        handle_feat_static_cat=True,
+        handle_feat_dynamic_real=False,
+        handle_feat_dynamic_cat=False,
+    ):
         """
         TODO write documentation
         """
@@ -66,22 +68,15 @@ class BaseParams:
             return options
         return self._hp_param(hp.uniform, param_name, *options)
 
-
     def tune_config(self):
         """
         TODO write documentation
         """
         return {}
 
-    def build_estimator(self,
-                        *,
-                        ctx,
-                        device,
-                        freq,
-                        prediction_length,
-                        target_dim,
-                        distr_output,
-                        params):
+    def build_estimator(
+        self, *, ctx, device, freq, prediction_length, target_dim, distr_output, params
+    ):
         """
         TODO write documentation
         """
@@ -99,7 +94,9 @@ class RForecastParams(BaseParams):
     Parameters class for RForecast Model
     """
 
-    def __init__(self, method_name=("tbats", "thetaf", "stlar", "arima", "ets"), period=None):
+    def __init__(
+        self, method_name=("tbats", "thetaf", "stlar", "arima", "ets"), period=None
+    ):
         """
         TODO write documentation
         """
@@ -109,7 +106,7 @@ class RForecastParams(BaseParams):
             handle_feat_static_real=True,
             handle_feat_static_cat=True,
             handle_feat_dynamic_real=True,
-            handle_feat_dynamic_cat=True
+            handle_feat_dynamic_cat=True,
         )
 
         self.method_name = method_name
@@ -121,7 +118,7 @@ class RForecastParams(BaseParams):
         """
         return {
             "method_name": self._choice("method_name", self.method_name),
-            "period": self._randint("period", self.period)
+            "period": self._randint("period", self.period),
         }
 
     def build_predictor(self, *, freq, prediction_length, params, **kwargs):
@@ -141,15 +138,17 @@ class TreePredictorParams(BaseParams):
     Parameters class for Tree Predictor Model
     """
 
-    def __init__(self,
-                 use_feat_dynamic_real,
-                 use_feat_dynamic_cat,
-                 model_params=None,
-                 method=("QRX", "QuantileRegression"),
-                 quantiles=[0.05, 0.25, 0.5, 0.75, 0.95],
-                 context_length=(1, 100),
-                 max_workers=None,
-                 max_n_datapts=1000000):
+    def __init__(
+        self,
+        use_feat_dynamic_real,
+        use_feat_dynamic_cat,
+        model_params=None,
+        method=("QRX", "QuantileRegression"),
+        quantiles=[0.05, 0.25, 0.5, 0.75, 0.95],
+        context_length=(1, 100),
+        max_workers=None,
+        max_n_datapts=1000000,
+    ):
         """
         TODO write documentation
         """
@@ -159,7 +158,7 @@ class TreePredictorParams(BaseParams):
             handle_feat_static_real=False,
             handle_feat_static_cat=False,
             handle_feat_dynamic_real=use_feat_dynamic_real,
-            handle_feat_dynamic_cat=use_feat_dynamic_cat
+            handle_feat_dynamic_cat=use_feat_dynamic_cat,
         )
 
         self.use_feat_dynamic_real = use_feat_dynamic_real
@@ -179,7 +178,7 @@ class TreePredictorParams(BaseParams):
         """
         return {
             "method": self._choice("method", self.method),
-            "context_length": self._randint("context_length", self.context_length)
+            "context_length": self._randint("context_length", self.context_length),
         }
 
     def build_estimator(self, *, freq, prediction_length, params, **kwargs):
@@ -197,7 +196,7 @@ class TreePredictorParams(BaseParams):
             method=params.get("method", self.method),
             quantiles=self.quantiles,
             max_workers=self.max_workers,
-            max_n_datapts=self.max_n_datapts
+            max_n_datapts=self.max_n_datapts,
         )
 
 
@@ -206,7 +205,9 @@ class ProphetParams(BaseParams):
     Parameter class for Prophet Model
     """
 
-    def __init__(self, growth=("linear"), seasonality_mode=("additive", "multiplicative")):
+    def __init__(
+        self, growth=("linear"), seasonality_mode=("additive", "multiplicative")
+    ):
         """
         TODO write documentation
         """
@@ -216,7 +217,7 @@ class ProphetParams(BaseParams):
             handle_feat_static_real=True,
             handle_feat_static_cat=True,
             handle_feat_dynamic_real=True,
-            handle_feat_dynamic_cat=True
+            handle_feat_dynamic_cat=True,
         )
 
         self.growth = growth
@@ -228,7 +229,7 @@ class ProphetParams(BaseParams):
         """
         return {
             "growth": self._choice("growth", self.growth),
-            "seasonality_mode": self._choice("seasonality_mode", self.seasonality_mode)
+            "seasonality_mode": self._choice("seasonality_mode", self.seasonality_mode),
         }
 
     def build_predictor(self, *, freq, prediction_length, params, **kwargs):
@@ -238,10 +239,12 @@ class ProphetParams(BaseParams):
         return ProphetPredictor(
             freq,
             prediction_length=prediction_length,
-            prophet_params = {
+            prophet_params={
                 "growth": params.get("growth", self.growth),
-                "seasonality_mode": params.get("seasonality_mode", self.seasonality_mode),
-            }
+                "seasonality_mode": params.get(
+                    "seasonality_mode", self.seasonality_mode
+                ),
+            },
         )
 
 
@@ -250,15 +253,17 @@ class FeedForwardParams(BaseParams):
     Parameter class for Feed Forward Model
     """
 
-    def __init__(self,
-                 hidden_layer_1_size=None,
-                 hidden_layer_2_size=None,
-                 hidden_layer_3_size=None,
-                 epochs=(1, 100),
-                 learning_rate=(0.001, 0.01),
-                 context_length=(1, 100),
-                 l2=(1e-08, 0.01),
-                 mean_scaling=True):
+    def __init__(
+        self,
+        hidden_layer_1_size=None,
+        hidden_layer_2_size=None,
+        hidden_layer_3_size=None,
+        epochs=(1, 100),
+        learning_rate=(0.001, 0.01),
+        context_length=(1, 100),
+        l2=(1e-08, 0.01),
+        mean_scaling=True,
+    ):
         """
         TODO write documentation
         """
@@ -268,7 +273,7 @@ class FeedForwardParams(BaseParams):
             handle_feat_static_real=False,
             handle_feat_static_cat=False,
             handle_feat_dynamic_real=False,
-            handle_feat_dynamic_cat=False
+            handle_feat_dynamic_cat=False,
         )
 
         self.hidden_layer_1_size = hidden_layer_1_size
@@ -285,22 +290,36 @@ class FeedForwardParams(BaseParams):
         TODO write documentation
         """
         return {
-            "hidden_layer_1_size": self._randint("hidden_layer_1_size", self.hidden_layer_1_size),
-            "hidden_layer_2_size": self._randint("hidden_layer_2_size", self.hidden_layer_2_size),
-            "hidden_layer_3_size": self._randint("hidden_layer_3_size", self.hidden_layer_3_size),
+            "hidden_layer_1_size": self._randint(
+                "hidden_layer_1_size", self.hidden_layer_1_size
+            ),
+            "hidden_layer_2_size": self._randint(
+                "hidden_layer_2_size", self.hidden_layer_2_size
+            ),
+            "hidden_layer_3_size": self._randint(
+                "hidden_layer_3_size", self.hidden_layer_3_size
+            ),
             "epochs": self._randint("epochs", self.epochs),
             "learning_rate": self._uniform("learning_rate", self.learning_rate),
             "context_length": self._randint("context_length", self.context_length),
-            "l2": self._uniform("l2", self.l2)
+            "l2": self._uniform("l2", self.l2),
         }
 
-    def build_estimator(self, *, ctx, freq, prediction_length, distr_output, params, **kwargs):
+    def build_estimator(
+        self, *, ctx, freq, prediction_length, distr_output, params, **kwargs
+    ):
         """
         TODO write documentation
         """
-        hidden_layer_1_size = params.get("hidden_layer_1_size", self.hidden_layer_1_size)
-        hidden_layer_2_size = params.get("hidden_layer_2_size", self.hidden_layer_2_size)
-        hidden_layer_3_size = params.get("hidden_layer_3_size", self.hidden_layer_3_size)
+        hidden_layer_1_size = params.get(
+            "hidden_layer_1_size", self.hidden_layer_1_size
+        )
+        hidden_layer_2_size = params.get(
+            "hidden_layer_2_size", self.hidden_layer_2_size
+        )
+        hidden_layer_3_size = params.get(
+            "hidden_layer_3_size", self.hidden_layer_3_size
+        )
         hidden_layer_size = []
         if hidden_layer_1_size is not None:
             hidden_layer_size.append(hidden_layer_1_size)
@@ -323,7 +342,7 @@ class FeedForwardParams(BaseParams):
                 learning_rate=params.get("learning_rate", self.learning_rate),
                 weight_decay=params.get("l2", self.l2),
                 hybridize=False,
-            )
+            ),
         )
 
 
@@ -332,18 +351,20 @@ class DeepARParams(BaseParams):
     Parameter class for Deep AR Model
     """
 
-    def __init__(self,
-                 epochs=(1, 100),
-                 num_cells=(1, 40),
-                 num_layers=(1, 16),
-                 dropout_rate=(0, 0.5),
-                 learning_rate=(0.0001, 0.01),
-                 batch_size=(16, 128),
-                 context_length=(1, 100),
-                 l2=(1e-8, 0.01),
-                 scaling=True,
-                 use_feat_dynamic_real=False,
-                 impute_missing_values=True):
+    def __init__(
+        self,
+        epochs=(1, 100),
+        num_cells=(1, 40),
+        num_layers=(1, 16),
+        dropout_rate=(0, 0.5),
+        learning_rate=(0.0001, 0.01),
+        batch_size=(16, 128),
+        context_length=(1, 100),
+        l2=(1e-8, 0.01),
+        scaling=True,
+        use_feat_dynamic_real=False,
+        impute_missing_values=True,
+    ):
         """
         TODO write documentation
         """
@@ -353,7 +374,7 @@ class DeepARParams(BaseParams):
             handle_feat_static_real=False,
             handle_feat_static_cat=False,
             handle_feat_dynamic_real=use_feat_dynamic_real,
-            handle_feat_dynamic_cat=False
+            handle_feat_dynamic_cat=False,
         )
 
         self.context_length = context_length
@@ -369,7 +390,7 @@ class DeepARParams(BaseParams):
         self.use_feat_static_real = False
         self.cardinality = None
         self.cell_type = "lstm"
-        self.scaling=scaling
+        self.scaling = scaling
         self.l2 = l2
         self.impute_missing_value = impute_missing_values
 
@@ -384,10 +405,12 @@ class DeepARParams(BaseParams):
             "num_layers": self._randint("num_layers", self.num_layers),
             "dropout_rate": self._uniform("dropout_rate", self.dropout_rate),
             "learning_rate": self._uniform("learning_rate", self.learning_rate),
-            "l2": self._uniform("l2", self.l2)
+            "l2": self._uniform("l2", self.l2),
         }
 
-    def build_estimator(self, *, ctx, freq, prediction_length, distr_output, params, **kwargs):
+    def build_estimator(
+        self, *, ctx, freq, prediction_length, distr_output, params, **kwargs
+    ):
         """
         TODO write documentation
         """
@@ -407,11 +430,12 @@ class DeepARParams(BaseParams):
             distr_output=distr_output,
             impute_missing_values=self.impute_missing_value,
             trainer=Trainer(
-                ctx=ctx, epochs=params.get("epochs", self.epochs),
+                ctx=ctx,
+                epochs=params.get("epochs", self.epochs),
                 learning_rate=params.get("learning_rate", self.learning_rate),
                 hybridize=False,
                 weight_decay=params.get("l2", self.l2),
-            )
+            ),
         )
 
 
@@ -420,15 +444,17 @@ class TransformerTempFlowParams(BaseParams):
     Parameter class for Tramsformer Temp Flow Model
     """
 
-    def __init__(self,
-                 epochs=(1, 100),
-                 d_model=(4, 8, 12, 16),
-                 num_heads=(1, 2, 4),
-                 context_length=(1, 100),
-                 flow_type="MAF",
-                 learning_rate=(0.0001, 0.01),
-                 l2=(0.0001, 0.01),
-                 scaling=False):
+    def __init__(
+        self,
+        epochs=(1, 100),
+        d_model=(4, 8, 12, 16),
+        num_heads=(1, 2, 4),
+        context_length=(1, 100),
+        flow_type="MAF",
+        learning_rate=(0.0001, 0.01),
+        l2=(0.0001, 0.01),
+        scaling=False,
+    ):
         """
         TODO write documentation
         """
@@ -438,7 +464,7 @@ class TransformerTempFlowParams(BaseParams):
             handle_feat_static_real=True,
             handle_feat_static_cat=True,
             handle_feat_dynamic_real=False,
-            handle_feat_dynamic_cat=False
+            handle_feat_dynamic_cat=False,
         )
 
         self.epochs = epochs
@@ -461,10 +487,12 @@ class TransformerTempFlowParams(BaseParams):
             "context_length": self._randint("context_length", self.context_length),
             "flow_type": self._choice("flow_type", self.flow_type),
             "learning_rate": self._uniform("learning_rate", self.learning_rate),
-            "l2": self._uniform("l2", self.l2)
+            "l2": self._uniform("l2", self.l2),
         }
 
-    def build_estimator(self, *, device, freq, prediction_length, target_dim, params, **kwargs):
+    def build_estimator(
+        self, *, device, freq, prediction_length, target_dim, params, **kwargs
+    ):
         """
         TODO write documentation
         """
@@ -484,11 +512,11 @@ class TransformerTempFlowParams(BaseParams):
                 device=device,
                 epochs=params.get("epochs", self.epochs),
                 learning_rate=params.get("learning_rate", self.learning_rate),
-                weight_decay = params.get("l2", self.l2),
+                weight_decay=params.get("l2", self.l2),
                 num_batches_per_epoch=100,
                 batch_size=32,
                 num_workers=0,
-            )
+            ),
         )
 
 
@@ -497,18 +525,20 @@ class DeepVARParams(BaseParams):
     Parameter class for Deep VAR Model
     """
 
-    def __init__(self,
-                 epochs=(1, 100),
-                 num_layers=2,
-                 num_cells=40,
-                 cell_type=("lstm"),
-                 dropout_rate=(0, 0.5),
-                 rank=5,
-                 embedding_dimension=(3, 10),
-                 context_length=(1, 100),
-                 learning_rate=(0.0001, 0.01),
-                 l2=(1e-4, 0.01),
-                 scaling=False):
+    def __init__(
+        self,
+        epochs=(1, 100),
+        num_layers=2,
+        num_cells=40,
+        cell_type=("lstm"),
+        dropout_rate=(0, 0.5),
+        rank=5,
+        embedding_dimension=(3, 10),
+        context_length=(1, 100),
+        learning_rate=(0.0001, 0.01),
+        l2=(1e-4, 0.01),
+        scaling=False,
+    ):
         """
         TODO write documentation
         """
@@ -518,7 +548,7 @@ class DeepVARParams(BaseParams):
             handle_feat_static_real=True,
             handle_feat_static_cat=True,
             handle_feat_dynamic_real=False,
-            handle_feat_dynamic_cat=False
+            handle_feat_dynamic_cat=False,
         )
 
         self.epochs = epochs
@@ -546,10 +576,12 @@ class DeepVARParams(BaseParams):
             "learning_rate": self._uniform("learning_raet", self.learning_rate),
             "rank": self._randint("rank", self.rank),
             "cell_type": self._choice("cell_type", self.cell_type),
-            "l2": self._uniform("l2", self.l2)
+            "l2": self._uniform("l2", self.l2),
         }
 
-    def build_estimator(self, *, ctx, freq, prediction_length, target_dim, params, **kwargs):
+    def build_estimator(
+        self, *, ctx, freq, prediction_length, target_dim, params, **kwargs
+    ):
         """
         TODO write documentation
         """
@@ -569,11 +601,12 @@ class DeepVARParams(BaseParams):
             use_marginal_transformation=False,
             target_dim=target_dim,
             trainer=Trainer(
-                ctx=ctx, epochs=params.get("epochs", self.epochs),
+                ctx=ctx,
+                epochs=params.get("epochs", self.epochs),
                 learning_rate=params.get("learning_rate", self.learning_rate),
-                weight_decay = params.get("l2", self.l2),
+                weight_decay=params.get("l2", self.l2),
                 hybridize=True,
-            )
+            ),
         )
 
 
@@ -582,16 +615,18 @@ class GPVarParams(BaseParams):
     Parameter class for GP Var Model
     """
 
-    def __init__(self,
-                 epochs=(1, 100),
-                 num_layers=(1, 32),
-                 num_cells=(1, 100),
-                 cell_type=("lstm", "gru"),
-                 dropout_rate=(0, 0.5),
-                 rank=(1, 20),
-                 context_length=(1, 100),
-                 learning_rate=(0.0001, 0.01),
-                 l2=(1e-4, 0.01)):
+    def __init__(
+        self,
+        epochs=(1, 100),
+        num_layers=(1, 32),
+        num_cells=(1, 100),
+        cell_type=("lstm", "gru"),
+        dropout_rate=(0, 0.5),
+        rank=(1, 20),
+        context_length=(1, 100),
+        learning_rate=(0.0001, 0.01),
+        l2=(1e-4, 0.01),
+    ):
         """
         TODO write documentation
         """
@@ -601,7 +636,7 @@ class GPVarParams(BaseParams):
             handle_feat_static_real=True,
             handle_feat_static_cat=True,
             handle_feat_dynamic_real=False,
-            handle_feat_dynamic_cat=False
+            handle_feat_dynamic_cat=False,
         )
 
         self.epochs = epochs
@@ -627,11 +662,12 @@ class GPVarParams(BaseParams):
             "learning_rate": self._uniform("learning_rate", self.learning_rate),
             "rank": self._randint("rank", self.rank),
             "cell_type": self._choice("cell_type", self.cell_type),
-            "l2": self._uniform("l2", self.l2)
+            "l2": self._uniform("l2", self.l2),
         }
 
-
-    def build_estimator(self, *, ctx, freq, prediction_length, target_dim, params, **kwargs):
+    def build_estimator(
+        self, *, ctx, freq, prediction_length, target_dim, params, **kwargs
+    ):
         """
         TODO write documentation
         """
@@ -652,11 +688,12 @@ class GPVarParams(BaseParams):
             use_marginal_transformation=False,
             target_dim=target_dim,
             trainer=Trainer(
-                ctx=ctx, epochs=params.get("epochs", self.epochs),
+                ctx=ctx,
+                epochs=params.get("epochs", self.epochs),
                 learning_rate=params.get("learning_rate", self.learning_rate),
-                weight_decay = params.get("l2", self.l2),
+                weight_decay=params.get("l2", self.l2),
                 hybridize=False,
-            )
+            ),
         )
 
 
@@ -676,7 +713,7 @@ class ConstantValueParams(BaseParams):
             handle_feat_static_real=False,
             handle_feat_static_cat=False,
             handle_feat_dynamic_real=False,
-            handle_feat_dynamic_cat=False
+            handle_feat_dynamic_cat=False,
         )
 
         self.value = value
@@ -685,9 +722,7 @@ class ConstantValueParams(BaseParams):
         """
         TODO write documentation
         """
-        return {
-            "value": self._uniform("value", self.value)
-        }
+        return {"value": self._uniform("value", self.value)}
 
     def build_predictor(self, *, freq, prediction_length, params, **kwargs):
         """
@@ -697,6 +732,5 @@ class ConstantValueParams(BaseParams):
         return ConstantValuePredictor(
             value=params.get("value", self.value),
             prediction_length=prediction_length,
-            freq=freq
+            freq=freq,
         )
-

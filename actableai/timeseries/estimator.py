@@ -6,12 +6,14 @@ class AAITimeSeriesEstimator:
     Custom Wrapper around GluonTS Estimator
     """
 
-    def __init__(self,
-                 estimator,
-                 keep_feat_static_real=True,
-                 keep_feat_static_cat=True,
-                 keep_feat_dynamic_real=True,
-                 keep_feat_dynamic_cat=True):
+    def __init__(
+        self,
+        estimator,
+        keep_feat_static_real=True,
+        keep_feat_static_cat=True,
+        keep_feat_dynamic_real=True,
+        keep_feat_dynamic_cat=True,
+    ):
         """
         TODO write documentation
         """
@@ -31,7 +33,7 @@ class AAITimeSeriesEstimator:
             self.keep_feat_static_real,
             self.keep_feat_static_cat,
             self.keep_feat_dynamic_real,
-            self.keep_feat_dynamic_cat
+            self.keep_feat_dynamic_cat,
         )
 
         if validation_data is not None:
@@ -40,8 +42,7 @@ class AAITimeSeriesEstimator:
                 self.keep_feat_static_real,
                 self.keep_feat_static_cat,
                 self.keep_feat_dynamic_real,
-                self.keep_feat_dynamic_cat
+                self.keep_feat_dynamic_cat,
             )
 
         return self.estimator.train(training_data, validation_data)
-

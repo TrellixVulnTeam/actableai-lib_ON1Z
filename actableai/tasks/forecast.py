@@ -10,28 +10,30 @@ class AAIForecastTask(AAITask):
     """
 
     @AAITask.run_with_ray_remote(TaskType.FORECAST)
-    def run(self,
-            df,
-            date_column,
-            predicted_columns=None,
-            prediction_length=None,
-            group_by=None,
-            feature_columns=None,
-            RAY_CPU_PER_TRIAL=3,
-            RAY_GPU_PER_TRIAL=0,
-            RAY_MAX_CONCURRENT=3,
-            epochs="auto",
-            num_cells="auto",
-            num_layers="auto",
-            dropout_rate="auto",
-            learning_rate="auto",
-            trials=1,
-            model_params=None,
-            use_ray=True,
-            tune_samples=20,
-            refit_full=True,
-            verbose=3,
-            seed=123):
+    def run(
+        self,
+        df,
+        date_column,
+        predicted_columns=None,
+        prediction_length=None,
+        group_by=None,
+        feature_columns=None,
+        RAY_CPU_PER_TRIAL=3,
+        RAY_GPU_PER_TRIAL=0,
+        RAY_MAX_CONCURRENT=3,
+        epochs="auto",
+        num_cells="auto",
+        num_layers="auto",
+        dropout_rate="auto",
+        learning_rate="auto",
+        trials=1,
+        model_params=None,
+        use_ray=True,
+        tune_samples=20,
+        refit_full=True,
+        verbose=3,
+        seed=123,
+    ):
         """
         TODO write documentation
         """
@@ -44,9 +46,16 @@ class AAIForecastTask(AAITask):
         from sklearn.preprocessing import LabelEncoder
         from actableai.timeseries import params
         from actableai.timeseries.forecaster import AAITimeSeriesForecaster
-        from actableai.data_validation.params import TimeSeriesDataValidator, TimeSeriesPredictionDataValidator
+        from actableai.data_validation.params import (
+            TimeSeriesDataValidator,
+            TimeSeriesPredictionDataValidator,
+        )
         from actableai.data_validation.base import CheckLevels
-        from actableai.timeseries.util import handle_datetime_column, find_freq, interpolate
+        from actableai.timeseries.util import (
+            handle_datetime_column,
+            find_freq,
+            interpolate,
+        )
         from actableai.utils.sanitize import sanitize_timezone
         from actableai.utils import get_type_special
 
@@ -71,18 +80,17 @@ class AAIForecastTask(AAITask):
 
         # First parameters validation
         data_validation_results = TimeSeriesDataValidator().validate(
-            df,
-            date_column,
-            predicted_columns,
-            feature_columns,
-            group_by
+            df, date_column, predicted_columns, feature_columns, group_by
         )
         failed_checks = [x for x in data_validation_results if x is not None]
 
         if CheckLevels.CRITICAL in [x.level for x in failed_checks]:
             return {
                 "status": "FAILURE",
-                "validations": [{"name": x.name, "level": x.level, "message": x.message} for x in failed_checks],
+                "validations": [
+                    {"name": x.name, "level": x.level, "message": x.message}
+                    for x in failed_checks
+                ],
                 "runtime": time.time() - start_time,
                 "data": {},
             }
@@ -98,7 +106,9 @@ class AAIForecastTask(AAITask):
 
         # Encode categorical columns
         if len(cat_feature_columns) > 0:
-            df[cat_feature_columns] = df[cat_feature_columns].apply(LabelEncoder().fit_transform)
+            df[cat_feature_columns] = df[cat_feature_columns].apply(
+                LabelEncoder().fit_transform
+            )
 
         # Create grouped df
         df_dict = {}
@@ -128,7 +138,9 @@ class AAIForecastTask(AAITask):
         for column in real_feature_columns:
             if df_unique[column] == 1:
                 for group, df_group in df_dict.items():
-                    group_feature_value = df_group[column].loc[df_group[column].first_valid_index()]
+                    group_feature_value = df_group[column].loc[
+                        df_group[column].first_valid_index()
+                    ]
                     real_static_feature_dict[group].append(group_feature_value)
             else:
                 real_dynamic_feature_columns.append(column)
@@ -137,12 +149,16 @@ class AAIForecastTask(AAITask):
         for column in cat_feature_columns:
             if df_unique[column] == 1:
                 for group, df_group in df_dict.items():
-                    group_feature_value = df_group[column].loc[df_group[column].first_valid_index()]
+                    group_feature_value = df_group[column].loc[
+                        df_group[column].first_valid_index()
+                    ]
                     cat_static_feature_dict[group].append(group_feature_value)
             else:
                 cat_dynamic_feature_columns.append(column)
 
-        has_dynamic_features = len(real_dynamic_feature_columns) + len(cat_dynamic_feature_columns) > 0
+        has_dynamic_features = (
+            len(real_dynamic_feature_columns) + len(cat_dynamic_feature_columns) > 0
+        )
         df_train_dict = {}
         df_valid_dict = {}
         df_predict_dict = {}
@@ -156,10 +172,12 @@ class AAIForecastTask(AAITask):
             freq = find_freq(pd_date)
             freq_dict[group] = freq
 
-
             # Sort Dataframe
             df_dict[group] = df_dict[group][
-                predicted_columns + real_dynamic_feature_columns + cat_dynamic_feature_columns + group_by
+                predicted_columns
+                + real_dynamic_feature_columns
+                + cat_dynamic_feature_columns
+                + group_by
             ]
             df_dict[group].index = pd_date
             df_dict[group].name = date_column
@@ -167,30 +185,41 @@ class AAIForecastTask(AAITask):
 
             pd_date_dict[group] = pd.Series(df_dict[group].index)
 
-            last_valid_index = -prediction_length if has_dynamic_features else df_dict[group].shape[0]
+            last_valid_index = (
+                -prediction_length if has_dynamic_features else df_dict[group].shape[0]
+            )
 
-            df_dict[group].iloc[:last_valid_index] = interpolate(df_dict[group].iloc[:last_valid_index], freq)
+            df_dict[group].iloc[:last_valid_index] = interpolate(
+                df_dict[group].iloc[:last_valid_index], freq
+            )
 
-            df_train_dict[group] = df_dict[group].iloc[:last_valid_index - prediction_length]
+            df_train_dict[group] = df_dict[group].iloc[
+                : last_valid_index - prediction_length
+            ]
             df_valid_dict[group] = df_dict[group].iloc[:last_valid_index]
             df_predict_dict[group] = df_dict[group]
 
         # Second Data Validation (for the prediction part of the data which needed pre-processing)
-        data_prediction_validation_results = TimeSeriesPredictionDataValidator().validate(
-            df_train_dict,
-            df_valid_dict,
-            df_predict_dict,
-            freq_dict,
-            real_dynamic_feature_columns + cat_dynamic_feature_columns,
-            predicted_columns,
-            prediction_length
+        data_prediction_validation_results = (
+            TimeSeriesPredictionDataValidator().validate(
+                df_train_dict,
+                df_valid_dict,
+                df_predict_dict,
+                freq_dict,
+                real_dynamic_feature_columns + cat_dynamic_feature_columns,
+                predicted_columns,
+                prediction_length,
+            )
         )
         failed_checks = [x for x in data_prediction_validation_results if x is not None]
 
         if CheckLevels.CRITICAL in [x.level for x in failed_checks]:
             return {
                 "status": "FAILURE",
-                "validations": [{"name": x.name, "level": x.level, "message": x.message} for x in failed_checks],
+                "validations": [
+                    {"name": x.name, "level": x.level, "message": x.message}
+                    for x in failed_checks
+                ],
                 "runtime": time.time() - start_time,
                 "data": {},
             }
@@ -202,34 +231,30 @@ class AAIForecastTask(AAITask):
         torch_device = torch.device("cuda" if RAY_GPU_PER_TRIAL > 0 else "cpu")
 
         if model_params is None:
-            model_params=[
+            model_params = [
                 params.ProphetParams(),
-
                 params.RForecastParams(
                     method_name=("thetaf", "stlar", "arima", "ets"),
                 ),
-
                 params.TreePredictorParams(
                     use_feat_dynamic_cat=len(cat_dynamic_feature_columns) > 0,
-                    use_feat_dynamic_real=len(real_dynamic_feature_columns) > 0 or len(predicted_columns) > 1,
+                    use_feat_dynamic_real=len(real_dynamic_feature_columns) > 0
+                    or len(predicted_columns) > 1,
                     method=("QRX", "QuantileRegression"),
-                    context_length=(1, 2 * prediction_length)
+                    context_length=(1, 2 * prediction_length),
                 ),
-
                 params.DeepARParams(
                     context_length=(1, 2 * prediction_length),
                     epochs=(1, 20),
                     num_layers=(1, 3),
                     num_cells=(1, 10),
-                    use_feat_dynamic_real=len(real_dynamic_feature_columns) > 0 or len(predicted_columns) > 1
+                    use_feat_dynamic_real=len(real_dynamic_feature_columns) > 0
+                    or len(predicted_columns) > 1,
                 ),
             ]
 
         m = AAITimeSeriesForecaster(
-            prediction_length,
-            mx_ctx,
-            torch_device,
-            model_params=model_params
+            prediction_length, mx_ctx, torch_device, model_params=model_params
         )
 
         m.fit(
@@ -248,7 +273,7 @@ class AAIForecastTask(AAITask):
                     "cpu": RAY_CPU_PER_TRIAL,
                     "gpu": RAY_GPU_PER_TRIAL,
                 },
-                "raise_on_failed_trial": False
+                "raise_on_failed_trial": False,
             },
             max_concurrent=RAY_MAX_CONCURRENT,
             tune_samples=tune_samples,
@@ -274,40 +299,45 @@ class AAIForecastTask(AAITask):
         df_val_predictions = pd.DataFrame()
         for group, df_group in validations["predictions"].items():
             df_group["_group"] = [group] * len(df_group)
-            df_val_predictions = pd.concat([
-                df_val_predictions,
-                df_group
-            ], ignore_index=True)
+            df_val_predictions = pd.concat(
+                [df_val_predictions, df_group], ignore_index=True
+            )
 
         df_val_item_metrics = pd.DataFrame()
         for group, df_group in validations["item_metrics"].items():
             df_group["_group"] = [group] * len(df_group)
-            df_val_item_metrics = pd.concat([
-                df_val_item_metrics,
-                df_group
-            ], ignore_index=True)
+            df_val_item_metrics = pd.concat(
+                [df_val_item_metrics, df_group], ignore_index=True
+            )
 
         df_predictions = pd.DataFrame()
         for group, df_group in predictions["predictions"].items():
             df_group["_group"] = [group] * len(df_group)
-            df_predictions = pd.concat([
-                df_predictions,
-                df_group
-            ], ignore_index=True)
+            df_predictions = pd.concat([df_predictions, df_group], ignore_index=True)
 
         for group_index, group in enumerate(group_by):
-            f_group_values = (lambda group_values: group_values[group_index])
-            df_val_predictions[group] = df_val_predictions["_group"].apply(f_group_values)
-            df_val_item_metrics[group] = df_val_item_metrics["_group"].apply(f_group_values)
+            f_group_values = lambda group_values: group_values[group_index]
+            df_val_predictions[group] = df_val_predictions["_group"].apply(
+                f_group_values
+            )
+            df_val_item_metrics[group] = df_val_item_metrics["_group"].apply(
+                f_group_values
+            )
             df_predictions[group] = df_predictions["_group"].apply(f_group_values)
 
-        df_val_predictions = df_val_predictions.rename(columns={"date": date_column}).drop(columns="_group")
-        df_predictions = df_predictions.rename(columns={"date": date_column}).drop(columns="_group")
+        df_val_predictions = df_val_predictions.rename(
+            columns={"date": date_column}
+        ).drop(columns="_group")
+        df_predictions = df_predictions.rename(columns={"date": date_column}).drop(
+            columns="_group"
+        )
 
         # FIXME REMOVE LEGACY CODE
         # --------------------
         val_dates = [
-            df_group_valid_dict.index[-prediction_length:].strftime("%Y-%m-%d %H:%M:%S").tolist()
+            df_group_valid_dict.index[-prediction_length:]
+            .strftime("%Y-%m-%d %H:%M:%S")
+            .tolist()
             for df_group_valid_dict in df_valid_dict.values()
         ]
         if len(group_by) <= 0:
@@ -324,18 +354,36 @@ class AAIForecastTask(AAITask):
                         "group": group,
                         "value": {
                             "data": {
-                                "date": df_valid_dict[group].index.strftime("%Y-%m-%d %H:%M:%S")[-4 * prediction_length:].tolist(),
-                                "value": df_valid_dict[group][target][-4 * prediction_length:].tolist()
+                                "date": df_valid_dict[group]
+                                .index.strftime("%Y-%m-%d %H:%M:%S")[
+                                    -4 * prediction_length :
+                                ]
+                                .tolist(),
+                                "value": df_valid_dict[group][target][
+                                    -4 * prediction_length :
+                                ].tolist(),
                             },
                             "prediction": {
-                                "date": df_group_target_predictions.sort_values(by="date")["date"].dt.strftime("%Y-%m-%d %H:%M:%S").tolist(),
-                                "min": df_group_target_predictions.sort_values(by="date")["q5"].tolist(),
-                                "median": df_group_target_predictions.sort_values(by="date")["q50"].tolist(),
-                                "max": df_group_target_predictions.sort_values(by="date")["q95"].tolist()
-                            }
-                        }
+                                "date": df_group_target_predictions.sort_values(
+                                    by="date"
+                                )["date"]
+                                .dt.strftime("%Y-%m-%d %H:%M:%S")
+                                .tolist(),
+                                "min": df_group_target_predictions.sort_values(
+                                    by="date"
+                                )["q5"].tolist(),
+                                "median": df_group_target_predictions.sort_values(
+                                    by="date"
+                                )["q50"].tolist(),
+                                "max": df_group_target_predictions.sort_values(
+                                    by="date"
+                                )["q95"].tolist(),
+                            },
+                        },
                     }
-                    for target, df_group_target_predictions in df_group_predictions.groupby("target")
+                    for target, df_group_target_predictions in df_group_predictions.groupby(
+                        "target"
+                    )
                 ]
                 for group, df_group_predictions in predictions["predictions"].items()
             ],
@@ -344,17 +392,25 @@ class AAIForecastTask(AAITask):
                 "values": [
                     [
                         {
-                            "q5": df_group_target_predictions.sort_values(by="date")["q5"].tolist(),
-                            "q50": df_group_target_predictions.sort_values(by="date")["q50"].tolist(),
-                            "q95": df_group_target_predictions.sort_values(by="date")["q95"].tolist(),
+                            "q5": df_group_target_predictions.sort_values(by="date")[
+                                "q5"
+                            ].tolist(),
+                            "q50": df_group_target_predictions.sort_values(by="date")[
+                                "q50"
+                            ].tolist(),
+                            "q95": df_group_target_predictions.sort_values(by="date")[
+                                "q95"
+                            ].tolist(),
                         }
-                        for _, df_group_target_predictions in df_group_predictions.groupby("target")
+                        for _, df_group_target_predictions in df_group_predictions.groupby(
+                            "target"
+                        )
                     ]
                     for df_group_predictions in validations["predictions"].values()
                 ],
-                "agg_metrics": None, # Not used in the frontend, and not compatible with multivariate
-                "item_metrics": df_val_item_metrics.to_dict()
-            }
+                "agg_metrics": None,  # Not used in the frontend, and not compatible with multivariate
+                "item_metrics": df_val_item_metrics.to_dict(),
+            },
         }
         # --------------------
 
@@ -368,13 +424,15 @@ class AAIForecastTask(AAITask):
                 "validation": {
                     "predict": df_val_predictions,
                     "agg_metrics": validations["agg_metrics"],
-                    "item_metrics": df_val_item_metrics
+                    "item_metrics": df_val_item_metrics,
                 },
             },
-            "data": data, # FIXME Legacy
-            "validations": [{"name": x.name, "level": x.level, "message": x.message} for x in failed_checks],
+            "data": data,  # FIXME Legacy
+            "validations": [
+                {"name": x.name, "level": x.level, "message": x.message}
+                for x in failed_checks
+            ],
             "runtime": runtime,
         }
 
         return resultPredict
-
