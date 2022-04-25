@@ -15,8 +15,7 @@ def unittest_hyperparameters():
 
 
 def init_ray(**kwargs):
-    num_cpus = psutil.cpu_count()
-    ray.init(num_cpus=num_cpus, namespace="aai", **kwargs)
+    ray.init(num_cpus=1, namespace="aai", **kwargs)
 
 
 def generate_random_date(
