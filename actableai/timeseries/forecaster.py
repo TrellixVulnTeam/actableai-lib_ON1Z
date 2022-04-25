@@ -155,6 +155,34 @@ class AAITimeSeriesForecaster(object):
             keep_feat_dynamic_cat,
         )
 
+    @classmethod
+    def _trainable(cls, params):
+        np.random.seed(params["seed"])
+        predictor = cls._create_predictor(
+            params["model_params"],
+            params["model"],
+            params["train_data_partial"],
+            params["freq"],
+            params["distr_output"],
+            params["prediction_length"],
+            params["mx_ctx"],
+            params["torch_device"],
+        )
+
+        forecast_it, ts_it = predictor.make_evaluation_predictions(
+            params["tune_data"], 100
+        )
+
+        evaluator = Evaluator(quantiles=[0.05, 0.25, 0.5, 0.75, 0.95])
+        agg_metrics, item_metrics = evaluator(
+            ts_it, forecast_it, num_series=len(params["tune_data"])
+        )
+
+        if not params["use_ray"]:
+            return {params["loss"]: agg_metrics[params["loss"]]}
+
+        tune.report(**{params["loss"]: agg_metrics[params["loss"]]})
+
     def _fit_predictor(
         self,
         train_data,
@@ -177,33 +205,8 @@ class AAITimeSeriesForecaster(object):
         else:
             self.distr_output = StudentTOutput()
 
-        def trainable(params):
-            np.random.seed(params["seed"])
-            predictor = self._create_predictor(
-                params["model_params"],
-                params["model"],
-                train_data_partial,
-                params["freq"],
-                params["distr_output"],
-                params["prediction_length"],
-                params["mx_ctx"],
-                params["torch_device"],
-            )
-
-            forecast_it, ts_it = predictor.make_evaluation_predictions(tune_data, 100)
-
-            evaluator = Evaluator(quantiles=[0.05, 0.25, 0.5, 0.75, 0.95])
-            agg_metrics, item_metrics = evaluator(
-                ts_it, forecast_it, num_series=len(tune_data)
-            )
-
-            if not use_ray:
-                return {loss: agg_metrics[loss]}
-
-            tune.report(**{loss: agg_metrics[loss]})
-
         def objective_function(params):
-            return {"loss": trainable(params)[loss], "status": "ok"}
+            return {"loss": self._trainable(params)[loss], "status": "ok"}
 
         models = []
         for name, p in self.model_params.items():
@@ -221,6 +224,10 @@ class AAITimeSeriesForecaster(object):
             "prediction_length": self.prediction_length,
             "mx_ctx": self.mx_ctx,
             "torch_device": self.torch_device,
+            "train_data_partial": train_data_partial,
+            "tune_data": tune_data,
+            "loss": loss,
+            "use_ray": use_ray,
         }
 
         # get time of each trial
@@ -238,7 +245,7 @@ class AAITimeSeriesForecaster(object):
 
             np.random.seed(seed)
             analysis = tune.run(
-                trainable,
+                self._trainable,
                 search_alg=algo,
                 num_samples=trials,
                 verbose=verbose,
