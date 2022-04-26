@@ -170,7 +170,7 @@ class AAITimeSeriesForecaster(object):
         )
 
         forecast_it, ts_it = predictor.make_evaluation_predictions(
-            params["tune_data"], 100
+            params["tune_data"], num_samples=100
         )
 
         evaluator = Evaluator(quantiles=[0.05, 0.25, 0.5, 0.75, 0.95])

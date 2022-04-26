@@ -245,15 +245,19 @@ class AAIForecastTask(AAITask):
                     method=("QRX", "QuantileRegression"),
                     context_length=(1, 2 * prediction_length),
                 ),
-                params.DeepARParams(
-                    context_length=(1, 2 * prediction_length),
-                    epochs=(1, 20),
-                    num_layers=(1, 3),
-                    num_cells=(1, 10),
-                    use_feat_dynamic_real=len(real_dynamic_feature_columns) > 0
-                    or len(predicted_columns) > 1,
-                ),
             ]
+
+            if len(df_train_dict[first_group]) >= 1000:
+                model_params.append(
+                    params.DeepARParams(
+                        context_length=(1, 2 * prediction_length),
+                        epochs=(1, 20),
+                        num_layers=(1, 3),
+                        num_cells=(1, 10),
+                        use_feat_dynamic_real=len(real_dynamic_feature_columns) > 0
+                        or len(predicted_columns) > 1,
+                    ),
+                )
 
         m = AAITimeSeriesForecaster(
             prediction_length, mx_ctx, torch_device, model_params=model_params
