@@ -300,6 +300,7 @@ class AAITimeSeriesForecaster(object):
         use_ray=True,
         verbose=3,
         seed=123,
+        sampling_method="random",
     ):
         """
         FIXME documentation
@@ -383,6 +384,7 @@ class AAITimeSeriesForecaster(object):
                 real_dynamic_feature_columns,
                 self.cat_dynamic_feature_columns,
                 tune_samples,
+                sampling_method=sampling_method,
             )
 
             (
@@ -607,6 +609,7 @@ class AAITimeSeriesForecaster(object):
         real_dynamic_feature_columns,
         cat_dynamic_feature_columns,
         tune_samples,
+        sampling_method="random",
     ):
         """
         TODO write documentation
@@ -640,6 +643,16 @@ class AAITimeSeriesForecaster(object):
 
         tune_data_list = []
         for i in range(tune_samples):
+            slice_function = None
+            if sampling_method == "random":
+                slice_function = lambda df: slice(
+                    np.random.randint(2 * self.prediction_length, df.shape[0] + 1)
+                )
+            elif sampling_method == "last":
+                slice_function = lambda df: slice(df.shape[0] - i)
+            else:
+                raise Exception("Unkown sampling method")
+
             tune_data_list.append(
                 util.dataframe_to_list_dataset(
                     df_dict,
@@ -651,7 +664,7 @@ class AAITimeSeriesForecaster(object):
                     cat_dynamic_feature_columns=cat_dynamic_feature_columns,
                     group_dict=self.group_dict,
                     prediction_length=self.prediction_length,
-                    slice_df=(lambda df: slice(df.shape[0] - i)),
+                    slice_df=slice_function,
                     training=True,
                 )
             )

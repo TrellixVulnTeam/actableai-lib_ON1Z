@@ -4,6 +4,7 @@ from actableai.tasks.base import AAITask
 
 import pandas as pd
 
+
 class AAIForecastTask(AAITask):
     """
     Forecast (time series) Task
@@ -33,6 +34,7 @@ class AAIForecastTask(AAITask):
         refit_full=True,
         verbose=3,
         seed=123,
+        sampling_method="random",
     ):
         """
         TODO write documentation
@@ -280,6 +282,7 @@ class AAIForecastTask(AAITask):
             use_ray=use_ray,
             verbose=verbose,
             seed=seed,
+            sampling_method=sampling_method,
         )
 
         total_trials_times = m.total_trial_time
