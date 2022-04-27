@@ -178,6 +178,13 @@ class TestTimeSeries:
         df_agg_metrics = validation_data["agg_metrics"]
         assert len(df_agg_metrics) == n_targets
         assert "target" in df_agg_metrics.columns
+        assert "MAPE" in df_agg_metrics.columns
+        assert "MASE" in df_agg_metrics.columns
+        assert "RMSE" in df_agg_metrics.columns
+        assert "sMAPE" in df_agg_metrics.columns
+        assert (
+            not df_agg_metrics[["MAPE", "MASE", "RMSE", "sMAPE"]].isna().any(axis=None)
+        )
         for col in target_columns:
             assert col in df_agg_metrics["target"].unique()
 
@@ -186,7 +193,13 @@ class TestTimeSeries:
         assert "target" in df_item_metrics.columns
         for col in group_by:
             assert col in df_item_metrics.columns
-
+        assert "MAPE" in df_item_metrics.columns
+        assert "MASE" in df_item_metrics.columns
+        assert "RMSE" in df_item_metrics.columns
+        assert "sMAPE" in df_item_metrics.columns
+        assert (
+            not df_item_metrics[["MAPE", "MASE", "RMSE", "sMAPE"]].isna().any(axis=None)
+        )
         for col in target_columns:
             assert col in df_item_metrics["target"].unique()
 
@@ -318,7 +331,14 @@ class TestTimeSeries:
         for col in target_columns:
             assert col in item_metrics["item_id"].values()
             assert col in item_metrics["item_id"].keys()
-
+        assert "MAPE" in item_metrics
+        assert "MASE" in item_metrics
+        assert "MSE" in item_metrics
+        assert "sMAPE" in item_metrics
+        assert not np.isnan(list(item_metrics["MAPE"].values())).any()
+        assert not np.isnan(list(item_metrics["MASE"].values())).any()
+        assert not np.isnan(list(item_metrics["MSE"].values())).any()
+        assert not np.isnan(list(item_metrics["sMAPE"].values())).any()
         for metric_dict in item_metrics.values():
             assert len(metric_dict) == n_targets
 

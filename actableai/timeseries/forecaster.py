@@ -498,7 +498,14 @@ class AAITimeSeriesForecaster(object):
             tss = list(ts_it)
             forecasts = list(forecast_it)
 
-            evaluator = Evaluator(quantiles=quantiles, num_workers=num_workers)
+            rmse = lambda target, forecast: np.sqrt(
+                np.mean(np.square(target - forecast))
+            )
+            evaluator = Evaluator(
+                quantiles=quantiles,
+                num_workers=num_workers,
+                custom_eval_fn={"custom_RMSE": [rmse, "mean", "median"]},
+            )
             target_agg_metrics, df_target_item_metrics = evaluator(
                 tss, forecasts, num_series=len(valid_data)
             )
@@ -529,6 +536,11 @@ class AAITimeSeriesForecaster(object):
                 ],
                 ignore_index=True,
             )
+
+        df_item_metrics = df_item_metrics.rename(columns={"custom_RMSE": "RMSE"})
+        df_agg_metrics = df_agg_metrics.drop(columns="RMSE").rename(
+            columns={"custom_RMSE": "RMSE"}
+        )
 
         df_item_metrics_dict = {}
         for group, df_group in df_item_metrics.groupby("group"):

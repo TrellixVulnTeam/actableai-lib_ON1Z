@@ -129,6 +129,7 @@ class TestAAITimeSeriesForecaster:
             n_real_features=np_rng.integers(1, 10) if use_features else 0,
             n_cat_features=np_rng.integers(1, 10) if use_features else 0,
         )
+        group_list = list(df_dict.keys())
         prediction_length = np_rng.integers(1, 3)
 
         real_static_feature_dict = {}
@@ -210,6 +211,77 @@ class TestAAITimeSeriesForecaster:
         assert predictions is not None
         assert "predictions" in predictions
 
+        df_predictions_dict = validations["predictions"]
+        for group in df_predictions_dict.keys():
+            assert group in group_list
+
+        df_item_metrics_dict = validations["item_metrics"]
+        for group in df_item_metrics_dict.keys():
+            assert group in group_list
+
+        for group in group_list:
+            df_predictions = df_predictions_dict[group]
+            assert "target" in df_predictions.columns
+            assert "date" in df_predictions.columns
+            assert "q5" in df_predictions.columns
+            assert "q50" in df_predictions.columns
+            assert "q95" in df_predictions.columns
+            assert len(df_predictions) == prediction_length * n_targets
+            assert (
+                df_predictions.groupby("date").first().index
+                == df_valid_dict[group].index[-prediction_length:]
+            ).all()
+
+            df_item_metrics = df_item_metrics_dict[group]
+            assert len(df_item_metrics) == n_targets
+            assert "target" in df_item_metrics.columns
+            assert "MAPE" in df_item_metrics.columns
+            assert "MASE" in df_item_metrics.columns
+            assert "RMSE" in df_item_metrics.columns
+            assert "sMAPE" in df_item_metrics.columns
+            assert (
+                not df_item_metrics[["MAPE", "MASE", "RMSE", "sMAPE"]]
+                .isna()
+                .any(axis=None)
+            )
+
+        df_agg_metrics = validations["agg_metrics"]
+        assert len(df_agg_metrics) == n_targets
+        assert "target" in df_agg_metrics.columns
+        assert "MAPE" in df_agg_metrics.columns
+        assert "MASE" in df_agg_metrics.columns
+        assert "RMSE" in df_agg_metrics.columns
+        assert "sMAPE" in df_agg_metrics.columns
+        assert (
+            not df_agg_metrics[["MAPE", "MASE", "RMSE", "sMAPE"]].isna().any(axis=None)
+        )
+
+        df_predictions_dict = predictions["predictions"]
+        for group in df_predictions_dict.keys():
+            assert group in group_list
+
+        for group in group_list:
+            if (
+                len(real_dynamic_feature_columns) + len(cat_dynamic_feature_columns)
+                <= 0
+            ):
+                future_dates = pd.date_range(
+                    df_test_dict[group].index[-1],
+                    periods=prediction_length + 1,
+                    freq=freq,
+                )[1:]
+            else:
+                future_dates = df_test_dict[group].index[-prediction_length:]
+
+            df_predictions = df_predictions_dict[group]
+            assert "target" in df_predictions.columns
+            assert "date" in df_predictions.columns
+            assert "q5" in df_predictions.columns
+            assert "q50" in df_predictions.columns
+            assert "q95" in df_predictions.columns
+            assert len(df_predictions) == prediction_length * n_targets
+            assert (df_predictions.groupby("date").first().index == future_dates).all()
+
     @pytest.mark.parametrize("freq", ["T"])
     @pytest.mark.parametrize("use_ray", [True, False])
     def test_hyperopt(self, np_rng, mx_ctx, torch_device, use_ray, freq):
@@ -252,201 +324,6 @@ class TestAAITimeSeriesForecaster:
         assert "agg_metrics" in validations
         assert predictions is not None
         assert "predictions" in predictions
-
-    @pytest.mark.parametrize("n_groups", [1, 5])
-    @pytest.mark.parametrize("n_targets", [1, 5])
-    @pytest.mark.parametrize("use_features", [True, False])
-    @pytest.mark.parametrize("freq", ["T"])
-    def test_score(
-        self, np_rng, mx_ctx, torch_device, n_groups, n_targets, use_features, freq
-    ):
-        (
-            df_dict,
-            target_columns,
-            real_dynamic_feature_columns,
-            cat_dynamic_feature_columns,
-        ) = generate_forecast_df_dict(
-            np_rng,
-            n_groups,
-            n_targets=n_targets,
-            freq=freq,
-            n_real_features=np_rng.integers(1, 10) if use_features else 0,
-            n_cat_features=np_rng.integers(1, 10) if use_features else 0,
-        )
-        group_list = list(df_dict.keys())
-        prediction_length = np_rng.integers(1, 3)
-
-        real_static_feature_dict = {}
-        cat_static_feature_dict = {}
-        if use_features:
-            for group in df_dict.keys():
-                n_features = np_rng.integers(2, 10)
-                real_static_feature_dict[group] = np_rng.standard_normal(n_features)
-
-            for group in df_dict.keys():
-                n_features = np_rng.integers(2, 10)
-                cat_static_feature_dict[group] = np_rng.integers(1, 10, n_features)
-
-        group_dict = None
-        if n_groups > 1:
-            group_dict = {
-                group: group_index for group_index, group in enumerate(df_dict.keys())
-            }
-
-        df_train_dict = {}
-        df_valid_dict = {}
-        for group in df_dict.keys():
-            df_train_dict[group] = df_dict[group].iloc[:-prediction_length]
-            df_valid_dict[group] = df_dict[group]
-
-        model_params = [params.ConstantValueParams()]
-
-        validations, _ = self._fit_predict_model(
-            mx_ctx,
-            torch_device,
-            prediction_length,
-            model_params,
-            freq,
-            target_columns,
-            df_train_dict,
-            df_valid_dict=df_valid_dict,
-            real_static_feature_dict=real_static_feature_dict,
-            cat_static_feature_dict=cat_static_feature_dict,
-            real_dynamic_feature_columns=real_dynamic_feature_columns,
-            cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-            group_dict=group_dict,
-        )
-
-        assert validations is not None
-        assert "predictions" in validations
-        assert "item_metrics" in validations
-        assert "agg_metrics" in validations
-
-        df_predictions_dict = validations["predictions"]
-        for group in df_predictions_dict.keys():
-            assert group in group_list
-
-        df_item_metrics_dict = validations["item_metrics"]
-        for group in df_item_metrics_dict.keys():
-            assert group in group_list
-
-        for group in group_list:
-            df_predictions = df_predictions_dict[group]
-            assert "target" in df_predictions.columns
-            assert "date" in df_predictions.columns
-            assert "q5" in df_predictions.columns
-            assert "q50" in df_predictions.columns
-            assert "q95" in df_predictions.columns
-            assert len(df_predictions) == prediction_length * n_targets
-            assert (
-                df_predictions.groupby("date").first().index
-                == df_valid_dict[group].index[-prediction_length:]
-            ).all()
-
-            df_item_metrics = df_item_metrics_dict[group]
-            assert "target" in df_item_metrics.columns
-            assert len(df_item_metrics) == n_targets
-
-        df_agg_metrics = validations["agg_metrics"]
-        assert "target" in df_agg_metrics.columns
-        assert len(df_agg_metrics) == n_targets
-
-    @pytest.mark.parametrize("n_groups", [1, 5])
-    @pytest.mark.parametrize("n_targets", [1, 5])
-    @pytest.mark.parametrize("use_features", [True, False])
-    @pytest.mark.parametrize("freq", ["T"])
-    def test_predict(
-        self, np_rng, mx_ctx, torch_device, n_groups, n_targets, use_features, freq
-    ):
-        (
-            df_dict,
-            target_columns,
-            real_dynamic_feature_columns,
-            cat_dynamic_feature_columns,
-        ) = generate_forecast_df_dict(
-            np_rng,
-            n_groups,
-            n_targets=n_targets,
-            freq=freq,
-            n_real_features=np_rng.integers(1, 10) if use_features else 0,
-            n_cat_features=np_rng.integers(1, 10) if use_features else 0,
-        )
-        group_list = list(df_dict.keys())
-        prediction_length = np_rng.integers(1, 3)
-
-        real_static_feature_dict = {}
-        cat_static_feature_dict = {}
-        if use_features:
-            for group in df_dict.keys():
-                n_features = np_rng.integers(2, 10)
-                real_static_feature_dict[group] = np_rng.standard_normal(n_features)
-
-            for group in df_dict.keys():
-                n_features = np_rng.integers(2, 10)
-                cat_static_feature_dict[group] = np_rng.integers(1, 10, n_features)
-
-        group_dict = None
-        if n_groups > 1:
-            group_dict = {
-                group: group_index for group_index, group in enumerate(df_dict.keys())
-            }
-
-        df_train_dict = {}
-        df_test_dict = {}
-        for group in df_dict.keys():
-            last_valid_index = (
-                -prediction_length if use_features else len(df_dict[group])
-            )
-
-            df_train_dict[group] = df_dict[group].iloc[:last_valid_index]
-            df_test_dict[group] = df_dict[group]
-
-        model_params = [params.ConstantValueParams()]
-
-        _, predictions = self._fit_predict_model(
-            mx_ctx,
-            torch_device,
-            prediction_length,
-            model_params,
-            freq,
-            target_columns,
-            df_train_dict,
-            df_test_dict=df_test_dict,
-            real_static_feature_dict=real_static_feature_dict,
-            cat_static_feature_dict=cat_static_feature_dict,
-            real_dynamic_feature_columns=real_dynamic_feature_columns,
-            cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-            group_dict=group_dict,
-        )
-
-        assert predictions is not None
-        assert "predictions" in predictions
-
-        df_predictions_dict = predictions["predictions"]
-        for group in df_predictions_dict.keys():
-            assert group in group_list
-
-        for group in group_list:
-            if (
-                len(real_dynamic_feature_columns) + len(cat_dynamic_feature_columns)
-                <= 0
-            ):
-                future_dates = pd.date_range(
-                    df_test_dict[group].index[-1],
-                    periods=prediction_length + 1,
-                    freq=freq,
-                )[1:]
-            else:
-                future_dates = df_test_dict[group].index[-prediction_length:]
-
-            df_predictions = df_predictions_dict[group]
-            assert "target" in df_predictions.columns
-            assert "date" in df_predictions.columns
-            assert "q5" in df_predictions.columns
-            assert "q50" in df_predictions.columns
-            assert "q95" in df_predictions.columns
-            assert len(df_predictions) == prediction_length * n_targets
-            assert (df_predictions.groupby("date").first().index == future_dates).all()
 
     @pytest.mark.parametrize("freq", ["T"])
     def test_not_trained_score(self, np_rng, mx_ctx, torch_device, freq):
