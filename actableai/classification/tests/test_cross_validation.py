@@ -40,6 +40,7 @@ def test_run_cross_validation():
         debiased_features=[],
         residuals_hyperparameters=None,
         num_gpus=0,
+        eval_metric="accuracy",
     )
 
     assert important_features is not None
