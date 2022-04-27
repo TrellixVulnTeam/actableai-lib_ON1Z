@@ -173,7 +173,7 @@ class AAITimeSeriesForecaster(object):
             params["tune_data"], num_samples=100
         )
 
-        evaluator = Evaluator(quantiles=[0.05, 0.25, 0.5, 0.75, 0.95])
+        evaluator = Evaluator(quantiles=[0.05, 0.25, 0.5, 0.75, 0.95], num_workers=None)
         agg_metrics, item_metrics = evaluator(
             ts_it, forecast_it, num_series=len(params["tune_data"])
         )
@@ -450,7 +450,7 @@ class AAITimeSeriesForecaster(object):
         return self
 
     def score(
-        self, df_dict, num_samples=100, quantiles=[0.05, 0.5, 0.95], num_workers=0
+        self, df_dict, num_samples=100, quantiles=[0.05, 0.5, 0.95], num_workers=None
     ):
         """
         TODO write documentation
