@@ -46,7 +46,7 @@ class AAIForecastTask(AAITask):
         import pandas as pd
         from copy import copy
         from sklearn.preprocessing import LabelEncoder
-        from actableai.timeseries import params
+        from actableai.timeseries.models import params
         from actableai.timeseries.forecaster import AAITimeSeriesForecaster
         from actableai.data_validation.params import (
             TimeSeriesDataValidator,

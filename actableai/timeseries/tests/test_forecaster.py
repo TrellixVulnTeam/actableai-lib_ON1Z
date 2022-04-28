@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import mxnet as mx
 
-from actableai.timeseries import params
+from actableai.timeseries.models import params
 from actableai.timeseries.exceptions import UntrainedModelException
 from actableai.timeseries.forecaster import AAITimeSeriesForecaster
 from actableai.utils.testing import init_ray, generate_forecast_df_dict

@@ -16,25 +16,15 @@ from gluonts.mx.distribution.neg_binomial import NegativeBinomialOutput
 from gluonts.evaluation import Evaluator
 
 from actableai.timeseries import util
-from actableai.timeseries.estimator import AAITimeSeriesEstimator
-from actableai.timeseries.predictor import AAITimeSeriesPredictor
+from actableai.timeseries.models.estimator import AAITimeSeriesEstimator
+from actableai.timeseries.models.predictor import AAITimeSeriesPredictor
 from actableai.timeseries.exceptions import (
     InvalidFrequencyException,
     UntrainedModelException,
 )
-from actableai.timeseries.params import (
-    ProphetParams,
-    FeedForwardParams,
-    DeepARParams,
-    GPVarParams,
-    RForecastParams,
-    TransformerTempFlowParams,
-    DeepVARParams,
-    TreePredictorParams,
-)
 
 
-class AAITimeSeriesForecaster(object):
+class AAITimeSeriesForecaster:
     """FIXME update documentation
     This timeseries forecaster does an extensive search of alogrithms and their hyperparameters to choose the best
     algorithm for a given data set.
