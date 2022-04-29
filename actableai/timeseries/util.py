@@ -247,7 +247,7 @@ def dataframe_to_list_dataset(
     group_dict=None,
     prediction_length=None,
     slice_df=None,
-    training=True
+    training=True,
 ):
     """
     TODO write documentation
@@ -359,20 +359,117 @@ def handle_features_dataset(
     return new_dataset
 
 
-def forecast_to_dataframe(
-    forecast, target_column, date_list, quantiles=[0.05, 0.5, 0.95]
+def forecast_to_dataframe(forecast, target_columns, date_list):
+    prediction_length = forecast.prediction_length
+
+    q5_quantile = forecast.quantile(0.05).astype(float)
+    q50_quantile = forecast.quantile(0.5).astype(float)
+    q95_quantile = forecast.quantile(0.95).astype(float)
+
+    if len(target_columns) <= 1:
+        q5_quantile = q5_quantile.reshape(prediction_length, 1)
+        q50_quantile = q50_quantile.reshape(prediction_length, 1)
+        q95_quantile = q95_quantile.reshape(prediction_length, 1)
+
+    return pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "target": [target_column] * prediction_length,
+                    "date": date_list,
+                    "q5": q5_quantile[:, index],
+                    "q50": q50_quantile[:, index],
+                    "q95": q95_quantile[:, index],
+                }
+            )
+            for index, target_column in enumerate(target_columns)
+        ],
+        ignore_index=True,
+    )
+
+
+def generate_train_valid_data(
+    df_dict,
+    target_columns,
+    prediction_length,
+    freq,
+    group_dict,
+    real_static_feature_dict,
+    cat_static_feature_dict,
+    real_dynamic_feature_columns,
+    cat_dynamic_feature_columns,
+    tune_samples,
+    sampling_method="random",
 ):
+    from gluonts.dataset.common import ListDataset
     """
     TODO write documentation
     """
-    df = pd.DataFrame(
-        {
-            "target": [target_column] * forecast.prediction_length,
-            "date": date_list,
-        }
+    train_data = dataframe_to_list_dataset(
+        df_dict,
+        target_columns,
+        freq,
+        real_static_feature_dict=real_static_feature_dict,
+        cat_static_feature_dict=cat_static_feature_dict,
+        real_dynamic_feature_columns=real_dynamic_feature_columns,
+        cat_dynamic_feature_columns=cat_dynamic_feature_columns,
+        group_dict=group_dict,
+        prediction_length=prediction_length,
+        training=True,
     )
 
-    for quantile in quantiles:
-        df[str(quantile)] = forecast.quantile(quantile).astype(float)
+    train_data_partial = dataframe_to_list_dataset(
+        df_dict,
+        target_columns,
+        freq,
+        real_static_feature_dict=real_static_feature_dict,
+        cat_static_feature_dict=cat_static_feature_dict,
+        real_dynamic_feature_columns=real_dynamic_feature_columns,
+        cat_dynamic_feature_columns=cat_dynamic_feature_columns,
+        group_dict=group_dict,
+        prediction_length=prediction_length,
+        slice_df=slice(-prediction_length - tune_samples),
+        training=True,
+    )
 
-    return df
+    tune_data_list = []
+    for i in range(tune_samples):
+        slice_function = None
+        if sampling_method == "random":
+            slice_function = lambda df: slice(
+                np.random.randint(2 * prediction_length + 1, df.shape[0] + 1)
+            )
+        elif sampling_method == "last":
+            slice_function = lambda df: slice(df.shape[0] - i)
+        else:
+            raise Exception("Unkown sampling method")
+
+        tune_data_list.append(
+            dataframe_to_list_dataset(
+                df_dict,
+                target_columns,
+                freq,
+                real_static_feature_dict=real_static_feature_dict,
+                cat_static_feature_dict=cat_static_feature_dict,
+                real_dynamic_feature_columns=real_dynamic_feature_columns,
+                cat_dynamic_feature_columns=cat_dynamic_feature_columns,
+                group_dict=group_dict,
+                prediction_length=prediction_length,
+                slice_df=slice_function,
+                training=True,
+            )
+        )
+
+    # Merge all samples into the same ListDataset
+    tune_data = None
+    if len(tune_data_list) > 0:
+        list_data = []
+
+        for tune_data_sample in tune_data_list:
+            list_data += tune_data_sample.list_data
+
+        tune_data = ListDataset(
+            list_data, freq, one_dim_target=(len(target_columns) == 1)
+        )
+
+    return train_data, train_data_partial, tune_data

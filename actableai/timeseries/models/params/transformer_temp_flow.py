@@ -25,6 +25,7 @@ class TransformerTempFlowParams(BaseParams):
         """
         super().__init__(
             model_name="TransformerTempFlow",
+            is_multivariate_model=True,
             has_estimator=True,
             handle_feat_static_real=True,
             handle_feat_static_cat=True,

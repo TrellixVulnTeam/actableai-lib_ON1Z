@@ -27,10 +27,11 @@ class DeepVARParams(BaseParams):
         TODO write documentation
         """
         super().__init__(
-            "DeepVAR",
+            model_name="DeepVAR",
+            is_multivariate_model=True,
             has_estimator=True,
-            handle_feat_static_real=True,
-            handle_feat_static_cat=True,
+            handle_feat_static_real=False,
+            handle_feat_static_cat=False,
             handle_feat_dynamic_real=False,
             handle_feat_dynamic_cat=False,
         )

@@ -28,6 +28,7 @@ class DeepARParams(BaseParams):
         """
         super().__init__(
             model_name="DeepAR",
+            is_multivariate_model=False,
             has_estimator=True,
             handle_feat_static_real=False,
             handle_feat_static_cat=False,

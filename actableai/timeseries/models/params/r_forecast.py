@@ -16,6 +16,7 @@ class RForecastParams(BaseParams):
         """
         super().__init__(
             model_name="RForecast",
+            is_multivariate_model=False,
             has_estimator=False,
             handle_feat_static_real=True,
             handle_feat_static_cat=True,

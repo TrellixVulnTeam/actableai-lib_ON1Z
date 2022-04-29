@@ -46,8 +46,7 @@ class AAIForecastTask(AAITask):
         import pandas as pd
         from copy import copy
         from sklearn.preprocessing import LabelEncoder
-        from actableai.timeseries.models import params
-        from actableai.timeseries.forecaster import AAITimeSeriesForecaster
+        from actableai.timeseries.models import params, AAITimeSeriesMultiTargetModel
         from actableai.data_validation.params import (
             TimeSeriesDataValidator,
             TimeSeriesPredictionDataValidator,
@@ -259,66 +258,71 @@ class AAIForecastTask(AAITask):
                     ),
                 )
 
-        m = AAITimeSeriesForecaster(
-            prediction_length, mx_ctx, torch_device, model_params=model_params
-        )
-
-        m.fit(
-            df_train_dict,
-            freq,
-            predicted_columns,
+        model = AAITimeSeriesMultiTargetModel(
+            target_columns=predicted_columns,
+            prediction_length=prediction_length,
+            freq=freq,
+            group_dict=group_dict,
             real_static_feature_dict=real_static_feature_dict,
             cat_static_feature_dict=cat_static_feature_dict,
             real_dynamic_feature_columns=real_dynamic_feature_columns,
             cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-            group_dict=group_dict,
-            trials=trials,
+        )
+        total_trials_times = model.fit(
+            df_dict=df_train_dict,
+            model_params=model_params,
+            mx_ctx=mx_ctx,
+            torch_device=torch_device,
             loss="mean_wQuantileLoss",
-            tune_params={
+            trials=trials,
+            max_concurrent=RAY_MAX_CONCURRENT,
+            use_ray=use_ray,
+            tune_samples=tune_samples,
+            sampling_method=sampling_method,
+            random_state=seed,
+            ray_tune_kwargs={
                 "resources_per_trial": {
                     "cpu": RAY_CPU_PER_TRIAL,
                     "gpu": RAY_GPU_PER_TRIAL,
                 },
                 "raise_on_failed_trial": False,
             },
-            max_concurrent=RAY_MAX_CONCURRENT,
-            tune_samples=tune_samples,
-            use_ray=use_ray,
             verbose=verbose,
-            seed=seed,
-            sampling_method=sampling_method,
         )
 
-        total_trials_times = m.total_trial_time
         start = time.time()
 
         # Generate validation results
-        validations = m.score(df_valid_dict)
+        (
+            df_val_predictions_dict,
+            df_item_metrics_dict,
+            df_agg_metrics,
+        ) = model.score(df_valid_dict)
 
         # Refit with validation data
         if refit_full:
-            m.refit(df_valid_dict)
+            model.refit(df_valid_dict)
 
         # Generate predictions
-        predictions = m.predict(df_predict_dict)
+        df_predictions_dict = model.predict(df_predict_dict)
 
         # Post process data
         df_val_predictions = pd.DataFrame()
-        for group, df_group in validations["predictions"].items():
+        for group, df_group in df_val_predictions_dict.items():
             df_group["_group"] = [group] * len(df_group)
             df_val_predictions = pd.concat(
                 [df_val_predictions, df_group], ignore_index=True
             )
 
         df_val_item_metrics = pd.DataFrame()
-        for group, df_group in validations["item_metrics"].items():
+        for group, df_group in df_item_metrics_dict.items():
             df_group["_group"] = [group] * len(df_group)
             df_val_item_metrics = pd.concat(
                 [df_val_item_metrics, df_group], ignore_index=True
             )
 
         df_predictions = pd.DataFrame()
-        for group, df_group in predictions["predictions"].items():
+        for group, df_group in df_predictions_dict.items():
             df_group["_group"] = [group] * len(df_group)
             df_predictions = pd.concat([df_predictions, df_group], ignore_index=True)
 
@@ -392,7 +396,7 @@ class AAIForecastTask(AAITask):
                         "target"
                     )
                 ]
-                for group, df_group_predictions in predictions["predictions"].items()
+                for group, df_group_predictions in df_predictions_dict.items()
             ],
             "evaluate": {
                 "dates": val_dates,
@@ -413,7 +417,7 @@ class AAIForecastTask(AAITask):
                             "target"
                         )
                     ]
-                    for df_group_predictions in validations["predictions"].values()
+                    for df_group_predictions in df_val_predictions_dict.values()
                 ],
                 "agg_metrics": None,  # Not used in the frontend, and not compatible with multivariate
                 "item_metrics": df_val_item_metrics.to_dict(),
@@ -430,7 +434,7 @@ class AAIForecastTask(AAITask):
                 "predict": df_predictions,
                 "validation": {
                     "predict": df_val_predictions,
-                    "agg_metrics": validations["agg_metrics"],
+                    "agg_metrics": df_agg_metrics,
                     "item_metrics": df_val_item_metrics,
                 },
             },

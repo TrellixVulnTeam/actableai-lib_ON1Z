@@ -16,6 +16,7 @@ class ProphetParams(BaseParams):
         """
         super().__init__(
             model_name="Prophet",
+            is_multivariate_model=False,
             has_estimator=False,
             handle_feat_static_real=True,
             handle_feat_static_cat=True,

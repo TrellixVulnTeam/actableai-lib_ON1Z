@@ -7,7 +7,7 @@ import mxnet as mx
 
 from actableai.timeseries.models import params
 from actableai.timeseries.exceptions import UntrainedModelException
-from actableai.timeseries.forecaster import AAITimeSeriesForecaster
+from actableai.timeseries.models import AAITimeSeriesMultiTargetModel
 from actableai.utils.testing import init_ray, generate_forecast_df_dict
 
 
@@ -21,7 +21,7 @@ def torch_device():
     yield torch.device("cpu")
 
 
-class TestAAITimeSeriesForecaster:
+class TestAAITimeSeriesMultiTargetModel:
     def _fit_predict_model(
         self,
         mx_ctx,
@@ -41,8 +41,15 @@ class TestAAITimeSeriesForecaster:
         trials=1,
         use_ray=False,
     ):
-        model = AAITimeSeriesForecaster(
-            prediction_length, mx_ctx, torch_device, model_params=model_params
+        model = AAITimeSeriesMultiTargetModel(
+            target_columns=target_columns,
+            prediction_length=prediction_length,
+            freq=freq,
+            group_dict=group_dict,
+            real_static_feature_dict=real_static_feature_dict,
+            cat_static_feature_dict=cat_static_feature_dict,
+            real_dynamic_feature_columns=real_dynamic_feature_columns,
+            cat_dynamic_feature_columns=cat_dynamic_feature_columns,
         )
 
         ray_shutdown = False
@@ -52,17 +59,18 @@ class TestAAITimeSeriesForecaster:
 
         if df_train_dict is not None:
             model.fit(
-                df_train_dict,
-                freq,
-                target_columns,
-                real_static_feature_dict=real_static_feature_dict,
-                cat_static_feature_dict=cat_static_feature_dict,
-                real_dynamic_feature_columns=real_dynamic_feature_columns,
-                cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-                group_dict=group_dict,
-                trials=trials,
+                df_dict=df_train_dict,
+                model_params=model_params,
+                mx_ctx=mx_ctx,
+                torch_device=torch_device,
                 loss="mean_wQuantileLoss",
-                tune_params={
+                trials=trials,
+                max_concurrent=4 if not use_ray else None,
+                use_ray=use_ray,
+                tune_samples=3,
+                sampling_method="random",
+                random_state=0,
+                ray_tune_kwargs={
                     "resources_per_trial": {
                         "cpu": 1,
                         "gpu": 0,
@@ -70,9 +78,7 @@ class TestAAITimeSeriesForecaster:
                     "raise_on_failed_trial": False,
                     "max_concurrent_trials": 1 if use_ray else None,
                 },
-                max_concurrent=4 if not use_ray else None,
-                tune_samples=3,
-                use_ray=use_ray,
+                verbose=3,
             )
 
         if ray_shutdown:
@@ -80,14 +86,22 @@ class TestAAITimeSeriesForecaster:
 
         validations = None
         if df_valid_dict is not None:
-            validations = model.score(df_valid_dict)
+            df_val_predictions_dict, df_item_metrics_dict, df_agg_metrics = model.score(
+                df_valid_dict
+            )
+            validations = {
+                "predictions": df_val_predictions_dict,
+                "item_metrics": df_item_metrics_dict,
+                "agg_metrics": df_agg_metrics,
+            }
 
             if df_test_dict is not None:
                 model.refit(df_valid_dict)
 
         predictions = None
         if df_test_dict is not None:
-            predictions = model.predict(df_test_dict)
+            df_predictions_dict = model.predict(df_test_dict)
+            predictions = {"predictions": df_predictions_dict}
 
         return validations, predictions
 
@@ -95,16 +109,6 @@ class TestAAITimeSeriesForecaster:
     @pytest.mark.parametrize("n_groups", [1, 2])
     @pytest.mark.parametrize("use_features", [True, False])
     @pytest.mark.parametrize("freq", ["T"])
-    @pytest.mark.parametrize(
-        "model_type",
-        [
-            "prophet",
-            "r_forecast",
-            "deep_ar",
-            "feed_forward",
-            "tree_predictor",
-        ],
-    )
     def test_simple_model(
         self,
         np_rng,
@@ -114,7 +118,6 @@ class TestAAITimeSeriesForecaster:
         n_groups,
         use_features,
         freq,
-        model_type,
     ):
         (
             df_dict,
@@ -163,35 +166,13 @@ class TestAAITimeSeriesForecaster:
             df_valid_dict[group] = df_dict[group].iloc[:last_valid_index]
             df_test_dict[group] = df_dict[group]
 
-        model_param = None
-        if model_type == "prophet":
-            model_param = params.ProphetParams()
-        elif model_type == "r_forecast":
-            model_param = params.RForecastParams()
-        elif model_type == "deep_ar":
-            model_param = params.DeepARParams(
-                num_cells=1,
-                num_layers=1,
-                epochs=2,
-                context_length=None,
-                use_feat_dynamic_real=use_features,
-            )
-        elif model_type == "feed_forward":
-            model_param = params.FeedForwardParams(
-                hidden_layer_1_size=1, epochs=2, context_length=None
-            )
-        elif model_type == "tree_predictor":
-            model_param = params.TreePredictorParams(
-                use_feat_dynamic_real=use_features,
-                use_feat_dynamic_cat=use_features,
-                context_length=None,
-            )
+        model_params = [params.ConstantValueParams()]
 
         validations, predictions = self._fit_predict_model(
             mx_ctx,
             torch_device,
             prediction_length,
-            [model_param],
+            model_params,
             freq,
             target_columns,
             df_train_dict,
@@ -223,9 +204,9 @@ class TestAAITimeSeriesForecaster:
             df_predictions = df_predictions_dict[group]
             assert "target" in df_predictions.columns
             assert "date" in df_predictions.columns
-            assert "0.05" in df_predictions.columns
-            assert "0.5" in df_predictions.columns
-            assert "0.95" in df_predictions.columns
+            assert "q5" in df_predictions.columns
+            assert "q50" in df_predictions.columns
+            assert "q95" in df_predictions.columns
             assert len(df_predictions) == prediction_length * n_targets
             assert (
                 df_predictions.groupby("date").first().index
@@ -276,9 +257,9 @@ class TestAAITimeSeriesForecaster:
             df_predictions = df_predictions_dict[group]
             assert "target" in df_predictions.columns
             assert "date" in df_predictions.columns
-            assert "0.05" in df_predictions.columns
-            assert "0.5" in df_predictions.columns
-            assert "0.95" in df_predictions.columns
+            assert "q5" in df_predictions.columns
+            assert "q50" in df_predictions.columns
+            assert "q95" in df_predictions.columns
             assert len(df_predictions) == prediction_length * n_targets
             assert (df_predictions.groupby("date").first().index == future_dates).all()
 

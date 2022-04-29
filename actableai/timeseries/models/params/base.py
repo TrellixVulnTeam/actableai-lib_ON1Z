@@ -9,6 +9,7 @@ class BaseParams:
     def __init__(
         self,
         model_name,
+        is_multivariate_model,
         has_estimator=True,
         handle_feat_static_real=True,
         handle_feat_static_cat=True,
@@ -19,6 +20,7 @@ class BaseParams:
         TODO write documentation
         """
         self.model_name = model_name
+        self.is_multivariate_model = is_multivariate_model
         self.has_estimator = has_estimator
         self.handle_feat_static_real = handle_feat_static_real
         self.handle_feat_static_cat = handle_feat_static_cat
