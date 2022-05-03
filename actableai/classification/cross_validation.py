@@ -251,6 +251,12 @@ def run_cross_validation(
         important_features, key=lambda k: k["importance"], reverse=True
     )
 
+    metric_groups = pd.concat(cross_val_evaluates["metrics"]).groupby("metric")
+    metric_df = pd.DataFrame({
+        "metrics": metric_groups.mean()["value"].index,
+        "value": metric_groups.mean()["value"].values.flatten(),
+        "stderr": metric_groups.agg(np.std)["value"].values/sqrt_k,
+    })
     evaluate = {
         "problem_type": cross_val_evaluates["problem_type"][0],
         "labels": [str(x) for x in cross_val_evaluates["labels"][0]],
@@ -262,6 +268,7 @@ def run_cross_validation(
         "confusion_matrix_std_err": (
             np.std(cross_val_evaluates["confusion_matrix"], axis=0) / sqrt_k
         ).tolist(),
+        "metrics": metric_df,
     }
 
     if evaluate["problem_type"] == "binary":
