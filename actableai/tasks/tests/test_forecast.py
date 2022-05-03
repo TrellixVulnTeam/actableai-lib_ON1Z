@@ -203,7 +203,7 @@ class TestTimeSeries:
         for col in target_columns:
             assert col in df_item_metrics["target"].unique()
 
-        # FIXME delete legacy
+        # TODO delete legacy
         # Test Legacy output
         legacy_data = results["data"]
         assert "predict" in legacy_data

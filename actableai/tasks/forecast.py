@@ -297,7 +297,7 @@ class AAIForecastTask(AAITask):
         # Generate predictions
         df_predictions = model.predict(df_dict=df_predict_dict)
 
-        # FIXME REMOVE LEGACY CODE
+        # TODO REMOVE LEGACY CODE
         # --------------------
         val_dates = [
             df_group_valid_dict.index[-prediction_length:]
@@ -407,7 +407,7 @@ class AAIForecastTask(AAITask):
                     "item_metrics": df_item_metrics,
                 },
             },
-            "data": data,  # FIXME Legacy
+            "data": data,  # TODO remove legacy code
             "validations": [
                 {"name": x.name, "level": x.level, "message": x.message}
                 for x in failed_checks
