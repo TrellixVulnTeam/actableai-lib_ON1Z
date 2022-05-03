@@ -67,14 +67,14 @@ class TestTimeSeries:
 
         assert results is not None
         assert "status" in results
-        assert "data_2.0" in results
+        assert "data_v2" in results
         assert "data" in results
         assert "validations" in results
         assert "runtime" in results
 
         assert results["status"] == "SUCCESS"
 
-        data = results["data_2.0"]
+        data = results["data_v2"]
         assert "predict" in data
         assert "validation" in data
 
@@ -363,7 +363,7 @@ class TestTimeSeries:
 
         assert results is not None
         assert "status" in results
-        assert "data_2.0" in results
+        assert "data_v2" in results
         assert "data" in results
         assert "validations" in results
         assert "runtime" in results
@@ -395,7 +395,7 @@ class TestTimeSeries:
 
         assert results is not None
         assert "status" in results
-        assert "data_2.0" in results
+        assert "data_v2" in results
         assert "data" in results
         assert "validations" in results
         assert "runtime" in results

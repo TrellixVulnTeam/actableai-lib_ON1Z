@@ -426,7 +426,7 @@ class AAIForecastTask(AAITask):
         resultPredict = {
             "status": "SUCCESS",
             "messenger": "",
-            "data_2.0": {
+            "data_v2": {
                 "predict": df_predictions,
                 "validation": {
                     "predict": df_val_predictions,
