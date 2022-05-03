@@ -223,9 +223,9 @@ class TestAAITimeSeriesForecaster:
             df_predictions = df_predictions_dict[group]
             assert "target" in df_predictions.columns
             assert "date" in df_predictions.columns
-            assert "q5" in df_predictions.columns
-            assert "q50" in df_predictions.columns
-            assert "q95" in df_predictions.columns
+            assert "0.05" in df_predictions.columns
+            assert "0.5" in df_predictions.columns
+            assert "0.95" in df_predictions.columns
             assert len(df_predictions) == prediction_length * n_targets
             assert (
                 df_predictions.groupby("date").first().index
@@ -276,9 +276,9 @@ class TestAAITimeSeriesForecaster:
             df_predictions = df_predictions_dict[group]
             assert "target" in df_predictions.columns
             assert "date" in df_predictions.columns
-            assert "q5" in df_predictions.columns
-            assert "q50" in df_predictions.columns
-            assert "q95" in df_predictions.columns
+            assert "0.05" in df_predictions.columns
+            assert "0.5" in df_predictions.columns
+            assert "0.95" in df_predictions.columns
             assert len(df_predictions) == prediction_length * n_targets
             assert (df_predictions.groupby("date").first().index == future_dates).all()
 

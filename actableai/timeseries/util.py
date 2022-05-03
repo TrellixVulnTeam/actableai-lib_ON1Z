@@ -359,13 +359,20 @@ def handle_features_dataset(
     return new_dataset
 
 
-def forecast_to_dataframe(forecast, target_column, date_list):
-    return pd.DataFrame(
+def forecast_to_dataframe(
+    forecast, target_column, date_list, quantiles=[0.05, 0.5, 0.95]
+):
+    """
+    TODO write documentation
+    """
+    df = pd.DataFrame(
         {
             "target": [target_column] * forecast.prediction_length,
             "date": date_list,
-            "q5": forecast.quantile(0.05).astype(float),
-            "q50": forecast.quantile(0.5).astype(float),
-            "q95": forecast.quantile(0.95).astype(float),
         }
     )
+
+    for quantile in quantiles:
+        df[str(quantile)] = forecast.quantile(quantile).astype(float)
+
+    return df

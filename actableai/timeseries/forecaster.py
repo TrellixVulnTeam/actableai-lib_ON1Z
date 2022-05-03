@@ -513,7 +513,10 @@ class AAITimeSeriesForecaster(object):
             # Add predictions
             for (group, df_group), forecast in zip(df_dict_clean.items(), forecasts):
                 df_predictions = util.forecast_to_dataframe(
-                    forecast, target_column, df_group.index[-self.prediction_length :]
+                    forecast,
+                    target_column,
+                    df_group.index[-self.prediction_length :],
+                    quantiles=quantiles,
                 )
 
                 df_predictions_dict[group] = pd.concat(
@@ -552,7 +555,7 @@ class AAITimeSeriesForecaster(object):
             "agg_metrics": df_agg_metrics,
         }
 
-    def predict(self, df_dict):
+    def predict(self, df_dict, quantiles=[0.05, 0.5, 0.95]):
         if self.predictors is None:
             raise UntrainedModelException()
 
@@ -603,7 +606,10 @@ class AAITimeSeriesForecaster(object):
             forecasts = self.predictors[target_column].predict(data)
             for group, forecast in zip(df_dict_clean.keys(), forecasts):
                 df_predictions = util.forecast_to_dataframe(
-                    forecast, target_column, future_dates_dict[group]
+                    forecast,
+                    target_column,
+                    future_dates_dict[group],
+                    quantiles=quantiles,
                 )
 
                 df_predictions_dict[group] = pd.concat(

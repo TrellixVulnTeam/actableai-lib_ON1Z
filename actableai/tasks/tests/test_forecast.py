@@ -88,9 +88,9 @@ class TestTimeSeries:
         assert len(df_predict) == prediction_length * n_groups * n_targets
         assert "target" in df_predict.columns
         assert date_column in df_predict.columns
-        assert "q5" in df_predict.columns
-        assert "q50" in df_predict.columns
-        assert "q95" in df_predict.columns
+        assert "0.05" in df_predict.columns
+        assert "0.5" in df_predict.columns
+        assert "0.95" in df_predict.columns
         for col in group_by:
             assert col in df_predict.columns
 
@@ -135,9 +135,9 @@ class TestTimeSeries:
         assert len(df_val_predict) == prediction_length * n_groups * n_targets
         assert "target" in df_val_predict.columns
         assert date_column in df_val_predict.columns
-        assert "q5" in df_val_predict.columns
-        assert "q50" in df_val_predict.columns
-        assert "q95" in df_val_predict.columns
+        assert "0.05" in df_val_predict.columns
+        assert "0.5" in df_val_predict.columns
+        assert "0.95" in df_val_predict.columns
         for col in group_by:
             assert col in df_val_predict.columns
 
