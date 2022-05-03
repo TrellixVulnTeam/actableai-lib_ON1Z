@@ -46,7 +46,7 @@ class AAIForecastTask(AAITask):
         import pandas as pd
         from copy import copy
         from sklearn.preprocessing import LabelEncoder
-        from actableai.timeseries.models import params, AAITimeSeriesMultiTargetModel
+        from actableai.timeseries.models import params, AAITimeSeriesForecaster
         from actableai.data_validation.params import (
             TimeSeriesDataValidator,
             TimeSeriesPredictionDataValidator,
@@ -111,23 +111,19 @@ class AAIForecastTask(AAITask):
                 LabelEncoder().fit_transform
             )
 
-        # Create grouped df
-        df_dict = {}
-        group_dict = {}
         df_unique = None
         if len(group_by) > 0:
-            df_group_by = df.groupby(group_by)
-            df_unique = df_group_by.nunique().max()
-
-            for group_index, (group, grouped_df) in enumerate(df_group_by):
-                if len(group_by) == 1:
-                    group = (group,)
-
-                group_dict[group] = group_index
-                df_dict[group] = grouped_df.reset_index(drop=True)
+            df_unique = df.groupby(group_by).nunique().max()
         else:
-            df_dict["data"] = df
             df_unique = df.nunique()
+
+        df_dict, group_dict, freq_dict = AAITimeSeriesForecaster.pre_process_data(
+            df=df,
+            date_column=date_column,
+            target_columns=predicted_columns,
+            group_by=group_by,
+            inplace=True,
+        )
 
         # Separate static from dynamic feature columns
         real_static_feature_dict = {group: [] for group in df_dict.keys()}
@@ -163,37 +159,30 @@ class AAIForecastTask(AAITask):
         df_train_dict = {}
         df_valid_dict = {}
         df_predict_dict = {}
-        freq_dict = {}
-        pd_date_dict = {}
         for group in df_dict.keys():
-            # Handle datetime
-            pd_date, _ = handle_datetime_column(df_dict[group][date_column])
-
-            # Find Frequencies
-            freq = find_freq(pd_date)
-            freq_dict[group] = freq
-
-            # Sort Dataframe
+            # Filter Dataframe
             df_dict[group] = df_dict[group][
                 predicted_columns
                 + real_dynamic_feature_columns
                 + cat_dynamic_feature_columns
                 + group_by
             ]
-            df_dict[group].index = pd_date
-            df_dict[group].name = date_column
-            df_dict[group].sort_index(inplace=True)
-
-            pd_date_dict[group] = pd.Series(df_dict[group].index)
 
             last_valid_index = (
                 -prediction_length if has_dynamic_features else df_dict[group].shape[0]
             )
 
-            df_dict[group].iloc[:last_valid_index] = interpolate(
-                df_dict[group].iloc[:last_valid_index], freq
+            # Interpolate missing values
+            df_dict[group] = pd.concat(
+                [
+                    interpolate(
+                        df_dict[group].iloc[:last_valid_index], freq_dict[group]
+                    ),
+                    df_dict[group].iloc[last_valid_index:],
+                ]
             )
 
+            # Split train/validation/test
             df_train_dict[group] = df_dict[group].iloc[
                 : last_valid_index - prediction_length
             ]
@@ -258,21 +247,23 @@ class AAIForecastTask(AAITask):
                     ),
                 )
 
-        model = AAITimeSeriesMultiTargetModel(
+        model = AAITimeSeriesForecaster(
+            date_column=date_column,
             target_columns=predicted_columns,
             prediction_length=prediction_length,
-            freq=freq,
-            group_dict=group_dict,
-            real_static_feature_dict=real_static_feature_dict,
-            cat_static_feature_dict=cat_static_feature_dict,
+            group_by=group_by,
+            real_static_feature=real_static_feature_dict,
+            cat_static_feature=cat_static_feature_dict,
             real_dynamic_feature_columns=real_dynamic_feature_columns,
             cat_dynamic_feature_columns=cat_dynamic_feature_columns,
         )
         total_trials_times = model.fit(
-            df_dict=df_train_dict,
             model_params=model_params,
-            mx_ctx=mx_ctx,
             torch_device=torch_device,
+            mx_ctx=mx_ctx,
+            df_dict=df_train_dict,
+            freq=freq,
+            group_dict=group_dict,
             loss="mean_wQuantileLoss",
             trials=trials,
             max_concurrent=RAY_MAX_CONCURRENT,
@@ -294,54 +285,17 @@ class AAIForecastTask(AAITask):
 
         # Generate validation results
         (
-            df_val_predictions_dict,
-            df_item_metrics_dict,
+            df_val_predictions,
+            df_item_metrics,
             df_agg_metrics,
-        ) = model.score(df_valid_dict)
+        ) = model.score(df_dict=df_valid_dict)
 
         # Refit with validation data
         if refit_full:
-            model.refit(df_valid_dict)
+            model.refit(df_dict=df_valid_dict)
 
         # Generate predictions
-        df_predictions_dict = model.predict(df_predict_dict)
-
-        # Post process data
-        df_val_predictions = pd.DataFrame()
-        for group, df_group in df_val_predictions_dict.items():
-            df_group["_group"] = [group] * len(df_group)
-            df_val_predictions = pd.concat(
-                [df_val_predictions, df_group], ignore_index=True
-            )
-
-        df_val_item_metrics = pd.DataFrame()
-        for group, df_group in df_item_metrics_dict.items():
-            df_group["_group"] = [group] * len(df_group)
-            df_val_item_metrics = pd.concat(
-                [df_val_item_metrics, df_group], ignore_index=True
-            )
-
-        df_predictions = pd.DataFrame()
-        for group, df_group in df_predictions_dict.items():
-            df_group["_group"] = [group] * len(df_group)
-            df_predictions = pd.concat([df_predictions, df_group], ignore_index=True)
-
-        for group_index, group in enumerate(group_by):
-            f_group_values = lambda group_values: group_values[group_index]
-            df_val_predictions[group] = df_val_predictions["_group"].apply(
-                f_group_values
-            )
-            df_val_item_metrics[group] = df_val_item_metrics["_group"].apply(
-                f_group_values
-            )
-            df_predictions[group] = df_predictions["_group"].apply(f_group_values)
-
-        df_val_predictions = df_val_predictions.rename(
-            columns={"date": date_column}
-        ).drop(columns="_group")
-        df_predictions = df_predictions.rename(columns={"date": date_column}).drop(
-            columns="_group"
-        )
+        df_predictions = model.predict(df_dict=df_predict_dict)
 
         # FIXME REMOVE LEGACY CODE
         # --------------------
@@ -354,8 +308,23 @@ class AAIForecastTask(AAITask):
         if len(group_by) <= 0:
             val_dates = val_dates[0]
 
-        df_val_item_metrics["item_id"] = df_val_item_metrics["target"]
-        df_val_item_metrics.index = df_val_item_metrics["item_id"]
+        df_item_metrics["item_id"] = df_item_metrics["target"]
+        df_item_metrics.index = df_item_metrics["item_id"]
+
+        df_val_predictions_items = {}
+        df_predictions_items = {}
+        if len(group_by) > 0:
+            df_val_predictions_items = [
+                (group if len(group_by) > 1 else (group,), group_df)
+                for group, group_df in df_val_predictions.groupby(group_by)
+            ]
+            df_predictions_items = [
+                (group if len(group_by) > 1 else (group,), group_df)
+                for group, group_df in df_predictions.groupby(group_by)
+            ]
+        else:
+            df_val_predictions_items = [("data", df_val_predictions)]
+            df_predictions_items = [("data", df_predictions)]
 
         data = {
             "predict": [
@@ -396,7 +365,7 @@ class AAIForecastTask(AAITask):
                         "target"
                     )
                 ]
-                for group, df_group_predictions in df_predictions_dict.items()
+                for group, df_group_predictions in df_predictions_items
             ],
             "evaluate": {
                 "dates": val_dates,
@@ -417,10 +386,10 @@ class AAIForecastTask(AAITask):
                             "target"
                         )
                     ]
-                    for df_group_predictions in df_val_predictions_dict.values()
+                    for _, df_group_predictions in df_val_predictions_items
                 ],
                 "agg_metrics": None,  # Not used in the frontend, and not compatible with multivariate
-                "item_metrics": df_val_item_metrics.to_dict(),
+                "item_metrics": df_item_metrics.to_dict(),
             },
         }
         # --------------------
@@ -435,7 +404,7 @@ class AAIForecastTask(AAITask):
                 "validation": {
                     "predict": df_val_predictions,
                     "agg_metrics": df_agg_metrics,
-                    "item_metrics": df_val_item_metrics,
+                    "item_metrics": df_item_metrics,
                 },
             },
             "data": data,  # FIXME Legacy
