@@ -1,6 +1,10 @@
 import pandas as pd
+from time import time
 
-from actableai.timeseries.models import AAITimeSeriesMultiTargetModel
+from actableai.timeseries.models import (
+    AAITimeSeriesMultiTargetModel,
+    AAITimeSeriesSimpleModel,
+)
 from actableai.timeseries.exceptions import UntrainedModelException
 from actableai.timeseries.util import handle_datetime_column, find_freq
 
@@ -136,7 +140,15 @@ class AAITimeSeriesForecaster:
             first_group = list(df_dict.keys())[0]
             freq = freq_dict[first_group]
 
-        self.model = AAITimeSeriesMultiTargetModel(
+        univariate_model_params = []
+        multivariate_model_params = []
+        for model_param in model_params:
+            if model_param.is_multivariate_model:
+                multivariate_model_params.append(model_param)
+            else:
+                univariate_model_params.append(model_param)
+
+        multi_target_model = AAITimeSeriesMultiTargetModel(
             target_columns=self.target_columns,
             prediction_length=self.prediction_length,
             freq=freq,
@@ -146,10 +158,9 @@ class AAITimeSeriesForecaster:
             real_dynamic_feature_columns=self.real_dynamic_feature_columns,
             cat_dynamic_feature_columns=self.cat_dynamic_feature_columns,
         )
-        # TODO try multivariate models
-        return self.model.fit(
+        multi_target_fit_time = multi_target_model.fit(
             df_dict=df_dict,
-            model_params=model_params,
+            model_params=univariate_model_params,
             mx_ctx=mx_ctx,
             torch_device=torch_device,
             loss=loss,
@@ -161,7 +172,59 @@ class AAITimeSeriesForecaster:
             random_state=random_state,
             ray_tune_kwargs=ray_tune_kwargs,
             verbose=verbose,
+            fit_full=False,
         )
+
+        multivariate_model = None
+        multivariate_fit_time = 0
+        if len(self.target_columns) > 1 and len(multivariate_model_params) > 0:
+            multivariate_model = AAITimeSeriesSimpleModel(
+                target_columns=self.target_columns,
+                prediction_length=self.prediction_length,
+                freq=freq,
+                group_dict=group_dict,
+                real_static_feature_dict=self.real_static_feature_dict,
+                cat_static_feature_dict=self.cat_static_feature_dict,
+                real_dynamic_feature_columns=self.real_dynamic_feature_columns,
+                cat_dynamic_feature_columns=self.cat_dynamic_feature_columns,
+            )
+
+            multivariate_fit_time = multivariate_model.fit(
+                df_dict=df_dict,
+                model_params=multivariate_model_params,
+                mx_ctx=mx_ctx,
+                torch_device=torch_device,
+                loss=loss,
+                trials=trials,
+                max_concurrent=max_concurrent,
+                use_ray=use_ray,
+                tune_samples=tune_samples,
+                sampling_method=sampling_method,
+                random_state=random_state,
+                ray_tune_kwargs=ray_tune_kwargs,
+                verbose=verbose,
+                fit_full=False,
+            )
+
+        start_time = time()
+
+        if multivariate_model is not None:
+            _, _, df_multi_target_agg_metrics = multi_target_model.score(df_dict)
+            _, _, df_multivariate_agg_metrics = multivariate_model.score(df_dict)
+
+            multi_target_loss = df_multi_target_agg_metrics[loss].mean(axis=0)
+            multivariate_loss = df_multivariate_agg_metrics[loss].mean(axis=0)
+
+            if multi_target_loss < multivariate_loss:
+                self.model = multi_target_model
+            else:
+                self.model = multivariate_model
+        else:
+            self.model = multi_target_model
+
+        self.model.refit(df_dict)
+
+        return multi_target_fit_time + multivariate_fit_time + time() - start_time
 
     def refit(self, *, df=None, df_dict=None):
         """

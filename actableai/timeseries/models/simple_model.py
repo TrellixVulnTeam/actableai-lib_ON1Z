@@ -228,6 +228,7 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
         random_state=None,
         ray_tune_kwargs=None,
         verbose=1,
+        fit_full=True,
     ):
         """
         TODO write documentation
@@ -340,10 +341,15 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
             )
             self.best_params = space_eval(space=search_space, hp_assignment=best)
 
+        if fit_full:
+            final_train_data = train_data
+        else:
+            final_train_data = train_data_partial
+
         self.predictor = self._create_predictor(
             model_params_dict=self.model_params_dict,
             params=self.best_params,
-            data=train_data,
+            data=final_train_data,
             freq_gluon=self.freq_gluon,
             distr_output=self.distr_output,
             prediction_length=self.prediction_length,
@@ -478,6 +484,7 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
                     ],
                     ignore_index=True,
                 )
+
         df_agg_metrics = df_agg_metrics.drop(columns="RMSE").rename(
             columns={"custom_RMSE": "RMSE"}
         )

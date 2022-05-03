@@ -233,6 +233,13 @@ class AAIForecastTask(AAITask):
                     method=("QRX", "QuantileRegression"),
                     context_length=(1, 2 * prediction_length),
                 ),
+                params.DeepVARParams(
+                    epochs=(5, 20),
+                    num_layers=(1, 3),
+                    num_cells=(1, 20),
+                    scaling=False,
+                    context_length=(prediction_length, 2 * prediction_length),
+                ),
             ]
 
             if len(df_train_dict[first_group]) >= 1000:

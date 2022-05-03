@@ -95,6 +95,7 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
         random_state=None,
         ray_tune_kwargs=None,
         verbose=1,
+        fit_full=True,
     ):
         """
         TODO write documentation
@@ -136,6 +137,7 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
                 random_state=random_state,
                 ray_tune_kwargs=ray_tune_kwargs,
                 verbose=verbose,
+                fit_full=fit_full
             )
 
             total_time += target_total_time

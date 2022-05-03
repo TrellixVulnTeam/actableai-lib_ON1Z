@@ -342,12 +342,14 @@ class TestTimeSeries:
         for metric_dict in item_metrics.values():
             assert len(metric_dict) == n_targets
 
+    @pytest.mark.parametrize("n_targets", [1, 2])
     @pytest.mark.parametrize("freq", ["T"])
-    def test_hyperopt(self, np_rng, forecast_task, freq):
+    def test_hyperopt(self, np_rng, forecast_task, n_targets, freq):
         prediction_length = np_rng.integers(1, 3)
         df, date_column, target_columns, _, _, _ = generate_forecast_df(
             np_rng,
             prediction_length,
+            n_targets=n_targets,
             freq=freq,
             date_range_kwargs={"min_periods": 30, "max_periods": 60},
         )

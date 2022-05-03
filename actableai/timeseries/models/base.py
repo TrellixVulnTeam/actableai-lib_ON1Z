@@ -72,6 +72,7 @@ class AAITimeSeriesBaseModel(ABC):
         random_state=None,
         ray_tune_kwargs=None,
         verbose=1,
+        fit_full=True,
     ):
         """
         TODO write documentation
