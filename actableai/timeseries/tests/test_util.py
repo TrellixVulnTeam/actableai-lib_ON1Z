@@ -86,7 +86,7 @@ def test_handle_datetime_column_mixed_hour():
 
     assert parsed_dt is not None
     assert dtype == "datetime"
-    assert (parsed_dt == date_range).all()
+    assert (parsed_dt.dt.time == date_range.dt.time).all()
 
 
 @pytest.mark.parametrize("freq", ["T", "S", "Y", "us"])
@@ -96,7 +96,7 @@ def test_handle_datetime_column_hour_multi_freq(freq):
 
     assert parsed_dt is not None
     assert dtype == "datetime"
-    assert (parsed_dt == date_range).all()
+    assert (parsed_dt.dt.time == date_range.dt.time).all()
 
 
 def test_handle_datetime_column_tstamp_mixed():
@@ -105,7 +105,7 @@ def test_handle_datetime_column_tstamp_mixed():
 
     assert parsed_dt is not None
     assert dtype == "datetime"
-    assert (parsed_dt == date_range).all()
+    assert (parsed_dt.dt.time == date_range.dt.time).all()
 
 
 @pytest.mark.parametrize("freq", ["T", "S", "Y", "us"])
@@ -115,7 +115,7 @@ def test_handle_datetime_column_tstamp_multi_freq(freq):
 
     assert parsed_dt is not None
     assert dtype == "datetime"
-    assert (parsed_dt == date_range).all()
+    assert (parsed_dt.dt.time == date_range.dt.time).all()
 
 
 def test_handle_datetime_column_dotted():
