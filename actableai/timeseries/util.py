@@ -359,17 +359,23 @@ def handle_features_dataset(
     return new_dataset
 
 
-def forecast_to_dataframe(forecast, target_columns, date_list):
+def forecast_to_dataframe(
+    forecast, target_columns, date_list, quantiles=[0.05, 0.5, 0.95]
+):
+    """
+    TODO write documentation
+    """
     prediction_length = forecast.prediction_length
 
-    q5_quantile = forecast.quantile(0.05).astype(float)
-    q50_quantile = forecast.quantile(0.5).astype(float)
-    q95_quantile = forecast.quantile(0.95).astype(float)
+    quantiles_values_dict = {
+        quantile: forecast.quantile(quantile).astype(float) for quantile in quantiles
+    }
 
     if len(target_columns) <= 1:
-        q5_quantile = q5_quantile.reshape(prediction_length, 1)
-        q50_quantile = q50_quantile.reshape(prediction_length, 1)
-        q95_quantile = q95_quantile.reshape(prediction_length, 1)
+        for quantile in quantiles_values_dict.keys():
+            quantiles_values_dict[quantile] = quantiles_values_dict[quantile].reshape(
+                prediction_length, 1
+            )
 
     return pd.concat(
         [
@@ -377,9 +383,10 @@ def forecast_to_dataframe(forecast, target_columns, date_list):
                 {
                     "target": [target_column] * prediction_length,
                     "date": date_list,
-                    "q5": q5_quantile[:, index],
-                    "q50": q50_quantile[:, index],
-                    "q95": q95_quantile[:, index],
+                    **{
+                        str(quantile): quantiles_values[:, index]
+                        for quantile, quantiles_values in quantiles_values_dict.items()
+                    },
                 }
             )
             for index, target_column in enumerate(target_columns)
@@ -401,10 +408,11 @@ def generate_train_valid_data(
     tune_samples,
     sampling_method="random",
 ):
-    from gluonts.dataset.common import ListDataset
     """
     TODO write documentation
     """
+    from gluonts.dataset.common import ListDataset
+
     train_data = dataframe_to_list_dataset(
         df_dict,
         target_columns,

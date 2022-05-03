@@ -438,7 +438,10 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
         # Add predictions
         for (group, df_group), forecast in zip(df_dict.items(), forecast_list):
             df_predictions_dict[group] = forecast_to_dataframe(
-                forecast, self.target_columns, df_group.index[-self.prediction_length :]
+                forecast,
+                self.target_columns,
+                df_group.index[-self.prediction_length :],
+                quantiles=quantiles,
             )
 
         # Post-process metrics
@@ -485,7 +488,7 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
 
         return df_predictions_dict, df_item_metrics_dict, df_agg_metrics
 
-    def predict(self, df_dict):
+    def predict(self, df_dict, quantiles=[0.05, 0.5, 0.95]):
         """
         TODO write documentation
         """
@@ -523,7 +526,10 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
         forecast_list = self.predictor.predict(data)
         for group, forecast in zip(df_dict.keys(), forecast_list):
             df_predictions_dict[group] = forecast_to_dataframe(
-                forecast, self.target_columns, future_dates_dict[group]
+                forecast,
+                self.target_columns,
+                future_dates_dict[group],
+                quantiles=quantiles,
             )
 
         return df_predictions_dict

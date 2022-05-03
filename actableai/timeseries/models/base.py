@@ -95,7 +95,7 @@ class AAITimeSeriesBaseModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, df_dict):
+    def predict(self, df_dict, quantiles=[0.05, 0.5, 0.95]):
         """
         TODO write documentation
         """

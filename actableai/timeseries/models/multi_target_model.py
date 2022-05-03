@@ -195,7 +195,7 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
 
         return df_predictions_dict, df_item_metrics_dict, df_agg_metrics
 
-    def predict(self, df_dict):
+    def predict(self, df_dict, quantiles=[0.05, 0.5, 0.95]):
         """
         TODO write documentation
         """
@@ -208,7 +208,7 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
                 raise UntrainedModelException()
 
             df_target_predictions_dict = self.predictor_dict[target_column].predict(
-                df_dict_clean
+                df_dict_clean, quantiles=quantiles
             )
 
             for group in df_dict_clean.keys():

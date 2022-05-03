@@ -244,7 +244,7 @@ class AAITimeSeriesForecaster:
 
         return df_predictions, df_item_metrics, df_agg_metrics
 
-    def predict(self, *, df=None, df_dict=None):
+    def predict(self, *, df=None, df_dict=None, quantiles=[0.05, 0.5, 0.95]):
         """
         TODO write documentation
         """
@@ -265,7 +265,7 @@ class AAITimeSeriesForecaster:
                 inplace=False,
             )
 
-        df_predictions_dict = self.model.predict(df_dict)
+        df_predictions_dict = self.model.predict(df_dict, quantiles=quantiles)
 
         df_predictions = pd.DataFrame()
         for group, df_group in df_predictions_dict.items():
