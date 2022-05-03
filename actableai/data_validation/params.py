@@ -274,10 +274,10 @@ class TimeSeriesDataValidator:
     def validate(self, df, date_column, predicted_columns, feature_columns, group_by):
         validation_results = [
             ColumnsExistChecker(level=CheckLevels.CRITICAL).check(
-                df, [date_column] + predicted_columns + feature_columns
+                df, [date_column] + predicted_columns + feature_columns + group_by
             ),
             DoNotContainEmptyColumnsChecker(level=CheckLevels.CRITICAL).check(
-                df, [date_column] + predicted_columns + feature_columns
+                df, [date_column] + predicted_columns + feature_columns + group_by
             ),
         ]
 
