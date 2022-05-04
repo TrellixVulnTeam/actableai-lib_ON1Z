@@ -1,27 +1,47 @@
+from typing import Union, Tuple, Optional, Dict, Any
+
 from actableai.timeseries.models.params import BaseParams
 
+from mxnet.context import Context
+
 from gluonts.mx.trainer import Trainer
+from gluonts.mx.distribution import DistributionOutput
 from gluonts.model.simple_feedforward import SimpleFeedForwardEstimator
 
 
 class FeedForwardParams(BaseParams):
-    """
-    Parameter class for Feed Forward Model
-    """
+    """Parameter class for Feed Forward Model."""
 
     def __init__(
         self,
-        hidden_layer_1_size=None,
-        hidden_layer_2_size=None,
-        hidden_layer_3_size=None,
-        epochs=(1, 100),
-        learning_rate=(0.001, 0.01),
-        context_length=(1, 100),
-        l2=(1e-08, 0.01),
-        mean_scaling=True,
+        hidden_layer_1_size: Union[Tuple[int, int], int] = 40,
+        hidden_layer_2_size: Optional[Union[Tuple[int, int], int]] = 40,
+        hidden_layer_3_size: Optional[Union[Tuple[int, int], int]] = None,
+        epochs: Union[Tuple[int, int], int] = (1, 100),
+        learning_rate: Union[Tuple[float, float], float] = (0.001, 0.01),
+        context_length: Union[Tuple[int, int], int] = (1, 100),
+        l2: Union[Tuple[float, float], float] = (1e-08, 0.01),
+        mean_scaling: bool = True,
     ):
-        """
-        TODO write documentation
+        """FeedForwardParams Constructor.
+
+        Args:
+            hidden_layer_1_size: Dimension of first layer, if tuple it represents the
+                minimum and maximum (excluded) value.
+            hidden_layer_2_size: Dimension of second layer, if tuple it represents the
+                minimum and maximum (excluded) value.
+            hidden_layer_3_size: Dimension of third layer, if tuple it represents the
+                minimum and maximum (excluded) value.
+            epochs: Number of epochs, if tuple it represents the minimum and maximum
+                (excluded) value.
+            learning_rate: Learning rate parameter, if tuple it represents the minimum
+                and maximum (excluded) value.
+            context_length: Number of time units that condition the predictions, if
+                tuple it represents the minimum and maximum (excluded) value.
+            l2: L2 regularization parameter, if tuple it represents the minimum and
+                maximum (excluded) value.
+            mean_scaling: Scale the network input by the data mean and the network
+                output by its inverse.
         """
         super().__init__(
             model_name="FeedFoward",
@@ -42,9 +62,11 @@ class FeedForwardParams(BaseParams):
         self.epochs = epochs
         self.l2 = l2
 
-    def tune_config(self):
-        """
-        TODO write documentation
+    def tune_config(self) -> Dict[str, Any]:
+        """Select parameters in the pre-defined hyperparameter space.
+
+        Returns:
+            Selected parameters.
         """
         return {
             "hidden_layer_1_size": self._randint(
@@ -63,10 +85,27 @@ class FeedForwardParams(BaseParams):
         }
 
     def build_estimator(
-        self, *, ctx, freq, prediction_length, distr_output, params, **kwargs
-    ):
-        """
-        TODO write documentation
+        self,
+        *,
+        ctx: Context,
+        freq: str,
+        prediction_length: int,
+        distr_output: DistributionOutput,
+        params: Dict[str, Any],
+        **kwargs
+    ) -> SimpleFeedForwardEstimator:
+        """Build an estimator from the underlying model using selected parameters.
+
+        Args:
+            ctx: mxnet context.
+            freq: Frequency of the time series used.
+            prediction_length: Length of the prediction that will be forecasted.
+            distr_output: Distribution output to use.
+            params: Selected parameters from the hyperparameter space.
+            kwargs: Ignored arguments.
+
+        Returns:
+            Built estimator.
         """
         hidden_layer_1_size = params.get(
             "hidden_layer_1_size", self.hidden_layer_1_size

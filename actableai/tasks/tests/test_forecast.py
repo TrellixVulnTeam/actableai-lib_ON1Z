@@ -56,8 +56,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             group_by=group_by,
             feature_columns=feature_columns,
             model_params=[params.ConstantValueParams()],
@@ -357,8 +357,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             trials=10,
             use_ray=False,
         )
@@ -386,8 +386,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=True,
@@ -422,8 +422,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -457,8 +457,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -490,8 +490,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -523,8 +523,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -560,8 +560,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -593,8 +593,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=["test"],
             prediction_length=prediction_length,
+            predicted_columns=["test"],
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -628,8 +628,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,
@@ -665,8 +665,8 @@ class TestTimeSeries:
         results = forecast_task.run(
             df,
             date_column,
-            predicted_columns=target_columns,
             prediction_length=prediction_length,
+            predicted_columns=target_columns,
             model_params=[params.ConstantValueParams()],
             trials=1,
             use_ray=False,

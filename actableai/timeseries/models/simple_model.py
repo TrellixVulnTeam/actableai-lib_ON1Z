@@ -1,20 +1,26 @@
 import visions
 import time
 
+from typing import Dict, List, Optional, Tuple, Any, Iterable
+
 import numpy as np
 import pandas as pd
 from functools import partial
 
 from hyperopt import hp, fmin, tpe, space_eval
 
+from mxnet.context import Context
+
 from ray import tune
 from ray.tune.suggest.hyperopt import HyperOptSearch
 from ray.tune.suggest import ConcurrencyLimiter
 
+from gluonts.mx.distribution import DistributionOutput
 from gluonts.mx.distribution.student_t import StudentTOutput
 from gluonts.mx.distribution.poisson import PoissonOutput
 from gluonts.evaluation import Evaluator, MultivariateEvaluator
 
+from actableai.timeseries.models.params import BaseParams
 from actableai.timeseries.models.base import AAITimeSeriesBaseModel
 from actableai.timeseries.models.estimator import AAITimeSeriesEstimator
 from actableai.timeseries.models.predictor import AAITimeSeriesPredictor
@@ -27,23 +33,33 @@ from actableai.timeseries.util import (
 
 
 class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
-    """
-    TODO write documentation
-    """
+    """Simple Time Series Model,"""
 
     def __init__(
         self,
-        target_columns,
-        prediction_length,
-        freq,
-        group_dict=None,
-        real_static_feature_dict=None,
-        cat_static_feature_dict=None,
-        real_dynamic_feature_columns=None,
-        cat_dynamic_feature_columns=None,
+        target_columns: List[str],
+        prediction_length: int,
+        freq: str,
+        group_dict: Optional[Dict[Tuple[Any], int]] = None,
+        real_static_feature_dict: Optional[Dict[Tuple[Any], List[float]]] = None,
+        cat_static_feature_dict: Optional[Dict[Tuple[Any], List[Any]]] = None,
+        real_dynamic_feature_columns: Optional[List[str]] = None,
+        cat_dynamic_feature_columns: Optional[List[str]] = None,
     ):
-        """
-        TODO write documentation
+        """AAITimeSeriesBaseModel Constructor.
+
+        Args:
+            target_columns: List of columns to forecast.
+            prediction_length: Length of the prediction to forecast.
+            freq: Frequency of the time series.
+            group_dict: Dictionary containing the unique label for each group.
+            real_static_feature_dict: Dictionary containing a list of real features for
+                each group.
+            cat_static_feature_dict: Dictionary containing a list of categorical
+                features for each group.
+            real_dynamic_feature_columns: List of columns containing real features.
+            cat_dynamic_feature_columns: List of columns containing categorical
+                features.
         """
         super().__init__(
             target_columns,
@@ -62,22 +78,33 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
         self.model_params_dict = None
         self.distr_output = None
         self.mx_ctx = None
-        self.torch_device = None
 
     @staticmethod
     def _create_predictor(
-        model_params_dict,
-        params,
-        data,
-        freq_gluon,
-        distr_output,
-        prediction_length,
-        target_dim,
-        mx_ctx,
-        torch_device,
-    ):
-        """
-        TODO write documentation
+        model_params_dict: Dict[str, BaseParams],
+        params: Dict[str, Any],
+        data: Iterable[Dict[str, Any]],
+        freq_gluon: str,
+        distr_output: DistributionOutput,
+        prediction_length: int,
+        target_dim: int,
+        mx_ctx: Context,
+    ) -> AAITimeSeriesPredictor:
+        """Create and train a predictor.
+
+        Args:
+            model_params_dict: Dictionary containing the different model params for
+                each model.
+            params: Hyperparameter choose by the tuning.
+            data: Data to use for training.
+            freq_gluon: GluonTS frequency of the time series.
+            distr_output: Distribution output to use.
+            prediction_length: Length of the prediction that will be forecasted.
+            target_dim: Target dimension (number of columns to predict).
+            mx_ctx: mxnet context.
+
+        Returns:
+            Trained predictor.
         """
         model_params_class = model_params_dict[params["model"]["model_name"]]
 
@@ -89,7 +116,6 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
         if model_params_class.has_estimator:
             gluonts_estimator = model_params_class.build_estimator(
                 ctx=mx_ctx,
-                device=torch_device,
                 freq=freq_gluon,
                 prediction_length=prediction_length,
                 target_dim=target_dim,
@@ -124,22 +150,38 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
     @classmethod
     def _trainable(
         cls,
-        params,
+        params: Dict[str, Any],
         *,
-        model_params_dict,
-        train_data_partial,
-        tune_data,
-        loss,
-        freq_gluon,
-        distr_output,
-        prediction_length,
-        target_dim,
-        use_ray,
-        mx_ctx,
-        torch_device,
-    ):
-        """
-        TODO write documentation
+        model_params_dict: Dict[str, BaseParams],
+        train_data_partial: Iterable[Dict[str, Any]],
+        tune_data: Iterable[Dict[str, Any]],
+        loss: str,
+        freq_gluon: str,
+        distr_output: DistributionOutput,
+        prediction_length: int,
+        target_dim: int,
+        use_ray: bool,
+        mx_ctx: Context,
+    ) -> Optional[float]:
+        """Create, train, and evaluate a model with specific hyperparameter.
+
+        Args:
+            params: Hyperparameter choose by the tuning.
+            model_params_dict: Dictionary containing the different model params for
+                each model.
+            train_data_partial: Data to use for training.
+            tune_data: Data to use for tuning.
+            loss: Loss to return.
+            freq_gluon: GluonTS frequency of the time series.
+            distr_output: Distribution output to use.
+            prediction_length: Length of the prediction that will be forecasted.
+            target_dim: Target dimension (number of columns to predict).
+            use_ray: Whether ray is used for tuning or not.
+            mx_ctx: mxnet context.
+
+        Returns:
+            If `use_ray` is False return the loss. Else will report the loss to ray
+            tune.
         """
         predictor = cls._create_predictor(
             model_params_dict,
@@ -150,7 +192,6 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
             prediction_length,
             target_dim,
             mx_ctx,
-            torch_device,
         )
 
         forecast_it, ts_it = predictor.make_evaluation_predictions(
@@ -176,23 +217,38 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
     @classmethod
     def _objective(
         cls,
-        params,
+        params: Dict[str, Any],
         *,
-        model_params_dict,
-        train_data_partial,
-        tune_data,
-        loss,
-        freq_gluon,
-        distr_output,
-        prediction_length,
-        target_dim,
-        use_ray,
-        mx_ctx,
-        torch_device,
-    ):
+        model_params_dict: Dict[str, BaseParams],
+        train_data_partial: Iterable[Dict[str, Any]],
+        tune_data: Iterable[Dict[str, Any]],
+        loss: str,
+        freq_gluon: str,
+        distr_output: DistributionOutput,
+        prediction_length: int,
+        target_dim: int,
+        use_ray: bool,
+        mx_ctx: Context,
+    ) -> Dict[str, Any]:
+        """Create, train, and evaluate a model with specific hyperparameter. Used by
+            hyperopt.
 
-        """
-        TODO write documentation
+        Args:
+            params: Hyperparameter choose by the tuning.
+            model_params_dict: Dictionary containing the different model params for
+                each model.
+            train_data_partial: Data to use for training.
+            tune_data: Data to use for tuning.
+            loss: Loss to return.
+            freq_gluon: GluonTS frequency of the time series.
+            distr_output: Distribution output to use.
+            prediction_length: Length of the prediction that will be forecasted.
+            target_dim: Target dimension (number of columns to predict).
+            use_ray: Whether ray is used for tuning or not.
+            mx_ctx: mxnet context.
+
+        Returns:
+            Dictionary containing the loss and the status.
         """
         return {
             "loss": cls._trainable(
@@ -207,34 +263,50 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
                 target_dim=target_dim,
                 use_ray=use_ray,
                 mx_ctx=mx_ctx,
-                torch_device=torch_device,
             ),
             "status": "ok",
         }
 
     def fit(
         self,
-        df_dict,
-        model_params,
-        mx_ctx,
-        torch_device,
+        df_dict: Dict[Tuple[Any], pd.DataFrame],
+        model_params: List[BaseParams],
+        mx_ctx: Context,
         *,
-        loss="mean_wQuantileLoss",
-        trials=3,
-        max_concurrent=None,
-        use_ray=True,
-        tune_samples=3,
-        sampling_method="random",
-        random_state=None,
-        ray_tune_kwargs=None,
-        verbose=1,
-        fit_full=True,
-    ):
-        """
-        TODO write documentation
+        loss: str = "mean_wQuantileLoss",
+        trials: int = 3,
+        max_concurrent: Optional[int] = None,
+        use_ray: bool = True,
+        tune_samples: int = 3,
+        sampling_method: str = "random",
+        random_state: Optional[int] = None,
+        ray_tune_kwargs: Optional[Dict[str, Any]] = None,
+        verbose: int = 1,
+        fit_full: bool = True,
+    ) -> float:
+        """Tune and fit the model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            model_params: List of models parameters to run the tuning search on.
+            mx_ctx: mxnet context.
+            loss: Loss to minimize when tuning.
+            trials: Number of trials for hyperparameter search.
+            max_concurrent: Maximum number of concurrent ray task.
+            use_ray: If True ray will be used for hyperparameter tuning.
+            tune_samples: Number of dataset samples to use when tuning.
+            sampling_method: Method used when extracting the samples for the tuning
+                ["random", "last"].
+            random_state: Random state to use for reproducibility.
+            ray_tune_kwargs: Named parameters to pass to ray's `tune` function.
+            verbose: Verbose level.
+            fit_full: If True the model will be fit after tuning using all the data
+                (tuning data).
+
+        Returns:
+            Total time spent for tuning.
         """
         self.mx_ctx = mx_ctx
-        self.torch_device = torch_device
 
         self.model_params_dict = {
             model_param_class.model_name: model_param_class
@@ -297,7 +369,6 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
                 target_dim=len(self.target_columns),
                 use_ray=use_ray,
                 mx_ctx=self.mx_ctx,
-                torch_device=self.torch_device,
             )
 
             analysis = tune.run(
@@ -330,7 +401,6 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
                 target_dim=len(self.target_columns),
                 use_ray=use_ray,
                 mx_ctx=self.mx_ctx,
-                torch_device=self.torch_device,
             )
 
             best = fmin(
@@ -355,14 +425,18 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
             prediction_length=self.prediction_length,
             target_dim=len(self.target_columns),
             mx_ctx=self.mx_ctx,
-            torch_device=self.torch_device,
         )
 
         return time.time() - start + trials_time_total
 
-    def refit(self, df_dict):
-        """
-        TODO write documentation
+    def refit(self, df_dict: Dict[Tuple[Any], pd.DataFrame]):
+        """Fit previously tuned model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
         """
         if self.predictor is None:
             raise UntrainedModelException()
@@ -389,14 +463,35 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
             prediction_length=self.prediction_length,
             target_dim=len(self.target_columns),
             mx_ctx=self.mx_ctx,
-            torch_device=self.torch_device,
         )
 
     def score(
-        self, df_dict, num_samples=100, quantiles=[0.05, 0.5, 0.95], num_workers=None
-    ):
-        """
-        TODO write documentation
+        self,
+        df_dict: Dict[Tuple[Any, ...], pd.DataFrame],
+        num_samples: int = 100,
+        quantiles: List[float] = [0.05, 0.5, 0.95],
+        num_workers: Optional[int] = None,
+    ) -> Tuple[
+        Dict[Tuple[Any, ...], pd.DataFrame],
+        Dict[Tuple[Any, ...], pd.DataFrame],
+        pd.DataFrame,
+    ]:
+        """Evaluate model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            num_samples: Number of dataset samples to use for evaluation
+            quantiles: List of quantiles to use for evaluation.
+            num_workers: Maximum number of workers to use, if None no parallelization
+                will be done.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
+
+        Returns:
+            - Dictionary containing the predicted time series for each group.
+            - Dictionary containing the metrics for each target for each group.
+            - Dataframe containing the aggregated metrics for each target.
         """
         if self.predictor is None:
             raise UntrainedModelException()
@@ -495,9 +590,22 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
 
         return df_predictions_dict, df_item_metrics_dict, df_agg_metrics
 
-    def predict(self, df_dict, quantiles=[0.05, 0.5, 0.95]):
-        """
-        TODO write documentation
+    def predict(
+        self,
+        df_dict: Dict[Tuple[Any, ...], pd.DataFrame],
+        quantiles: List[float] = [0.05, 0.5, 0.95],
+    ) -> Dict[Tuple[Any, ...], pd.DataFrame]:
+        """Make a prediction using the model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            quantiles: Quantiles to predict.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
+
+        Returns:
+            Dictionary containing the predicted time series for each group.
         """
         if self.predictor is None:
             raise UntrainedModelException()

@@ -1,32 +1,55 @@
+from typing import List, Union, Tuple, Any, Dict, Optional
+
 import pandas as pd
 from time import time
+
+from mxnet.context import Context
 
 from actableai.timeseries.models import (
     AAITimeSeriesMultiTargetModel,
     AAITimeSeriesSimpleModel,
 )
+from actableai.timeseries.models.params import BaseParams
 from actableai.timeseries.exceptions import UntrainedModelException
 from actableai.timeseries.util import handle_datetime_column, find_freq
 
 
 class AAITimeSeriesForecaster:
-    """
-    TODO write documentation
-    """
+    """Time Series Forecaster Model."""
 
     def __init__(
         self,
-        date_column,
-        target_columns,
-        prediction_length,
-        group_by=None,
-        real_static_feature=None,
-        cat_static_feature=None,
-        real_dynamic_feature_columns=None,
-        cat_dynamic_feature_columns=None,
+        date_column: str,
+        target_columns: List[str],
+        prediction_length: int,
+        group_by: List[str] = None,
+        real_static_feature: Optional[
+            Union[List[float], Dict[Tuple[Any, ...], List[float]]]
+        ] = None,
+        cat_static_feature: Optional[
+            Union[List[Any], Dict[Tuple[Any, ...], List[Any]]]
+        ] = None,
+        real_dynamic_feature_columns: Optional[List[str]] = None,
+        cat_dynamic_feature_columns: Optional[List[str]] = None,
     ):
-        """
-        TODO write documentation
+        """AAITimeSeriesForecaster Constructor.
+
+        Args:
+            date_column: Column containing the date/datetime/time component of the time
+                series.
+            target_columns: List of columns to forecast, if None all the columns will
+                be selected.
+            prediction_length: Length of the prediction to forecast.
+            group_by: List of columns to use to separate different time series/groups.
+            real_static_feature: Dictionary or List containing the real static features,
+                if dictionary it represents the features for each group, if list it
+                means that there is no groups.
+            cat_static_feature: Dictionary or List containing the categorical static
+                features, if dictionary it represents the features for each group, if
+                list it means that there is no groups.
+            real_dynamic_feature_columns: List of columns containing real features.
+            cat_dynamic_feature_columns: List of columns containing categorical
+                features.
         """
         self.date_column = date_column
         self.target_columns = target_columns
@@ -49,16 +72,36 @@ class AAITimeSeriesForecaster:
             self.group_by = []
 
         if isinstance(self.real_static_feature_dict, list):
-            self.real_static_feature_dict = {"data": self.real_static_feature_dict}
+            self.real_static_feature_dict = {("data",): self.real_static_feature_dict}
         if isinstance(self.cat_static_feature_dict, list):
-            self.cat_static_feature_dict = {"data": self.cat_static_feature_dict}
+            self.cat_static_feature_dict = {("data",): self.cat_static_feature_dict}
 
         self.model = None
 
     @staticmethod
-    def pre_process_data(df, date_column, target_columns, group_by=None, inplace=True):
-        """
-        TODO write documentation
+    def pre_process_data(
+        df: pd.DataFrame,
+        date_column: str,
+        group_by: Optional[List[str]] = None,
+        inplace: bool = True,
+    ) -> Tuple[
+        Dict[Tuple[Any, ...], pd.DataFrame],
+        Dict[Tuple[Any, ...], int],
+        Dict[Tuple[Any, ...], str],
+    ]:
+        """Pre-process dataframe to separate groups and handle datetime.
+
+        Args:
+            df: Input DataFrame
+            date_column: Column containing the date/datetime/time component of the time
+                series.
+            group_by: List of columns to use to separate different time series/groups.
+            inplace: If True this function will modify the original DataFrame.
+
+        Returns:
+            - Dictionary containing the time series for each group.
+            - Dictionary containing the unique label for each group.
+            - Dictionary containing the frequency of each group.
         """
         if group_by is None:
             group_by = []
@@ -76,7 +119,7 @@ class AAITimeSeriesForecaster:
                 group_dict[group] = group_index
                 df_dict[group] = grouped_df.reset_index(drop=True)
         else:
-            df_dict["data"] = df
+            df_dict[("data",)] = df
 
         # Process groups
         for group in df_dict.keys():
@@ -99,26 +142,47 @@ class AAITimeSeriesForecaster:
 
     def fit(
         self,
-        model_params,
-        mx_ctx,
-        torch_device,
+        model_params: List[BaseParams],
+        mx_ctx: Context,
         *,
-        df=None,
-        df_dict=None,
-        freq=None,
-        group_dict=None,
-        loss="mean_wQuantileLoss",
-        trials=3,
-        max_concurrent=None,
-        use_ray=True,
-        tune_samples=3,
-        sampling_method="random",
-        random_state=None,
-        ray_tune_kwargs=None,
-        verbose=1,
-    ):
-        """
-        TODO write documentation
+        df: Optional[pd.DataFrame] = None,
+        df_dict: Optional[Dict[Tuple[Any, ...], pd.DataFrame]] = None,
+        freq: Optional[str] = None,
+        group_dict: Optional[Dict[Tuple[Any, ...], int]] = None,
+        loss: str = "mean_wQuantileLoss",
+        trials: int = 3,
+        max_concurrent: Optional[int] = None,
+        use_ray: bool = True,
+        tune_samples: int = 3,
+        sampling_method: str = "random",
+        random_state: Optional[int] = None,
+        ray_tune_kwargs: Optional[Dict[str, Any]] = None,
+        verbose: int = 1,
+    ) -> float:
+        """Tune and fit the model.
+
+        Args:
+            model_params: List of models parameters to run the tuning search on.
+            mx_ctx: mxnet context.
+            df: Input DataFrame. If None `df_dict`, `freq`, and `group_dict` must be
+                provided.
+            df_dict: Dictionary containing the time series for each group. If None `df`
+                must be provided.
+            freq: Frequency of the time series.
+            group_dict: Dictionary containing the unique label for each group.
+            loss: Loss to minimize when tuning.
+            trials: Number of trials for hyperparameter search.
+            max_concurrent: Maximum number of concurrent ray task.
+            use_ray: If True ray will be used for hyperparameter tuning.
+            tune_samples: Number of dataset samples to use when tuning.
+            sampling_method: Method used when extracting the samples for the tuning
+                ["random", "last"].
+            random_state: Random state to use for reproducibility.
+            ray_tune_kwargs: Named parameters to pass to ray's `tune` function.
+            verbose: Verbose level.
+
+        Returns:
+            Total time spent for tuning.
         """
         if df is None and df_dict is None:
             raise Exception("df or df_dict must be provided")
@@ -133,7 +197,6 @@ class AAITimeSeriesForecaster:
             df_dict, group_dict, freq_dict = self.pre_process_data(
                 df=df,
                 date_column=self.date_column,
-                target_columns=self.target_columns,
                 group_by=self.group_by,
                 inplace=False,
             )
@@ -162,7 +225,6 @@ class AAITimeSeriesForecaster:
             df_dict=df_dict,
             model_params=univariate_model_params,
             mx_ctx=mx_ctx,
-            torch_device=torch_device,
             loss=loss,
             trials=trials,
             max_concurrent=max_concurrent,
@@ -193,7 +255,6 @@ class AAITimeSeriesForecaster:
                 df_dict=df_dict,
                 model_params=multivariate_model_params,
                 mx_ctx=mx_ctx,
-                torch_device=torch_device,
                 loss=loss,
                 trials=trials,
                 max_concurrent=max_concurrent,
@@ -226,9 +287,21 @@ class AAITimeSeriesForecaster:
 
         return multi_target_fit_time + multivariate_fit_time + time() - start_time
 
-    def refit(self, *, df=None, df_dict=None):
-        """
-        TODO write documentation
+    def refit(
+        self,
+        *,
+        df: Optional[pd.DataFrame] = None,
+        df_dict: Optional[Dict[Tuple[Any, ...], pd.DataFrame]] = None,
+    ):
+        """Fit previously tuned model.
+
+        Args:
+            df: Input DataFrame. If None `df_dict` must be provided.
+            df_dict: Dictionary containing the time series for each group. If None `df`
+                must be provided.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
         """
         if self.model is None:
             raise UntrainedModelException()
@@ -238,11 +311,10 @@ class AAITimeSeriesForecaster:
         if df is not None and df_dict is not None:
             raise Exception("df or df_dict must be provided")
 
-        if df_dict is None:
+        if df is not None:
             df_dict, _, _ = self.pre_process_data(
                 df=df,
                 date_column=self.date_column,
-                target_columns=self.target_columns,
                 group_by=self.group_by,
                 inplace=False,
             )
@@ -252,14 +324,30 @@ class AAITimeSeriesForecaster:
     def score(
         self,
         *,
-        df=None,
-        df_dict=None,
-        num_samples=100,
-        quantiles=[0.05, 0.5, 0.95],
-        num_workers=None,
-    ):
-        """
-        TODO write documentation
+        df: Optional[pd.DataFrame] = None,
+        df_dict: Optional[Dict[Tuple[Any, ...], pd.DataFrame]] = None,
+        num_samples: int = 100,
+        quantiles: List[float] = [0.05, 0.5, 0.95],
+        num_workers: Optional[int] = None,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Evaluate model.
+
+        Args:
+            df: Input DataFrame. If None `df_dict` must be provided.
+            df_dict: Dictionary containing the time series for each group. If None `df`
+                must be provided.
+            num_samples: Number of dataset samples to use for evaluation
+            quantiles: List of quantiles to use for evaluation.
+            num_workers: Maximum number of workers to use, if None no parallelization
+                will be done.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
+
+        Returns:
+            - Predicted time series.
+            - Metrics for each target and groups.
+            - Aggregated metrics for each target.
         """
         if self.model is None:
             raise UntrainedModelException()
@@ -269,11 +357,10 @@ class AAITimeSeriesForecaster:
         if df is not None and df_dict is not None:
             raise Exception("df or df_dict must be provided")
 
-        if df_dict is None:
+        if df is not None:
             df_dict, _, _ = self.pre_process_data(
                 df=df,
                 date_column=self.date_column,
-                target_columns=self.target_columns,
                 group_by=self.group_by,
                 inplace=False,
             )
@@ -307,9 +394,26 @@ class AAITimeSeriesForecaster:
 
         return df_predictions, df_item_metrics, df_agg_metrics
 
-    def predict(self, *, df=None, df_dict=None, quantiles=[0.05, 0.5, 0.95]):
-        """
-        TODO write documentation
+    def predict(
+        self,
+        *,
+        df: Optional[pd.DataFrame] = None,
+        df_dict: Optional[Dict[Tuple[Any, ...], pd.DataFrame]] = None,
+        quantiles: List[float] = [0.05, 0.5, 0.95],
+    ) -> pd.DataFrame:
+        """Make a prediction using the model.
+
+        Args:
+            df: Input DataFrame. If None `df_dict` must be provided.
+            df_dict: Dictionary containing the time series for each group. If None `df`
+                must be provided.
+            quantiles: Quantiles to predict.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
+
+        Returns:
+            Predicted time series.
         """
         if self.model is None:
             raise UntrainedModelException()
@@ -319,11 +423,10 @@ class AAITimeSeriesForecaster:
         if df is not None and df_dict is not None:
             raise Exception("df or df_dict must be provided")
 
-        if df_dict is None:
+        if df is not None:
             df_dict, _, _ = self.pre_process_data(
                 df=df,
                 date_column=self.date_column,
-                target_columns=self.target_columns,
                 group_by=self.group_by,
                 inplace=False,
             )

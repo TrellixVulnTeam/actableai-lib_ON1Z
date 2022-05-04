@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional, Any
 from actableai.tasks import TaskType
 from actableai.tasks.base import AAITask
 
@@ -6,45 +6,66 @@ import pandas as pd
 
 
 class AAIForecastTask(AAITask):
-    """
-    Forecast (time series) Task
-    """
+    """Forecast (time series) Task"""
 
     @AAITask.run_with_ray_remote(TaskType.FORECAST)
     def run(
         self,
-        df,
-        date_column,
-        predicted_columns=None,
-        prediction_length=None,
-        group_by=None,
-        feature_columns=None,
-        RAY_CPU_PER_TRIAL=3,
-        RAY_GPU_PER_TRIAL=0,
-        RAY_MAX_CONCURRENT=3,
-        epochs="auto",
-        num_cells="auto",
-        num_layers="auto",
-        dropout_rate="auto",
-        learning_rate="auto",
-        trials=1,
-        model_params=None,
-        use_ray=True,
-        tune_samples=20,
-        refit_full=True,
-        verbose=3,
-        seed=123,
-        sampling_method="random",
-    ):
-        """
-        TODO write documentation
+        df: pd.DataFrame,
+        date_column: str,
+        prediction_length: int,
+        predicted_columns: Optional[List[str]] = None,
+        group_by: Optional[List[str]] = None,
+        feature_columns: Optional[List[str]] = None,
+        RAY_CPU_PER_TRIAL: int = 3,
+        RAY_GPU_PER_TRIAL: int = 0,
+        RAY_MAX_CONCURRENT: int = 3,
+        trials: int = 1,
+        model_params: Optional[List[object]] = None,
+        use_ray: bool = True,
+        tune_samples: int = 20,
+        refit_full: bool = True,
+        verbose: int = 3,
+        seed: int = 123,
+        sampling_method: str = "random",
+    ) -> Dict[str, Any]:
+        """Run time series forecasting task and return results.
+
+        Args:
+            df: Input DataFrame.
+            date_column: Column containing the date/datetime/time component of the time
+                series.
+            prediction_length: Length of the prediction to forecast.
+            predicted_columns: List of columns to forecast, if None all the columns will
+                be selected.
+            group_by: List of columns to use to separate different time series/groups.
+                This list is used by the `groupby` function of the pandas library.
+            feature_columns: List of columns containing extraneous features used to
+                forecast. If one or more feature columns contain dynamic features
+                (features that change over time) the dataset must contain
+                `prediction_length` features data points in the future.
+            RAY_GPU_PER_TRIAL: Number of CPU to use per trial.
+            RAY_GPU_PER_TRIAL: Number of GPU to use per trial.
+            RAY_MAX_CONCURRENT: Maximum number of concurrent ray task.
+            trials: Number of trials for hyperparameter search.
+            model_params: List of model parameters to run the tuning search on. If None
+                some default models will be used.
+            use_ray: If True ray will be used for hyperparameter tuning.
+            tune_samples: Number of dataset samples to use when tuning.
+            refit_full: If True the final model will be fitted using all the data
+                (including the validation set).
+            verbose: Verbose level.
+            seed: Random seed to use.
+            sampling_method: Method used when extracting the samples for the tuning
+                ["random", "last"].
+
+        Returns:
+            Dict: Dictionary containing the results.
         """
         import time
-        import torch
         import mxnet as mx
         import numpy as np
         import pandas as pd
-        from copy import copy
         from sklearn.preprocessing import LabelEncoder
         from actableai.timeseries.models import params, AAITimeSeriesForecaster
         from actableai.data_validation.params import (
@@ -75,7 +96,7 @@ class AAIForecastTask(AAITask):
         if group_by is None:
             group_by = []
 
-        # To resolve any issues of acces rights make a copy
+        # To resolve any issues of access rights make a copy
         df = df.copy()
         df = sanitize_timezone(df)
 
@@ -120,7 +141,6 @@ class AAIForecastTask(AAITask):
         df_dict, group_dict, freq_dict = AAITimeSeriesForecaster.pre_process_data(
             df=df,
             date_column=date_column,
-            target_columns=predicted_columns,
             group_by=group_by,
             inplace=True,
         )
@@ -218,7 +238,6 @@ class AAIForecastTask(AAITask):
         freq = freq_dict[first_group]
 
         mx_ctx = mx.gpu() if RAY_GPU_PER_TRIAL > 0 else mx.cpu()
-        torch_device = torch.device("cuda" if RAY_GPU_PER_TRIAL > 0 else "cpu")
 
         if model_params is None:
             model_params = [
@@ -266,7 +285,6 @@ class AAIForecastTask(AAITask):
         )
         total_trials_times = model.fit(
             model_params=model_params,
-            torch_device=torch_device,
             mx_ctx=mx_ctx,
             df_dict=df_train_dict,
             freq=freq,
@@ -330,8 +348,8 @@ class AAIForecastTask(AAITask):
                 for group, group_df in df_predictions.groupby(group_by)
             ]
         else:
-            df_val_predictions_items = [("data", df_val_predictions)]
-            df_predictions_items = [("data", df_predictions)]
+            df_val_predictions_items = [(("data",), df_val_predictions)]
+            df_predictions_items = [(("data",), df_predictions)]
 
         data = {
             "predict": [
@@ -403,7 +421,7 @@ class AAIForecastTask(AAITask):
 
         runtime = time.time() - start + total_trials_times
 
-        resultPredict = {
+        return {
             "status": "SUCCESS",
             "messenger": "",
             "data_v2": {
@@ -421,5 +439,3 @@ class AAIForecastTask(AAITask):
             ],
             "runtime": runtime,
         }
-
-        return resultPredict

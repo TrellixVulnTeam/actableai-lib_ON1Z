@@ -1,6 +1,5 @@
 import pytest
 import ray
-import torch
 import numpy as np
 import pandas as pd
 import mxnet as mx
@@ -15,17 +14,10 @@ from actableai.utils.testing import init_ray, generate_forecast_df_dict
 def mx_ctx():
     yield mx.cpu()
 
-
-@pytest.fixture(scope="module")
-def torch_device():
-    yield torch.device("cpu")
-
-
 class TestAAITimeSeriesSimpleModel:
     def _fit_predict_model(
         self,
         mx_ctx,
-        torch_device,
         prediction_length,
         model_params,
         freq,
@@ -62,7 +54,6 @@ class TestAAITimeSeriesSimpleModel:
                 df_dict=df_train_dict,
                 model_params=model_params,
                 mx_ctx=mx_ctx,
-                torch_device=torch_device,
                 loss="mean_wQuantileLoss",
                 trials=trials,
                 max_concurrent=4 if not use_ray else None,
@@ -124,7 +115,6 @@ class TestAAITimeSeriesSimpleModel:
         self,
         np_rng,
         mx_ctx,
-        torch_device,
         n_groups,
         use_features,
         freq,
@@ -217,7 +207,6 @@ class TestAAITimeSeriesSimpleModel:
 
         validations, predictions = self._fit_predict_model(
             mx_ctx,
-            torch_device,
             prediction_length,
             [model_param],
             freq,
@@ -312,7 +301,7 @@ class TestAAITimeSeriesSimpleModel:
 
     @pytest.mark.parametrize("freq", ["T"])
     @pytest.mark.parametrize("use_ray", [True, False])
-    def test_hyperopt(self, np_rng, mx_ctx, torch_device, use_ray, freq):
+    def test_hyperopt(self, np_rng, mx_ctx, use_ray, freq):
         df_dict, target_columns, _, _ = generate_forecast_df_dict(
             np_rng, n_groups=1, n_targets=1, freq=freq
         )
@@ -334,7 +323,6 @@ class TestAAITimeSeriesSimpleModel:
 
         validations, predictions = self._fit_predict_model(
             mx_ctx,
-            torch_device,
             prediction_length,
             model_params,
             freq,
@@ -354,7 +342,7 @@ class TestAAITimeSeriesSimpleModel:
         assert "predictions" in predictions
 
     @pytest.mark.parametrize("freq", ["T"])
-    def test_not_trained_score(self, np_rng, mx_ctx, torch_device, freq):
+    def test_not_trained_score(self, np_rng, mx_ctx, freq):
         df_dict, target_columns, _, _ = generate_forecast_df_dict(
             np_rng, n_groups=1, n_targets=1, freq=freq
         )
@@ -365,7 +353,6 @@ class TestAAITimeSeriesSimpleModel:
         with pytest.raises(UntrainedModelException):
             _, _ = self._fit_predict_model(
                 mx_ctx,
-                torch_device,
                 prediction_length,
                 model_params,
                 freq,
@@ -377,7 +364,7 @@ class TestAAITimeSeriesSimpleModel:
             )
 
     @pytest.mark.parametrize("freq", ["T"])
-    def test_not_trained_predict(self, np_rng, mx_ctx, torch_device, freq):
+    def test_not_trained_predict(self, np_rng, mx_ctx, freq):
         df_dict, target_columns, _, _ = generate_forecast_df_dict(
             np_rng, n_groups=1, n_targets=1, freq=freq
         )
@@ -388,7 +375,6 @@ class TestAAITimeSeriesSimpleModel:
         with pytest.raises(UntrainedModelException):
             _, _ = self._fit_predict_model(
                 mx_ctx,
-                torch_device,
                 prediction_length,
                 model_params,
                 freq,

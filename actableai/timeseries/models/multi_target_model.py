@@ -1,28 +1,46 @@
+from typing import List, Optional, Dict, Tuple, Any
+
 import pandas as pd
+
+from mxnet.context import Context
 
 from actableai.timeseries.models.base import AAITimeSeriesBaseModel
 from actableai.timeseries.models.simple_model import AAITimeSeriesSimpleModel
 from actableai.timeseries.exceptions import UntrainedModelException
+from actableai.timeseries.models.params import BaseParams
 
 
 class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
-    """
-    TODO write documentation
+    """Multi-Target Time Series Model, can be used for univariate and multivariate
+    forecasting. It will internally use one AAITimeSeriesSimpleModel for each
+    target, using the other target as features for every model.
     """
 
     def __init__(
         self,
-        target_columns,
-        prediction_length,
-        freq,
-        group_dict=None,
-        real_static_feature_dict=None,
-        cat_static_feature_dict=None,
-        real_dynamic_feature_columns=None,
-        cat_dynamic_feature_columns=None,
+        target_columns: List[str],
+        prediction_length: int,
+        freq: str,
+        group_dict: Optional[Dict[Tuple[Any], int]] = None,
+        real_static_feature_dict: Optional[Dict[Tuple[Any], List[float]]] = None,
+        cat_static_feature_dict: Optional[Dict[Tuple[Any], List[Any]]] = None,
+        real_dynamic_feature_columns: Optional[List[str]] = None,
+        cat_dynamic_feature_columns: Optional[List[str]] = None,
     ):
-        """
-        TODO write documentation
+        """AAITimeSeriesMultiTargetModel Constructor.
+
+        Args:
+            target_columns: List of columns to forecast.
+            prediction_length: Length of the prediction to forecast.
+            freq: Frequency of the time series.
+            group_dict: Dictionary containing the unique label for each group.
+            real_static_feature_dict: Dictionary containing a list of real features for
+                each group.
+            cat_static_feature_dict: Dictionary containing a list of categorical
+                features for each group.
+            real_dynamic_feature_columns: List of columns containing real features.
+            cat_dynamic_feature_columns: List of columns containing categorical
+                features.
         """
         super().__init__(
             target_columns,
@@ -40,18 +58,30 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
         self.shift_target_columns_dict = self._get_shift_target_columns()
         self.shift_target_columns = list(self.shift_target_columns_dict.values())
 
-    def _get_shift_target_columns(self):
-        """
-        TODO write documentation
+    def _get_shift_target_columns(self) -> Dict[str, str]:
+        """Create look-up table (dictionary) to associate target columns with their
+            shifted corresponding columns.
+
+        Returns:
+            The dictionary.
         """
         return {
             target_column: f"_{target_column}_shift"
             for target_column in self.target_columns
         }
 
-    def _pre_process_data(self, df_dict, keep_future=True):
-        """
-        TODO write documentation
+    def _pre_process_data(
+        self, df_dict: Dict[Tuple[Any], pd.DataFrame], keep_future: bool = True
+    ) -> Dict[Tuple[Any], pd.DataFrame]:
+        """Pre-process data to add the shifted target as features.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            keep_future: If False the future (shifted) values are trimmed out.
+
+        Returns:
+            New dictionary containing the time series for each group (along with the
+                features).
         """
         if len(self.target_columns) <= 1:
             return df_dict
@@ -81,24 +111,42 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
 
     def fit(
         self,
-        df_dict,
-        model_params,
-        mx_ctx,
-        torch_device,
+        df_dict: Dict[Tuple[Any], pd.DataFrame],
+        model_params: List[BaseParams],
+        mx_ctx: Context,
         *,
-        loss="mean_wQuantileLoss",
-        trials=3,
-        max_concurrent=None,
-        use_ray=True,
-        tune_samples=3,
-        sampling_method="random",
-        random_state=None,
-        ray_tune_kwargs=None,
-        verbose=1,
-        fit_full=True,
-    ):
-        """
-        TODO write documentation
+        loss: str = "mean_wQuantileLoss",
+        trials: int = 3,
+        max_concurrent: Optional[int] = None,
+        use_ray: bool = True,
+        tune_samples: int = 3,
+        sampling_method: str = "random",
+        random_state: Optional[int] = None,
+        ray_tune_kwargs: Optional[Dict[str, Any]] = None,
+        verbose: int = 1,
+        fit_full: bool = True,
+    ) -> float:
+        """Tune and fit the model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            model_params: List of models parameters to run the tuning search on.
+            mx_ctx: mxnet context.
+            loss: Loss to minimize when tuning.
+            trials: Number of trials for hyperparameter search.
+            max_concurrent: Maximum number of concurrent ray task.
+            use_ray: If True ray will be used for hyperparameter tuning.
+            tune_samples: Number of dataset samples to use when tuning.
+            sampling_method: Method used when extracting the samples for the tuning
+                ["random", "last"].
+            random_state: Random state to use for reproducibility.
+            ray_tune_kwargs: Named parameters to pass to ray's `tune` function.
+            verbose: Verbose level.
+            fit_full: If True the model will be fit after tuning using all the data
+                (tuning data).
+
+        Returns:
+            Total time spent for tuning.
         """
         df_dict_clean = self._pre_process_data(df_dict, keep_future=False)
 
@@ -127,7 +175,6 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
                 df_dict=df_dict_clean,
                 model_params=model_params,
                 mx_ctx=mx_ctx,
-                torch_device=torch_device,
                 loss=loss,
                 trials=trials,
                 max_concurrent=max_concurrent,
@@ -137,16 +184,21 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
                 random_state=random_state,
                 ray_tune_kwargs=ray_tune_kwargs,
                 verbose=verbose,
-                fit_full=fit_full
+                fit_full=fit_full,
             )
 
             total_time += target_total_time
 
         return total_time
 
-    def refit(self, df_dict):
-        """
-        TODO write documentation
+    def refit(self, df_dict: Dict[Tuple[Any], pd.DataFrame]):
+        """Fit previously tuned model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
         """
         df_dict_clean = self._pre_process_data(df_dict, keep_future=False)
 
@@ -156,10 +208,32 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
             self.predictor_dict[target_column].refit(df_dict_clean)
 
     def score(
-        self, df_dict, num_samples=100, quantiles=[0.05, 0.5, 0.95], num_workers=None
-    ):
-        """
-        TODO write documentation
+        self,
+        df_dict: Dict[Tuple[Any, ...], pd.DataFrame],
+        num_samples: int = 100,
+        quantiles: List[float] = [0.05, 0.5, 0.95],
+        num_workers: Optional[int] = None,
+    ) -> Tuple[
+        Dict[Tuple[Any, ...], pd.DataFrame],
+        Dict[Tuple[Any, ...], pd.DataFrame],
+        pd.DataFrame,
+    ]:
+        """Evaluate model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            num_samples: Number of dataset samples to use for evaluation
+            quantiles: List of quantiles to use for evaluation.
+            num_workers: Maximum number of workers to use, if None no parallelization
+                will be done.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
+
+        Returns:
+            - Dictionary containing the predicted time series for each group.
+            - Dictionary containing the metrics for each target for each group.
+            - Dataframe containing the aggregated metrics for each target.
         """
         df_dict_clean = self._pre_process_data(df_dict, keep_future=False)
 
@@ -197,9 +271,22 @@ class AAITimeSeriesMultiTargetModel(AAITimeSeriesBaseModel):
 
         return df_predictions_dict, df_item_metrics_dict, df_agg_metrics
 
-    def predict(self, df_dict, quantiles=[0.05, 0.5, 0.95]):
-        """
-        TODO write documentation
+    def predict(
+        self,
+        df_dict: Dict[Tuple[Any, ...], pd.DataFrame],
+        quantiles: List[float] = [0.05, 0.5, 0.95],
+    ) -> Dict[Tuple[Any, ...], pd.DataFrame]:
+        """Make a prediction using the model.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            quantiles: Quantiles to predict.
+
+        Raises:
+            UntrainedModelException: If the model has not been trained/tuned before.
+
+        Returns:
+            Dictionary containing the predicted time series for each group.
         """
         df_dict_clean = self._pre_process_data(df_dict, keep_future=True)
 

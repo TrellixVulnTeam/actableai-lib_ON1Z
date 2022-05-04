@@ -1,14 +1,10 @@
 class InvalidFrequencyException(ValueError):
-    """
-    TODO write documentation
-    """
+    """Exception representing an invalid frequency."""
 
     pass
 
 
 class UntrainedModelException(ValueError):
-    """
-    TODO write documentation
-    """
+    """Exception representing an untrained model."""
 
     pass
