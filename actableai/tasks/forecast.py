@@ -352,18 +352,18 @@ class AAIForecastTask(AAITask):
                             },
                             "prediction": {
                                 "date": df_group_target_predictions.sort_values(
-                                    by="date"
-                                )["date"]
+                                    by=date_column
+                                )[date_column]
                                 .dt.strftime("%Y-%m-%d %H:%M:%S")
                                 .tolist(),
                                 "min": df_group_target_predictions.sort_values(
-                                    by="date"
+                                    by=date_column
                                 )["0.05"].tolist(),
                                 "median": df_group_target_predictions.sort_values(
-                                    by="date"
+                                    by=date_column
                                 )["0.5"].tolist(),
                                 "max": df_group_target_predictions.sort_values(
-                                    by="date"
+                                    by=date_column
                                 )["0.95"].tolist(),
                             },
                         },
@@ -379,13 +379,13 @@ class AAIForecastTask(AAITask):
                 "values": [
                     [
                         {
-                            "q5": df_group_target_predictions.sort_values(by="date")[
+                            "q5": df_group_target_predictions.sort_values(date_column)[
                                 "0.05"
                             ].tolist(),
-                            "q50": df_group_target_predictions.sort_values(by="date")[
+                            "q50": df_group_target_predictions.sort_values(date_column)[
                                 "0.5"
                             ].tolist(),
-                            "q95": df_group_target_predictions.sort_values(by="date")[
+                            "q95": df_group_target_predictions.sort_values(date_column)[
                                 "0.95"
                             ].tolist(),
                         }

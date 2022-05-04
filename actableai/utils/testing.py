@@ -171,7 +171,7 @@ def generate_forecast_df(
     for (group, df_group), group_values in zip(
         df_dict.items(), itertools.product(*group_values_list)
     ):
-        df_group["date"] = df_group.index
+        df_group["_date"] = df_group.index
 
         if has_groups:
             for group_by_name, group_by_value in zip(group_by, group_values):
@@ -187,4 +187,4 @@ def generate_forecast_df(
 
         df = pd.concat([df, df_group], ignore_index=True)
 
-    return df, "date", target_list, group_by, feature_list, n_groups
+    return df, "_date", target_list, group_by, feature_list, n_groups
