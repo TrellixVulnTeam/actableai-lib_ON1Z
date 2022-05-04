@@ -115,7 +115,8 @@ class TestAAITimeSeriesSimpleModel:
             [True, "r_forecast"],
             [True, "deep_ar"],
             [True, "feed_forward"],
-            [True, "tree_predictor"],
+            [True, "tree_predictor_qrx"],
+            [True, "tree_predictor_quantile_regression"],
             [False, "deep_var"],
         ],
     )
@@ -195,11 +196,19 @@ class TestAAITimeSeriesSimpleModel:
             model_param = params.FeedForwardParams(
                 hidden_layer_1_size=1, epochs=2, context_length=None
             )
-        elif model_type == "tree_predictor":
+        elif model_type == "tree_predictor_qrx":
             model_param = params.TreePredictorParams(
                 use_feat_dynamic_real=use_features,
                 use_feat_dynamic_cat=use_features,
                 context_length=None,
+                method="QRX",
+            )
+        elif model_type == "tree_predictor_quantile_regression":
+            model_param = params.TreePredictorParams(
+                use_feat_dynamic_real=use_features,
+                use_feat_dynamic_cat=use_features,
+                context_length=None,
+                method="QuantileRegression",
             )
         elif model_type == "deep_var":
             model_param = params.DeepVARParams(
