@@ -8,7 +8,7 @@ import numpy as np
 from gluonts.dataset.common import ListDataset
 from gluonts.transform import TransformedDataset
 
-from actableai.timeseries.util import (
+from actableai.timeseries.utils import (
     find_freq,
     dataframe_to_list_dataset,
     find_gluonts_freq,

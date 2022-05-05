@@ -6,7 +6,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.model.forecast import Forecast
 from gluonts.model.predictor import Predictor
 
-from actableai.timeseries.util import handle_features_dataset
+from actableai.timeseries.utils import handle_features_dataset
 
 
 class AAITimeSeriesPredictor:

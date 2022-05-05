@@ -11,7 +11,7 @@ from actableai.timeseries.models import (
 )
 from actableai.timeseries.models.params import BaseParams
 from actableai.timeseries.exceptions import UntrainedModelException
-from actableai.timeseries.util import handle_datetime_column, find_freq
+from actableai.timeseries.utils import handle_datetime_column, find_freq
 
 
 class AAITimeSeriesForecaster:

@@ -1,38 +1,25 @@
-from copy import deepcopy
-import re
 import json
-from typing import Optional, Tuple
+import re
+
+from typing import Optional, Tuple, Union, Dict, Callable, Iterable, List, Any, Iterator
+from copy import deepcopy
+
 import numpy as np
 import visions as v
 import pandas as pd
 
-
-def makeCorrectName(s):
-    return s.replace(" ", "_")
+from gluonts.model.forecast import Forecast
 
 
-def returnDataTable(df):
-    exdata = json.loads(df.to_json(orient="table"))
-    for item in exdata["data"]:
-        if "index" in item:
-            del item["index"]
-    exdata["schema"]["fields"].pop(0)
-    return exdata
+def find_gluonts_freq(freq: str) -> str:
+    """Convert pandas frequency to GluonTS frequency.
 
+    Args:
+        freq: pandas frequency
 
-def isCategory(column):
-    if column in v.Float:
-        return False
-    if column in v.Integer:
-        (dc,) = column.value_counts().shape
-        if dc <= 5:
-            return True
-        else:
-            return False
-    return True
-
-
-def find_gluonts_freq(freq):
+    Returns:
+        GluonTS frequency
+    """
     # For W:
     if re.findall("\d*W", freq):
         return re.findall("\d*W", freq)[0]
@@ -42,17 +29,35 @@ def find_gluonts_freq(freq):
     return freq
 
 
-def interpolate(df, freq):
+def interpolate(df: pd.DataFrame, freq: str) -> pd.DataFrame:
+    """Interpolate missing values in time series.
+
+    Args:
+        df: Time series DataFrame.
+        freq: Frequency to use when interpolating
+
+    Returns:
+        Interpolated new DataFrame
+    """
     return df.resample(freq).interpolate(method="linear")
 
 
-def find_freq(
-    pd_date: pd.Series, period=10
-) -> Optional[str]:  ## Need to sorted before.
+def find_freq(pd_date: pd.Series, period: int = 10) -> Optional[str]:
+    """Find the frequency from a list of datetime.
+
+    Args:
+        pd_date: List of datetime as a pandas Series, needs to be sorted.
+        period: Window to look for when computing the frequency.
+
+    Returns:
+        The frequency or None if not found.
+    """
     if len(pd_date) < 3:
         return None
-    pd_date = pd_date.sort_values()  # Sorting them ?
+
+    pd_date = pd_date.sort_values()
     freq = pd.infer_freq(pd_date)
+
     if freq:
         return freq
 
@@ -70,85 +75,37 @@ def find_freq(
     return most_freq
 
 
-def make_future_dataframe(periods, pd_date, freq, include_history=True):
-    history_dates = pd.to_datetime(pd_date).sort_values()
-    """Simulate the trend using the extrapolated generative model.
-    Parameters
-    ----------
-    periods: Int number of periods to forecast forward.
-    freq: Any valid frequency for pd.date_range, such as 'D' or 'M'.
-    include_history: Boolean to include the historical dates in the data
-        frame for predictions.
-    Returns
-    -------
-    pd.Dataframe that extends forward from the end of self.history for the
-    requested number of periods.
+def get_satisfied_formats(row: pd.Series, unique_formats: List[str]) -> List[str]:
+    """Find the datetime formats compatible with a list of datetime.
+
+    Args:
+        row: List of datetime as a pandas Series.
+        unique_formats: List of formats to try.
+
+    Returns:
+        List of compatible formats.
     """
-
-    if history_dates is None:
-        raise Exception("Model must be fit before this can be used.")
-    last_date = history_dates.max()
-    dates = pd.date_range(
-        start=last_date,
-        periods=periods + 1,  # An extra in case we include start
-        freq=freq,
-    )
-    dates = dates[dates > last_date]  # Drop start if equals last_date
-    dates = dates[:periods]  # Return correct number of periods
-
-    if include_history:
-        dates = np.concatenate((np.array(history_dates), dates))
-
-    return pd.DataFrame({"ds": dates})
-
-
-# FIXME unused
-def minmax_scaler_fit_transform(df):
-    from sklearn.preprocessing import MinMaxScaler
-
-    x = df.values
-    scaler = MinMaxScaler()
-    x_scaled = scaler.fit_transform(x)
-    x_scaled = pd.DataFrame(x_scaled)
-    x_scaled.index = df.index
-
-    return x_scaled, scaler
-
-
-# FIXME unused
-def minmax_scaler_transform(df, scaler):
-
-    x = df.values
-    x_scaled = scaler.transform(x)
-    x_scaled = pd.DataFrame(x_scaled)
-    x_scaled.index = df.index
-
-    return x_scaled
-
-
-# FIXME unused
-def inverse_transform(normalized_fc, scaler):
-    fc_samples = normalized_fc.samples
-    fc_shape = fc_samples.shape
-    fc_samples = scaler.inverse_transform(fc_samples.reshape(-1, fc_shape[2]))
-    normalized_fc.samples = fc_samples.reshape(fc_shape)
-
-    return normalized_fc
-
-
-def get_satisfied_formats(row, unique_formats):
     satisfied_formats = []
-    for format in unique_formats:
+    for dt_format in unique_formats:
         try:
-            pd.to_datetime(row, format=format)
-            satisfied_formats.append(format)
+            pd.to_datetime(row, format=dt_format)
+            satisfied_formats.append(dt_format)
         except:
             continue
 
     return satisfied_formats
 
 
-def parse_datetime(dt_str, formats):
+def parse_datetime(dt_str: pd.Series, formats: List[str]) -> Optional[pd.Series]:
+    """Try to parse datetime using a list of formats. Returns the first working format.
+
+    Args:
+        dt_str: List of datetime as pandas Series.
+        formats: List of datetime formats to try.
+
+    Returns:
+        Parsed list of datetime or None if no formats are compatible.
+    """
     for fm in formats:
         try:
             result = pd.to_datetime(dt_str, format=fm)
@@ -158,7 +115,18 @@ def parse_datetime(dt_str, formats):
     return None
 
 
-def parse_by_format_with_valid_frequency(series, formats):
+def parse_by_format_with_valid_frequency(
+    series: pd.Series, formats: List[str]
+) -> pd.Series:
+    """Parse datetime using a list of formats. Returns the first working format.
+
+    Args:
+        series: List of datetime as pandas Series.
+        formats: List of datetime formats to try.
+
+    Returns:
+        Parsed list of datetime.
+    """
     for fm in formats:
         try:
             result = pd.to_datetime(series.astype(str), format=fm)
@@ -172,8 +140,15 @@ def parse_by_format_with_valid_frequency(series, formats):
 def handle_datetime_column(
     series: pd.Series, min_parsed_rate: float = 0.5
 ) -> Tuple[pd.Series, str]:
-    """
-    TODO write documentation
+    """Parse datetime from a list of datetime.
+
+    Args:
+        series: List of datetime to parse as a pandas Series.
+        min_parsed_rate: Ratio of minimum parsed dates.
+
+    Returns:
+        - Parsed pandas series.
+        - Data type of the parsed series ["datetime", "others"].
     """
     from pandas._libs.tslibs.parsing import _guess_datetime_format
 
@@ -236,21 +211,41 @@ def handle_datetime_column(
 
 
 def dataframe_to_list_dataset(
-    df_dict,
-    target_columns,
-    freq,
+    df_dict: Dict[Tuple[Any, ...], pd.DataFrame],
+    target_columns: List[str],
+    freq: str,
     *,
-    real_static_feature_dict=None,
-    cat_static_feature_dict=None,
-    real_dynamic_feature_columns=None,
-    cat_dynamic_feature_columns=None,
-    group_dict=None,
-    prediction_length=None,
-    slice_df=None,
-    training=True,
-):
-    """
-    TODO write documentation
+    real_static_feature_dict: Optional[Dict[Tuple[Any], List[float]]] = None,
+    cat_static_feature_dict: Optional[Dict[Tuple[Any], List[Any]]] = None,
+    real_dynamic_feature_columns: Optional[List[str]] = None,
+    cat_dynamic_feature_columns: Optional[List[str]] = None,
+    group_dict: Optional[Dict[Tuple[Any], int]] = None,
+    prediction_length: Optional[int] = None,
+    slice_df: Optional[Union[slice, Callable]] = None,
+    training: bool = True,
+) -> Iterable[Dict[str, Any]]:
+    """Transform pandas DataFrame to GluonTS ListDataset.
+
+    Args:
+        df_dict: Dictionary containing the time series for each group.
+        target_columns: List of columns to forecast.
+        freq: Frequency of the time series.
+        real_static_feature_dict: Dictionary containing a list of real features for
+            each group.
+        cat_static_feature_dict: Dictionary containing a list of categorical
+            features for each group.
+        real_dynamic_feature_columns: List of columns containing real features.
+        cat_dynamic_feature_columns: List of columns containing categorical
+            features.
+        group_dict: Dictionary containing the unique label for each group.
+        prediction_length: Length of the prediction to forecast. Cannot be None if
+            `training` is False.
+        slice_df: Slice or function to call that will return a slice. The slice will be
+            applied to each group separately.
+        training: If True the future dynamic features are trimmed out of the result.
+
+    Returns:
+        The ListDataset containing all the groups, features, and targets.
     """
     from gluonts.dataset.common import ListDataset
 
@@ -266,7 +261,7 @@ def dataframe_to_list_dataset(
         group_dict = {}
 
     if prediction_length is None and not training:
-        raise Exception("prediction length cannot be None if trainig is False")
+        raise Exception("prediction length cannot be None if training is False")
 
     one_dim_target = len(target_columns) == 1
     if one_dim_target:
@@ -315,14 +310,23 @@ def dataframe_to_list_dataset(
 
 
 def handle_features_dataset(
-    dataset,
-    keep_feat_static_real,
-    keep_feat_static_cat,
-    keep_feat_dynamic_real,
-    keep_feat_dynamic_cat,
-):
-    """
-    TODO write documentation
+    dataset: Iterable[Dict[str, Any]],
+    keep_feat_static_real: bool,
+    keep_feat_static_cat: bool,
+    keep_feat_dynamic_real: bool,
+    keep_feat_dynamic_cat: bool,
+) -> Iterable[Dict[str, Any]]:
+    """Filter out features from GluonTS ListDataset.
+
+    Args:
+        dataset: The ListDataset to filter.
+        keep_feat_static_real: Whether to keep the real static features or not.
+        keep_feat_static_cat: Whether to keep the categorical static features or not.
+        keep_feat_dynamic_real: Whether to keep to the real dynamic features or not.
+        keep_feat_dynamic_cat: Whether to keep the categorical dynamic features or not.
+
+    Returns:
+        Filtered ListDataset.
     """
     from gluonts.transform import TransformedDataset
     from gluonts.dataset.common import ListDataset
@@ -360,10 +364,21 @@ def handle_features_dataset(
 
 
 def forecast_to_dataframe(
-    forecast, target_columns, date_list, quantiles=[0.05, 0.5, 0.95]
-):
-    """
-    TODO write documentation
+    forecast: Iterator[Forecast],
+    target_columns: List[str],
+    date_list: List[pd.datetime],
+    quantiles: List[float] = [0.05, 0.5, 0.95],
+) -> pd.DataFrame:
+    """Convert GluonTS forecast to pandas DataFrame.
+
+    Args:
+        forecast: GluonTS forecast.
+        target_columns: List of columns to forecast.
+        date_list: List of datetime forecasted.
+        quantiles: List of quantiles to forecast.
+
+    Returns:
+        Forecasted values as pandas DataFrame.
     """
     prediction_length = forecast.prediction_length
 
@@ -393,91 +408,3 @@ def forecast_to_dataframe(
         ],
         ignore_index=True,
     )
-
-
-def generate_train_valid_data(
-    df_dict,
-    target_columns,
-    prediction_length,
-    freq,
-    group_dict,
-    real_static_feature_dict,
-    cat_static_feature_dict,
-    real_dynamic_feature_columns,
-    cat_dynamic_feature_columns,
-    tune_samples,
-    sampling_method="random",
-):
-    """
-    TODO write documentation
-    """
-    from gluonts.dataset.common import ListDataset
-
-    train_data = dataframe_to_list_dataset(
-        df_dict,
-        target_columns,
-        freq,
-        real_static_feature_dict=real_static_feature_dict,
-        cat_static_feature_dict=cat_static_feature_dict,
-        real_dynamic_feature_columns=real_dynamic_feature_columns,
-        cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-        group_dict=group_dict,
-        prediction_length=prediction_length,
-        training=True,
-    )
-
-    train_data_partial = dataframe_to_list_dataset(
-        df_dict,
-        target_columns,
-        freq,
-        real_static_feature_dict=real_static_feature_dict,
-        cat_static_feature_dict=cat_static_feature_dict,
-        real_dynamic_feature_columns=real_dynamic_feature_columns,
-        cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-        group_dict=group_dict,
-        prediction_length=prediction_length,
-        slice_df=slice(-prediction_length - tune_samples),
-        training=True,
-    )
-
-    tune_data_list = []
-    for i in range(tune_samples):
-        slice_function = None
-        if sampling_method == "random":
-            slice_function = lambda df: slice(
-                np.random.randint(2 * prediction_length + 1, df.shape[0] + 1)
-            )
-        elif sampling_method == "last":
-            slice_function = lambda df: slice(df.shape[0] - i)
-        else:
-            raise Exception("Unkown sampling method")
-
-        tune_data_list.append(
-            dataframe_to_list_dataset(
-                df_dict,
-                target_columns,
-                freq,
-                real_static_feature_dict=real_static_feature_dict,
-                cat_static_feature_dict=cat_static_feature_dict,
-                real_dynamic_feature_columns=real_dynamic_feature_columns,
-                cat_dynamic_feature_columns=cat_dynamic_feature_columns,
-                group_dict=group_dict,
-                prediction_length=prediction_length,
-                slice_df=slice_function,
-                training=True,
-            )
-        )
-
-    # Merge all samples into the same ListDataset
-    tune_data = None
-    if len(tune_data_list) > 0:
-        list_data = []
-
-        for tune_data_sample in tune_data_list:
-            list_data += tune_data_sample.list_data
-
-        tune_data = ListDataset(
-            list_data, freq, one_dim_target=(len(target_columns) == 1)
-        )
-
-    return train_data, train_data_partial, tune_data

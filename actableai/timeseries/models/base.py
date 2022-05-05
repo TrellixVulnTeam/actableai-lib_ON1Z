@@ -6,7 +6,7 @@ import pandas as pd
 
 from mxnet.context import Context
 
-from actableai.timeseries.util import find_gluonts_freq
+from actableai.timeseries.utils import find_gluonts_freq
 from actableai.timeseries.models.params import BaseParams
 
 

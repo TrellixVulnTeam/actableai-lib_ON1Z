@@ -634,7 +634,7 @@ class IsValidFrequencyChecker(IChecker):
         Returns:
             Optional[CheckResult]: Check result.
         """
-        from actableai.timeseries.util import find_freq, handle_datetime_column
+        from actableai.timeseries.utils import find_freq, handle_datetime_column
 
         try:
             pd_date, _ = handle_datetime_column(df)

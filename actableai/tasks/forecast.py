@@ -73,7 +73,7 @@ class AAIForecastTask(AAITask):
             TimeSeriesPredictionDataValidator,
         )
         from actableai.data_validation.base import CheckLevels
-        from actableai.timeseries.util import (
+        from actableai.timeseries.utils import (
             handle_datetime_column,
             find_freq,
             interpolate,

@@ -1,6 +1,6 @@
 from typing import Union, Optional, Iterable, Any, Dict
 
-from actableai.timeseries.util import handle_features_dataset
+from actableai.timeseries.utils import handle_features_dataset
 
 from gluonts.model.estimator import Estimator
 from gluonts.model.predictor import Predictor

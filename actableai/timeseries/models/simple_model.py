@@ -25,8 +25,7 @@ from actableai.timeseries.models.base import AAITimeSeriesBaseModel
 from actableai.timeseries.models.estimator import AAITimeSeriesEstimator
 from actableai.timeseries.models.predictor import AAITimeSeriesPredictor
 from actableai.timeseries.exceptions import UntrainedModelException
-from actableai.timeseries.util import (
-    generate_train_valid_data,
+from actableai.timeseries.utils import (
     dataframe_to_list_dataset,
     forecast_to_dataframe,
 )
@@ -267,6 +266,98 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
             "status": "ok",
         }
 
+    def _generate_train_valid_data(
+        self,
+        df_dict: Dict[Tuple[Any], pd.DataFrame],
+        tune_samples: int,
+        sampling_method: str = "random",
+    ) -> Tuple[
+        Iterable[Dict[str, Any]], Iterable[Dict[str, Any]], Iterable[Dict[str, Any]]
+    ]:
+        """Generate and split train and validation data for tuning.
+
+        Args:
+            df_dict: Dictionary containing the time series for each group.
+            tune_samples: Number of dataset samples to use when tuning.
+            sampling_method: Method used when extracting the samples for the tuning
+                ["random", "last"].
+
+        Returns:
+            - Training ListDataset.
+            - Training ListDataset (partial without tuning).
+            - Tuning ListDataset.
+        """
+        from gluonts.dataset.common import ListDataset
+
+        train_data = dataframe_to_list_dataset(
+            df_dict,
+            self.target_columns,
+            self.freq,
+            real_static_feature_dict=self.real_static_feature_dict,
+            cat_static_feature_dict=self.cat_static_feature_dict,
+            real_dynamic_feature_columns=self.real_dynamic_feature_columns,
+            cat_dynamic_feature_columns=self.cat_dynamic_feature_columns,
+            group_dict=self.group_dict,
+            prediction_length=self.prediction_length,
+            training=True,
+        )
+
+        train_data_partial = dataframe_to_list_dataset(
+            df_dict,
+            self.target_columns,
+            self.freq,
+            real_static_feature_dict=self.real_static_feature_dict,
+            cat_static_feature_dict=self.cat_static_feature_dict,
+            real_dynamic_feature_columns=self.real_dynamic_feature_columns,
+            cat_dynamic_feature_columns=self.cat_dynamic_feature_columns,
+            group_dict=self.group_dict,
+            prediction_length=self.prediction_length,
+            slice_df=slice(-self.prediction_length - tune_samples),
+            training=True,
+        )
+
+        tune_data_list = []
+        for i in range(tune_samples):
+            slice_function = None
+            if sampling_method == "random":
+                slice_function = lambda df: slice(
+                    np.random.randint(2 * self.prediction_length + 1, df.shape[0] + 1)
+                )
+            elif sampling_method == "last":
+                slice_function = lambda df: slice(df.shape[0] - i)
+            else:
+                raise Exception("Unkown sampling method")
+
+            tune_data_list.append(
+                dataframe_to_list_dataset(
+                    df_dict,
+                    self.target_columns,
+                    self.freq,
+                    real_static_feature_dict=self.real_static_feature_dict,
+                    cat_static_feature_dict=self.cat_static_feature_dict,
+                    real_dynamic_feature_columns=self.real_dynamic_feature_columns,
+                    cat_dynamic_feature_columns=self.cat_dynamic_feature_columns,
+                    group_dict=self.group_dict,
+                    prediction_length=self.prediction_length,
+                    slice_df=slice_function,
+                    training=True,
+                )
+            )
+
+        # Merge all samples into the same ListDataset
+        tune_data = None
+        if len(tune_data_list) > 0:
+            list_data = []
+
+            for tune_data_sample in tune_data_list:
+                list_data += tune_data_sample.list_data
+
+            tune_data = ListDataset(
+                list_data, self.freq, one_dim_target=(len(self.target_columns) == 1)
+            )
+
+        return train_data, train_data_partial, tune_data
+
     def fit(
         self,
         df_dict: Dict[Tuple[Any], pd.DataFrame],
@@ -314,16 +405,8 @@ class AAITimeSeriesSimpleModel(AAITimeSeriesBaseModel):
             if model_param_class is not None
         }
 
-        train_data, train_data_partial, tune_data = generate_train_valid_data(
+        train_data, train_data_partial, tune_data = self._generate_train_valid_data(
             df_dict,
-            self.target_columns,
-            self.prediction_length,
-            self.freq_gluon,
-            self.group_dict,
-            self.real_static_feature_dict,
-            self.cat_static_feature_dict,
-            self.real_dynamic_feature_columns,
-            self.cat_dynamic_feature_columns,
             tune_samples,
             sampling_method,
         )
