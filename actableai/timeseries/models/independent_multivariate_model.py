@@ -3,6 +3,8 @@ from typing import List, Optional, Dict, Tuple, Any, Union
 import pandas as pd
 import mxnet as mx
 
+from multiprocessing.pool import ThreadPool
+
 from actableai.timeseries.models.base import AAITimeSeriesBaseModel
 from actableai.timeseries.models.single_model import AAITimeSeriesSingleModel
 from actableai.timeseries.exceptions import UntrainedModelException
@@ -158,8 +160,7 @@ class AAITimeSeriesIndependentMultivariateModel(AAITimeSeriesBaseModel):
 
         total_time = 0
 
-        # Train one model per target
-        # TODO make this parallel
+        # Create one predictor per target
         for target_column in self.target_columns:
             shift_target_column = self.shift_target_columns_dict[target_column]
 
@@ -179,23 +180,36 @@ class AAITimeSeriesIndependentMultivariateModel(AAITimeSeriesBaseModel):
                 real_dynamic_feature_columns=real_dynamic_feature_columns,
                 cat_dynamic_feature_columns=self.cat_dynamic_feature_columns,
             )
-            target_total_time = self.predictor_dict[target_column].fit(
-                group_df_dict=group_df_dict_clean,
-                model_params=model_params,
-                mx_ctx=mx_ctx,
-                loss=loss,
-                trials=trials,
-                max_concurrent=max_concurrent,
-                use_ray=use_ray,
-                tune_samples=tune_samples,
-                sampling_method=sampling_method,
-                random_state=random_state,
-                ray_tune_kwargs=ray_tune_kwargs,
-                verbose=verbose,
-                fit_full=fit_full,
-            )
 
-            total_time += target_total_time
+        # Train one model per target
+        target_pool = ThreadPool(processes=max_concurrent)
+
+        target_results = [
+            target_pool.apply_async(
+                self.predictor_dict[target_column].fit,
+                kwds={
+                    "group_df_dict": group_df_dict_clean,
+                    "model_params": model_params,
+                    "mx_ctx": mx_ctx,
+                    "loss": loss,
+                    "trials": trials,
+                    "max_concurrent": max_concurrent,
+                    "use_ray": use_ray,
+                    "tune_samples": tune_samples,
+                    "sampling_method": sampling_method,
+                    "random_state": random_state,
+                    "ray_tune_kwargs": ray_tune_kwargs,
+                    "verbose": verbose,
+                    "fit_full": fit_full,
+                }
+            )
+            for target_column in self.target_columns
+        ]
+
+        for results in target_results:
+            total_time += results.get()
+
+        target_pool.close()
 
         return total_time
 
