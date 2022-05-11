@@ -361,6 +361,7 @@ class TestTimeSeries:
             predicted_columns=target_columns,
             trials=10,
             use_ray=False,
+            max_concurrent=1,
         )
 
         assert results is not None
