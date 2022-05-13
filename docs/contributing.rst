@@ -149,7 +149,7 @@ You can run the following locally:
 
 .. code-block:: shell
 
-    scripts/format.sh
+    ./format.sh
 
 **Other recommendations**:
 
