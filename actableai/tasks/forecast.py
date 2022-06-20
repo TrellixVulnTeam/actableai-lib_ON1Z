@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Dict, List, Optional, Any, Tuple
 
+from actableai.callbacks.time_series import AAITimeSeriesCallback
 from actableai.tasks import TaskType
 from actableai.tasks.base import AAITask
 
@@ -345,6 +346,7 @@ class AAIForecastTask(AAITask):
         verbose: int = 3,
         seed: int = 123,
         sampling_method: str = "random",
+        callback: Optional[AAITimeSeriesCallback] = None,
     ) -> Dict[str, Any]:
         """Run time series forecasting task and return results.
 
@@ -569,6 +571,7 @@ class AAIForecastTask(AAITask):
             random_state=seed,
             ray_tune_kwargs=ray_tune_kwargs,
             verbose=verbose,
+            callback=callback,
         )
 
         start = time.time()

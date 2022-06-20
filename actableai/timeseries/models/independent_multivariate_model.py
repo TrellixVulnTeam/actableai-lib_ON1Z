@@ -2,6 +2,7 @@ import mxnet as mx
 import pandas as pd
 from typing import List, Optional, Dict, Tuple, Any, Union
 
+from actableai.callbacks.time_series import AAITimeSeriesCallback
 from actableai.timeseries.exceptions import UntrainedModelException
 from actableai.timeseries.models.base import AAITimeSeriesBaseModel
 from actableai.timeseries.models.params.base import BaseParams
@@ -130,6 +131,7 @@ class AAITimeSeriesIndependentMultivariateModel(AAITimeSeriesBaseModel):
         ray_tune_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 1,
         fit_full: bool = True,
+        callback: Optional[AAITimeSeriesCallback] = None,
     ) -> float:
         """Tune and fit the model.
 
@@ -192,6 +194,7 @@ class AAITimeSeriesIndependentMultivariateModel(AAITimeSeriesBaseModel):
                 ray_tune_kwargs=ray_tune_kwargs,
                 verbose=verbose,
                 fit_full=fit_full,
+                callback=callback,
             )
 
             total_time += target_total_time

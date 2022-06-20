@@ -3,6 +3,7 @@ import pandas as pd
 from abc import ABC, abstractmethod
 from typing import List, Dict, Tuple, Any, Optional, Union
 
+from actableai.callbacks.time_series import AAITimeSeriesCallback
 from actableai.timeseries.models.params.base import BaseParams
 from actableai.timeseries.utils import find_gluonts_freq
 
@@ -83,6 +84,7 @@ class AAITimeSeriesBaseModel(ABC):
         ray_tune_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 1,
         fit_full: bool = True,
+        callback: Optional[AAITimeSeriesCallback] = None,
     ) -> float:
         """Tune and fit the model.
 

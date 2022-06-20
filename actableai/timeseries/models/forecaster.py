@@ -3,6 +3,7 @@ import pandas as pd
 from time import time
 from typing import List, Union, Tuple, Any, Dict, Optional
 
+from actableai.callbacks.time_series import AAITimeSeriesCallback
 from actableai.timeseries.exceptions import UntrainedModelException
 from actableai.timeseries.models.independent_multivariate_model import (
     AAITimeSeriesIndependentMultivariateModel,
@@ -158,6 +159,7 @@ class AAITimeSeriesForecaster:
         ray_tune_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 1,
         fit_full: bool = True,
+        callback: Optional[AAITimeSeriesCallback] = None,
     ) -> float:
         """Tune and fit the model.
 
@@ -238,6 +240,7 @@ class AAITimeSeriesForecaster:
             ray_tune_kwargs=ray_tune_kwargs,
             verbose=verbose,
             fit_full=False,
+            callback=callback,
         )
 
         # Train multivariate models

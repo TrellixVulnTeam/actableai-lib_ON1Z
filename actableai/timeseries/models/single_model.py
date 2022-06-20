@@ -13,6 +13,7 @@ from ray.tune.suggest import ConcurrencyLimiter
 from ray.tune.suggest.hyperopt import HyperOptSearch
 from typing import Dict, List, Optional, Tuple, Any, Iterable, Union
 
+from actableai.callbacks.time_series import AAITimeSeriesCallback
 from actableai.timeseries.exceptions import UntrainedModelException
 from actableai.timeseries.models.base import AAITimeSeriesBaseModel
 from actableai.timeseries.models.estimator import AAITimeSeriesEstimator
@@ -155,6 +156,7 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
         target_dim: int,
         use_ray: bool,
         mx_ctx: mx.Context,
+        callback: Optional[AAITimeSeriesCallback],
     ) -> Optional[float]:
         """Create, train, and evaluate a model with specific hyperparameter.
 
@@ -196,7 +198,17 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
             quantiles=[0.05, 0.25, 0.5, 0.75, 0.95],
             num_workers=None,
         )
-        agg_metrics, _ = evaluator(ts_it, forecast_it, num_series=len(tune_data))
+        agg_metrics, df_item_metrics = evaluator(
+            ts_it, forecast_it, num_series=len(tune_data)
+        )
+
+        if callback is not None:
+            # FIXME process the evaluations
+            callback.on_tune_model_trained(
+                model_params=params,
+                agg_metrics=agg_metrics,
+                df_item_metrics=df_item_metrics,
+            )
 
         if not use_ray:
             return agg_metrics[loss]
@@ -218,6 +230,7 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
         target_dim: int,
         use_ray: bool,
         mx_ctx: mx.Context,
+        callback: Optional[AAITimeSeriesCallback],
     ) -> Dict[str, Any]:
         """Create, train, and evaluate a model with specific hyperparameter. Used by
             hyperopt.
@@ -252,6 +265,7 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
                 target_dim=target_dim,
                 use_ray=use_ray,
                 mx_ctx=mx_ctx,
+                callback=callback,
             ),
             "status": "ok",
         }
@@ -366,6 +380,7 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
         ray_tune_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 1,
         fit_full: bool = True,
+        callback: Optional[AAITimeSeriesCallback] = None,
     ) -> float:
         """Tune and fit the model.
 
@@ -446,6 +461,7 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
                 target_dim=len(self.target_columns),
                 use_ray=use_ray,
                 mx_ctx=mx_ctx,
+                callback=callback,
             )
 
             analysis = tune.run(
@@ -478,6 +494,7 @@ class AAITimeSeriesSingleModel(AAITimeSeriesBaseModel):
                 target_dim=len(self.target_columns),
                 use_ray=use_ray,
                 mx_ctx=mx_ctx,
+                callback=callback,
             )
 
             best = fmin(
