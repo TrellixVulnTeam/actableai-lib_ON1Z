@@ -1,5 +1,6 @@
 import traceback
 import logging
+from torch.utils.data import DataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,8 @@ class AAISentimentExtractor:
         results = [
             {"keyword": [], "sentiment": [], "confidence": []} for i in range(len(X))
         ]
+        annotated_sents = []
+        extracted_candidates = []
         for candidate in candidates:
             if candidate.text in keywords:
                 sent = X[candidate.sentence_id]
@@ -78,23 +81,37 @@ class AAISentimentExtractor:
                     + "[ASP]"
                     + sent[candidate.end_position :]
                 )
+                annotated_sents.append(annotated_sent)
+                extracted_candidates.append(candidate)
 
-                try:
-                    sentiment = self.sent_classifier.infer(
-                        annotated_sent, print_result=False
-                    )
-                    results[candidate.sentence_id]["keyword"].append(candidate.text)
-                    results[candidate.sentence_id]["sentiment"].append(
-                        sentiment["sentiment"][0].lower()
-                    )
-                    results[candidate.sentence_id]["confidence"].append(
-                        sentiment["confidence"][0]
-                    )
-                except Exception:
-                    logger.error(
-                        "Error in analyzing sentence: %s\n%s"
-                        % (annotated_sent, traceback.format_exc())
-                    )
+        samples = []
+        for sent in annotated_sents:
+            samples.extend(self.sent_classifier.dataset.parse_sample(sent))
+        self.sent_classifier.dataset.process_data(samples)
+        self.sent_classifier.infer_dataloader = DataLoader(
+            dataset=self.sent_classifier.dataset,
+            batch_size=self.sent_classifier.opt.eval_batch_size,
+            shuffle=False)
+
+        try:
+            predictions = self.sent_classifier._infer(print_result=False)
+            sentiments, confidences = [], []
+            for s in predictions:
+                sentiments.extend(s["sentiment"])
+                confidences.extend(s["confidence"])
+
+            assert len(sentiments) == len(extracted_candidates)
+            assert len(sentiments) == len(confidences)
+
+            for candidate, s, conf in zip(extracted_candidates,
+                                          sentiments,
+                                          confidences):
+                results[candidate.sentence_id]["keyword"].append(candidate.text)
+                results[candidate.sentence_id]["sentiment"].append(s.lower())
+                results[candidate.sentence_id]["confidence"].append(conf)
+        except Exception:
+            logger.error(
+                "Error in analyzing text: %s\n%s" % (text, traceback.format_exc()))
 
         return results
 
