@@ -48,7 +48,7 @@ class AAIAssociationRulesTask(AAITask):
             >>>     group_by=["order_id", "customer_id"],
             >>>     items="product_id",
             >>> )
-            >>> result["association_rules"]
+            >>> result
 
         Returns:
             Dict: Dictionnary containing the results of the task.
