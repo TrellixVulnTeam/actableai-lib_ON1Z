@@ -233,7 +233,6 @@ def run_cross_validation(
 
             cross_val_evaluates[metric].append(evaluate[metric])
 
-        if problem_type == "binary":
             auc_curve = evaluate["auc_curve"]
             for metric in auc_curve:
                 if metric not in cross_val_auc_curves:
@@ -292,24 +291,23 @@ def run_cross_validation(
         "metrics": metric_df,
     }
 
-    if evaluate["problem_type"] == "binary":
-        evaluate["auc_curve"] = cross_validation_curve(
-            cross_val_auc_curves, x="False Positive Rate", y="True Positive Rate"
-        )
-        evaluate["auc_score"] = auc(
-            evaluate["auc_curve"]["False Positive Rate"],
-            evaluate["auc_curve"]["True Positive Rate"],
-        )
-        evaluate["precision_recall_curve"] = cross_validation_curve(
-            cross_val_precision_recall_curves, x="Recall", y="Precision"
-        )
-        evaluate["precision_score"] = np.mean(
-            cross_val_evaluates["precision_score"], axis=0
-        )
-        evaluate["recall_score"] = np.mean(cross_val_evaluates["recall_score"], axis=0)
-        evaluate["f1_score"] = np.mean(cross_val_evaluates["f1_score"], axis=0)
-        evaluate["positive_count"] = np.mean(cross_val_evaluates["positive_count"])
-        evaluate["negative_count"] = np.mean(cross_val_evaluates["negative_count"])
+    evaluate["auc_curve"] = cross_validation_curve(
+        cross_val_auc_curves, x="False Positive Rate", y="True Positive Rate"
+    )
+    evaluate["auc_score"] = auc(
+        evaluate["auc_curve"]["False Positive Rate"],
+        evaluate["auc_curve"]["True Positive Rate"],
+    )
+    evaluate["precision_recall_curve"] = cross_validation_curve(
+        cross_val_precision_recall_curves, x="Recall", y="Precision"
+    )
+    evaluate["precision_score"] = np.mean(
+        cross_val_evaluates["precision_score"], axis=0
+    )
+    evaluate["recall_score"] = np.mean(cross_val_evaluates["recall_score"], axis=0)
+    evaluate["f1_score"] = np.mean(cross_val_evaluates["f1_score"], axis=0)
+    evaluate["positive_count"] = np.mean(cross_val_evaluates["positive_count"])
+    evaluate["negative_count"] = np.mean(cross_val_evaluates["negative_count"])
 
     # Create ensemble model
     ensemble_model = AverageEnsembleClassifier(cross_val_predictors)
