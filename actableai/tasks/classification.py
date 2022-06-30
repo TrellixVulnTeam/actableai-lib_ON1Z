@@ -241,10 +241,7 @@ class _AAIClassificationTrainTask(AAITask):
         elif evaluate["problem_type"] == "multiclass":
             auc_scores = []
             auc_curves = []
-            precision_scores = []
-            recall_scores = []
             precision_recall_curves = []
-            f1_scores = []
             positive_counts = []
             negative_counts = []
             for pos_label in evaluate["labels"]:
@@ -264,12 +261,6 @@ class _AAIClassificationTrainTask(AAITask):
                         "threshold": 0.5,
                     }
                 )
-                precision_scores.append(
-                    precision_score(label_val, label_pred, pos_label=pos_label)
-                )
-                recall_scores.append(
-                    recall_score(label_val, label_pred, pos_label=pos_label)
-                )
                 precision, recall, thresholds = custom_precision_recall_curve(
                     label_val, pred_prob_val[pos_label], pos_label=pos_label
                 )
@@ -281,15 +272,16 @@ class _AAIClassificationTrainTask(AAITask):
                         "positive_label": str(pos_label),
                     }
                 )
-                f1_scores.append(f1_score(label_val, label_pred, pos_label=pos_label))
                 positive_counts.append(len(label_val[label_val == pos_label]))
-                negative_counts.append(len(label_val) - evaluate["positive_count"])
+                negative_counts.append(len(label_val) - positive_counts[-1])
             evaluate["auc_score"] = auc_scores
             evaluate["auc_curve"] = auc_curves
-            evaluate["precision_score"] = precision_scores
-            evaluate["recall_score"] = recall_scores
+            evaluate["precision_score"] = precision_score(
+                label_val, label_pred, average=None
+            )
+            evaluate["recall_score"] = recall_score(label_val, label_pred, average=None)
             evaluate["precision_recall_curve"] = precision_recall_curves
-            evaluate["f1_score"] = f1_scores
+            evaluate["f1_score"] = f1_score(label_val, label_pred, average=None)
             evaluate["positive_count"] = positive_counts
             evaluate["negative_count"] = negative_counts
 
