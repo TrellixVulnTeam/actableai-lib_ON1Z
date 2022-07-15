@@ -219,7 +219,7 @@ def run_cross_validation(
         important_features,
         evaluate,
         df_val_pred_prob,
-        predict_shap_values,
+        df_predict_shap_values,
         leaderboard,
     ) in enumerate(cross_val_results):
         _, val_index = kfolds_index_list[kfold_index]
@@ -269,7 +269,7 @@ def run_cross_validation(
         )
 
         if run_model and explain_samples:
-            cross_val_predict_shap_values.append(predict_shap_values)
+            cross_val_predict_shap_values.append(df_predict_shap_values)
 
     # Evaluate results
     sqrt_k = math.sqrt(kfolds)
@@ -399,9 +399,13 @@ def run_cross_validation(
     # Create ensemble model
     ensemble_model = AverageEnsembleClassifier(cross_val_predictors)
 
-    predict_shap_values = []
+    df_predict_shap_values = None
     if run_model and explain_samples:
-        predict_shap_values = np.mean(cross_val_predict_shap_values, axis=0)
+        df_predict_shap_values = (
+            pd.concat(cross_val_predict_shap_values, axis=1)
+            .groupby(level=0, axis=1)
+            .mean()
+        )
 
     leaderboard = leaderboard_cross_val(cross_val_leaderboard)
 
@@ -410,7 +414,7 @@ def run_cross_validation(
         important_features,
         evaluate,
         df_val_cross_val_pred_prob,
-        predict_shap_values,
+        df_predict_shap_values,
         df_val,
         leaderboard,
     )

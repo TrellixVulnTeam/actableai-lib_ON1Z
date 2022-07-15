@@ -287,10 +287,10 @@ class _AAIClassificationTrainTask(AAITask):
                     }
                 )
 
-        predict_shap_values = []
+        df_predict_shap_values = None
 
         if run_model and explain_samples:
-            predict_shap_values = explainer.shap_values(df_test)
+            df_predict_shap_values = explainer.shap_values(df_test)
 
         return (
             predictor,
@@ -298,7 +298,7 @@ class _AAIClassificationTrainTask(AAITask):
             important_features,
             evaluate,
             pred_prob_val,
-            predict_shap_values,
+            df_predict_shap_values,
             leaderboard,
         )
 
@@ -503,7 +503,7 @@ class AAIClassificationTask(AAITask):
                 important_features,
                 evaluate,
                 pred_prob_val,
-                predict_shap_values,
+                df_predict_shap_values,
                 df_val,
                 leaderboard,
             ) = run_cross_validation(
@@ -539,7 +539,7 @@ class AAIClassificationTask(AAITask):
                 important_features,
                 evaluate,
                 pred_prob_val,
-                predict_shap_values,
+                df_predict_shap_values,
                 leaderboard,
             ) = classification_train_task.run(
                 problem_type=problem_type,
@@ -581,9 +581,11 @@ class AAIClassificationTask(AAITask):
             df_predict[target] = pred_prob.idxmax(axis=1)
 
         # Validation
-        eval_shap_values = []
+        df_eval_shap_values = None
         if kfolds <= 1 and explain_samples:
-            eval_shap_values = explainer.shap_values(df_val[features + biased_groups])
+            df_eval_shap_values = explainer.shap_values(
+                df_val[features + biased_groups]
+            )
 
         debiasing_charts = []
         # Generate debiasing charts
@@ -696,8 +698,14 @@ class AAIClassificationTask(AAITask):
                 "prediction_table": df_predict,
                 "fields": predict_data["schema"]["fields"],
                 "predictData": predict_data["data"],
-                "predict_shaps": predict_shap_values,
-                "validation_shaps": eval_shap_values,
+                "predict_shaps": df_predict_shap_values.to_numpy()
+                if df_predict_shap_values is not None
+                else [],
+                "predict_shaps_v2": df_predict_shap_values,
+                "validation_shaps": df_eval_shap_values.to_numpy()
+                if df_eval_shap_values is not None
+                else [],
+                "validation_shaps_v2": df_eval_shap_values,
                 "exdata": exdata["data"] if not use_cross_validation else [],
                 "evaluate": evaluate,
                 "importantFeatures": important_features,

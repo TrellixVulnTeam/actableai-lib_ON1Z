@@ -181,7 +181,7 @@ class AAIClusteringTask(AAITask):
         )
         z = dec.project(transformed_values)
 
-        shap_values = []
+        df_shap_values = None
         if explain_samples:
             background_samples = 100
             if len(transformed_values) < 100:
@@ -219,7 +219,7 @@ class AAIClusteringTask(AAITask):
                     :, preprocessor.feature_links[i]
                 ].sum(axis=1)
 
-            shap_values = df_final_shap_values.to_numpy()
+            df_shap_values = df_final_shap_values
 
         try:
             lda = LinearDiscriminantAnalysis(n_components=2)
@@ -289,7 +289,7 @@ class AAIClusteringTask(AAITask):
         return {
             "data_v2": {
                 "clusters": clusters,
-                "shap_values": shap_values,
+                "shap_values": df_shap_values,
             },
             "data": clusters,
             "status": "SUCCESS",

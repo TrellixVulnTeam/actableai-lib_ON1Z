@@ -30,7 +30,7 @@ def run_cross_validation(
     time_limit: Optional[int],
     drop_unique: bool,
     drop_useless_features: bool,
-) -> Tuple[Dict, Dict, List, float, float, List, List, List]:
+) -> Tuple[Dict, Dict, List, float, float, pd.DataFrame, List, List]:
     """Run cross validation on Regression Task. Data is divided in kfold groups and each
     run a regression. The returned values are means or lists of values from
     each sub regression task.
@@ -141,7 +141,7 @@ def run_cross_validation(
             predictions,
             prediction_low,
             prediction_high,
-            predict_shap_values,
+            df_predict_shap_values,
             leaderboard,
         ) = cv_results
 
@@ -175,7 +175,7 @@ def run_cross_validation(
 
         if run_model:
             if explain_samples:
-                cross_val_predict_shap_values.append(predict_shap_values)
+                cross_val_predict_shap_values.append(df_predict_shap_values)
             cross_val_predictions.append(predictions)
             if prediction_quantile_low is not None:
                 if cross_val_prediction_low is None:
@@ -271,12 +271,16 @@ def run_cross_validation(
         )
 
     predictions = []
-    predict_shap_values = []
+    df_predict_shap_values = None
     prediction_low = None
     prediction_high = None
     if run_model:
         if explain_samples:
-            predict_shap_values = np.mean(cross_val_predict_shap_values, axis=0)
+            df_predict_shap_values = (
+                pd.concat(cross_val_predict_shap_values, axis=1)
+                .groupby(level=0, axis=1)
+                .mean()
+            )
 
         predictions = np.mean(cross_val_predictions, axis=0).tolist()
         if prediction_quantile_low is not None:
@@ -292,7 +296,7 @@ def run_cross_validation(
         predictions,
         prediction_low,
         prediction_high,
-        predict_shap_values,
+        df_predict_shap_values,
         df_val,
         leaderboard,
     )

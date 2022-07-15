@@ -67,7 +67,6 @@ def test_cross_validation():
     assert "p_value_std_err" in important_features[0]
     assert evaluate is not None
     assert predictions is not None
-    assert predict_shap_values is not None
     assert df_val is not None
     assert leaderboard is not None
 

@@ -63,6 +63,5 @@ def test_run_cross_validation():
     assert evaluate is not None
     assert ensemble_model is not None
     assert df_val_cross_val_pred_prob is not None
-    assert predict_shap_values is not None
     assert df_val is not None
     assert leaderboard is not None

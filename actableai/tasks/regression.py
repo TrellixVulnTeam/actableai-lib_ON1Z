@@ -224,10 +224,10 @@ class _AAIRegressionTrainTask(AAITask):
         predictions = None
         predictions_low = None
         predictions_high = None
-        predict_shap_values = None
+        df_predict_shap_values = None
         if run_model:
             if explain_samples:
-                predict_shap_values = explainer.shap_values(df_test)
+                df_predict_shap_values = explainer.shap_values(df_test)
 
             full_predictions = predictor.predict(df_test)
 
@@ -247,7 +247,7 @@ class _AAIRegressionTrainTask(AAITask):
             predictions,
             predictions_low,
             predictions_high,
-            predict_shap_values,
+            df_predict_shap_values,
             leaderboard,
         )
 
@@ -455,7 +455,7 @@ class AAIRegressionTask(AAITask):
                 predictions,
                 prediction_low,
                 prediction_high,
-                predict_shap_values,
+                df_predict_shap_values,
                 df_val,
                 leaderboard,
             ) = run_cross_validation(
@@ -494,7 +494,7 @@ class AAIRegressionTask(AAITask):
                 predictions,
                 prediction_low,
                 prediction_high,
-                predict_shap_values,
+                df_predict_shap_values,
                 leaderboard,
             ) = regression_train_task.run(
                 explain_samples=explain_samples,
@@ -522,7 +522,7 @@ class AAIRegressionTask(AAITask):
             )
 
         # Validation
-        eval_shap_values = []
+        df_eval_shap_values = None
         if kfolds <= 1:
             if prediction_quantile_low is None or prediction_quantile_high is None:
                 df_val[target + "_predicted"] = y_pred
@@ -536,7 +536,7 @@ class AAIRegressionTask(AAITask):
             # predictor.unpersist_models()
 
             if explain_samples:
-                eval_shap_values = explainer.shap_values(
+                df_eval_shap_values = explainer.shap_values(
                     df_val[features + biased_groups]
                 )
 
@@ -655,9 +655,15 @@ class AAIRegressionTask(AAITask):
         data = {
             "validation_table": df_val if kfolds <= 1 else None,
             "prediction_table": df_predict,
-            "predict_shaps": predict_shap_values,
+            "predict_shaps": df_predict_shap_values.to_numpy()
+            if df_predict_shap_values is not None
+            else [],
+            "predict_shaps_v2": df_predict_shap_values,
             "evaluate": evaluate,
-            "validation_shaps": eval_shap_values,
+            "validation_shaps": df_eval_shap_values.to_numpy()
+            if df_eval_shap_values is not None
+            else [],
+            "validation_shaps_v2": df_eval_shap_values,
             "importantFeatures": important_features,
             "debiasing_charts": debiasing_charts,
             "leaderboard": leaderboard,
