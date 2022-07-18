@@ -121,10 +121,14 @@ class ClassificationTrainFeaturesExtractor(MethodFeaturesExtractor):
             **extract_dataset_features(
                 arguments.get("df_val", pd.DataFrame()), prefix="val_"
             ),
+            **extract_dataset_features(
+                arguments.get("df_test", pd.DataFrame()), prefix="test__"
+            ),
             **deepcopy(arguments),
         }
 
         features.pop("df_train", None)
         features.pop("df_val", None)
+        features.pop("df_test", None)
 
         return features
