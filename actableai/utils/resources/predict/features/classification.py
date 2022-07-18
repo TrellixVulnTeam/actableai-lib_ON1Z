@@ -122,7 +122,7 @@ class ClassificationTrainFeaturesExtractor(MethodFeaturesExtractor):
                 arguments.get("df_val", pd.DataFrame()), prefix="val_"
             ),
             **extract_dataset_features(
-                arguments.get("df_test", pd.DataFrame()), prefix="test__"
+                arguments.get("df_test", pd.DataFrame()), prefix="test_"
             ),
             **deepcopy(arguments),
         }
