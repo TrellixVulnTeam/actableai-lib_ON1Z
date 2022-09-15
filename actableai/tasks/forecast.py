@@ -331,6 +331,7 @@ class AAIForecastTask(AAITask):
 
         Returns:
             Dict: Dictionary containing the results.
+                - "model": AAIModel to redeploy the model
         """
         import time
         import mxnet as mx
@@ -342,6 +343,7 @@ class AAIForecastTask(AAITask):
         )
         from actableai.data_validation.base import CheckLevels
         from actableai.utils.sanitize import sanitize_timezone
+        from actableai.models.aai_predictor import AAITimeSeriesForecasterModel
 
         # FIXME random seed not working here
         np.random.seed(seed)
@@ -526,4 +528,5 @@ class AAIForecastTask(AAITask):
                 for x in failed_checks
             ],
             "runtime": runtime,
+            "model": AAITimeSeriesForecasterModel(model),
         }

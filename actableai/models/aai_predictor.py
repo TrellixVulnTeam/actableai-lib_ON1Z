@@ -4,10 +4,13 @@ from econml.dml import DML
 import pandas as pd
 
 from actableai.intervention import custom_intervention_effect
+from actableai.timeseries.models.forecaster import AAITimeSeriesForecaster
+
+MODEL_VERSION = 1
 
 
 class AAIModel:
-    model_version = 1
+    model_version = MODEL_VERSION
 
     def __init__(self, version: int = model_version) -> None:
         self.version = version
@@ -16,8 +19,8 @@ class AAIModel:
 class AAITabularModel(AAIModel):
     def __init__(
         self,
-        version: int,
         predictor: TabularPredictor,
+        version: int = MODEL_VERSION,
     ) -> None:
         super().__init__(version)
         self.predictor = predictor
@@ -26,16 +29,16 @@ class AAITabularModel(AAIModel):
 class AAITabularModelInterventional(AAITabularModel):
     def __init__(
         self,
-        version: int,
         predictor: TabularPredictor,
         causal_model: DML,
         intervened_column: str,
         common_causes: Optional[List[str]],
         discrete_treatment: Optional[bool],
+        version: int = MODEL_VERSION,
     ) -> None:
         super().__init__(
-            version,
-            predictor,
+            version=version,
+            predictor=predictor,
         )
         self.causal_model = causal_model
         self.intervened_column = intervened_column
@@ -52,3 +55,11 @@ class AAITabularModelInterventional(AAITabularModel):
             predictor=self.predictor,
             discrete_treatment=self.discrete_treatment,
         )
+
+
+class AAITimeSeriesForecasterModel(AAIModel):
+    def __init__(
+        self, model: AAITimeSeriesForecaster, version: int = MODEL_VERSION
+    ) -> None:
+        super().__init__(version)
+        self.model = model

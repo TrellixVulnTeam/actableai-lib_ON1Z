@@ -1,5 +1,7 @@
 from typing import Dict
 
+from actableai.models.aai_predictor import AAIModel, AAITimeSeriesForecasterModel
+
 
 class AAIModelInference:
     """
@@ -108,22 +110,25 @@ class AAIModelInference:
         task_model = self._get_model(task_id)
 
         # We used to pickle TabularPredictor. This check is for legacy
-        if isinstance(task_model, AAITabularModel):
-            pred = self._predict(
-                task_id,
-                task_model.predictor,
-                df,
-                return_probabilities,
-                probability_threshold,
-                positive_label,
-            )
-            # Intervention effect part
-            if isinstance(task_model, AAITabularModelInterventional) and (
-                f"intervened_{task_model.intervened_column}" in df
-                or f"expected_{task_model.predictor.label}" in df
-            ):
-                pred["intervention"] = task_model.intervention_effect(df, pred)
-            return pred
+        if isinstance(task_model, AAIModel):
+            if isinstance(task_model, AAITabularModel):
+                pred = self._predict(
+                    task_id,
+                    task_model.predictor,
+                    df,
+                    return_probabilities,
+                    probability_threshold,
+                    positive_label,
+                )
+                # Intervention effect part
+                if isinstance(task_model, AAITabularModelInterventional) and (
+                    f"intervened_{task_model.intervened_column}" in df
+                    or f"expected_{task_model.predictor.label}" in df
+                ):
+                    pred["intervention"] = task_model.intervention_effect(df, pred)
+                return pred
+            if isinstance(task_model, AAITimeSeriesForecasterModel):
+                return task_model.model.predict(df=df)
 
         # Run legacy task_model directly
         return self._predict(
