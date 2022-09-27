@@ -62,10 +62,19 @@ class Refiner(ABC):
             else:
                 raise NotImplementedError
 
+            rich_column_meta_dict = {
+                "float64": ColumnType.Float,
+                "category": ColumnType.Category,
+                "object": ColumnType.Category,
+                "int64": ColumnType.Integer,
+            }
+
             fix_info_list = fixer.fix(
                 processed_fixed_df,
                 errors,
-                RichColumnMeta(col, ColumnType.Category),
+                RichColumnMeta(
+                    col, rich_column_meta_dict[str(processed_fixed_df[col].dtype)]
+                ),
             )
             all_fix_info_list.extend(fix_info_list)
         return all_fix_info_list
@@ -119,8 +128,7 @@ class Refiner(ABC):
         errors: CellErrors, df: pd.DataFrame, fix_info_list: FixInfoList
     ):
         for err in errors:
-            df[err.column] = df[err.column].astype("str")
-            df.at[err.index, err.column] = UNABLE_TO_FIX_PLACEHOLDER
+            df.loc[err.index, err.column] = UNABLE_TO_FIX_PLACEHOLDER
             fix_info_list.replace(
                 FixInfo(
                     col=err.column,
@@ -156,7 +164,7 @@ class Refiner(ABC):
             fix_info_list.replace(*best_fix)
 
         for info in fix_info_list:
-            df.at[info.index, info.col] = info.best_guess
+            df.loc[info.index, info.col] = info.best_guess
 
     @abstractmethod
     def _find_all_value_pairs_satisfy_constraints(

@@ -1,5 +1,6 @@
 import os.path
 import pandas as pd
+import numpy as np
 import shutil
 import time
 from autogluon.core.dataset import TabularDataset
@@ -60,7 +61,7 @@ class AutoGluonFixer(AutoFixer):
                 raise ValueError(
                     "Column values only have 1 unique value, should not use AutoGluonFixer"
                 )
-            elif len(target_values) == 2:
+            elif target_values_uniq_count == 2:
                 return _ProblemType.binary
             else:
                 return _ProblemType.multiclass
@@ -117,7 +118,7 @@ class AutoGluonFixer(AutoFixer):
         )
 
         holdout_frac = None
-        if len(df_to_train) > 0:
+        if len(df_to_train) > 0 and problem_type == _ProblemType.regression:
             holdout_frac = len(df_to_train[column_to_predict.name].unique()) / len(
                 df_to_train
             )
@@ -140,6 +141,17 @@ class AutoGluonFixer(AutoFixer):
         )
         df_to_test = TabularDataset(df_to_test[columns_to_train])
         predict_df_with_confidence = predictor.predict_proba(df_to_test)
+
+        if column_to_predict.type == ColumnType.Integer:
+            predict_df_with_confidence = (
+                pd.Series(predict_df_with_confidence)
+                .apply(lambda x: int(round(x)) if not np.isnan(x) else np.nan)
+                .astype(int)
+            )
+        if column_to_predict.type == ColumnType.Float:
+            predict_df_with_confidence = pd.Series(predict_df_with_confidence).astype(
+                float
+            )
 
         return problem_type, predict_df_with_confidence
 

@@ -182,10 +182,9 @@ class Processor:
                 df_result[col] = list(map(str, df[col]))
             elif expect_type == ColumnType.Integer:
                 values = df[col]
-                nan_indexes = np.isnan(values)
-                values[nan_indexes] = NAN_INTEGER
-                df_result[col] = values.round().apply(int).apply(str)
-                df_result.at[nan_indexes, col] = ""
+                df_result[col] = values.apply(
+                    lambda x: int(round(x)) if not np.isnan(x) else np.nan
+                )
             elif expect_type == ColumnType.Float:
                 df_result[col] = df[col].apply(float)
             elif expect_type == ColumnType.Complex:
