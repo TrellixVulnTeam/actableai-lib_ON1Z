@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import pytest
 from math import inf
 from unittest.mock import MagicMock
@@ -240,13 +241,13 @@ class TestReplaceAsUnableToFixInPlace:
                 CellErrors(MagicMock(), [CellError("a", 0, ErrorType.INVALID)]),
                 pd.DataFrame({"a": [1, 2, 3]}),
                 FixInfoList([FixInfo("a", 0, FixValueOptions([FixValue(100, 1)]))]),
-                pd.DataFrame({"a": ["-CANT FIX-", "2", "3"]}),
+                pd.DataFrame({"a": [np.nan, 2, 3]}),
                 FixInfoList(
                     [
                         FixInfo(
                             "a",
                             0,
-                            FixValueOptions([FixValue("-CANT FIX-", -inf)]),
+                            FixValueOptions([FixValue(np.nan, -inf)]),
                         )
                     ]
                 ),

@@ -455,7 +455,7 @@ def test_chain():
         (
             pd.DataFrame(data={"a": [1.0, 2.0, 3.0, 8.9999, 4.111111]}),
             DfTypes([("a", ColumnType.Integer)]),
-            pd.DataFrame(data={"a": ["1", "2", "3", "9", "4"]}),
+            pd.DataFrame(data={"a": [1, 2, 3, 9, 4]}),
         ),
         (
             pd.DataFrame(data={"a": [1.0, 2.0, 3.9999, np.NaN]}),
@@ -463,10 +463,10 @@ def test_chain():
             pd.DataFrame(
                 data={
                     "a": [
-                        "1",
-                        "2",
-                        "4",
-                        "",
+                        1,
+                        2,
+                        4,
+                        np.nan,
                     ]
                 }
             ),
