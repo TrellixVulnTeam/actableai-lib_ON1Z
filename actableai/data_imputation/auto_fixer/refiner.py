@@ -62,10 +62,19 @@ class Refiner(ABC):
             else:
                 raise NotImplementedError
 
+            rich_column_meta_dict = {
+                "float64": ColumnType.Float,
+                "category": ColumnType.Category,
+                "object": ColumnType.Category,
+                "int64": ColumnType.Integer,
+            }
+
             fix_info_list = fixer.fix(
                 processed_fixed_df,
                 errors,
-                RichColumnMeta(col, ColumnType.Category),
+                RichColumnMeta(
+                    col, rich_column_meta_dict[str(processed_fixed_df[col].dtype)]
+                ),
             )
             all_fix_info_list.extend(fix_info_list)
         return all_fix_info_list

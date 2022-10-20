@@ -160,20 +160,6 @@ class AAIDataImputationTask(AAITask):
             fixed_v = x[1]
             if (
                 str(raw_v) == str(fixed_v)
-                or (
-                    isinstance(raw_v, int)
-                    and isinstance(fixed_v, str)
-                    and raw_v == fixed_v
-                )
-                or (isinstance(raw_v, float) and pd.isna(raw_v) and fixed_v == "_nan_")
-                or (
-                    pd.notna(raw_v)
-                    and (
-                        isinstance(raw_v, float)
-                        and (isinstance(fixed_v, str))
-                        and int(raw_v) == int(fixed_v)
-                    )
-                )
             ):
                 return ""
             else:

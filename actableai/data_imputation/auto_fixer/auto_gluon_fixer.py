@@ -117,7 +117,10 @@ class AutoGluonFixer(AutoFixer):
         )
 
         holdout_frac = None
-        if len(df_to_train) > 0:
+        if len(df_to_train) > 0 and (
+            problem_type == _ProblemType.multiclass
+            or problem_type == _ProblemType.binary
+        ):
             holdout_frac = len(df_to_train[column_to_predict.name].unique()) / len(
                 df_to_train
             )
@@ -140,6 +143,15 @@ class AutoGluonFixer(AutoFixer):
         )
         df_to_test = TabularDataset(df_to_test[columns_to_train])
         predict_df_with_confidence = predictor.predict_proba(df_to_test)
+
+        if column_to_predict.type == ColumnType.Integer:
+            predict_df_with_confidence = pd.Series(predict_df_with_confidence).astype(
+                int
+            )
+        if column_to_predict.type == ColumnType.Float:
+            predict_df_with_confidence = pd.Series(predict_df_with_confidence).astype(
+                float
+            )
 
         return problem_type, predict_df_with_confidence
 
