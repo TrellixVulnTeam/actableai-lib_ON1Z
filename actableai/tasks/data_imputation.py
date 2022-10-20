@@ -158,6 +158,8 @@ class AAIDataImputationTask(AAITask):
         def diff(x):
             raw_v = x[0]
             fixed_v = x[1]
+            if isinstance(raw_v, int) and isinstance(fixed_v, float):
+                fixed_v = int(fixed_v)
             if str(raw_v) == str(fixed_v):
                 return ""
             else:
