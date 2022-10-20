@@ -158,9 +158,7 @@ class AAIDataImputationTask(AAITask):
         def diff(x):
             raw_v = x[0]
             fixed_v = x[1]
-            if (
-                str(raw_v) == str(fixed_v)
-            ):
+            if str(raw_v) == str(fixed_v):
                 return ""
             else:
                 return "highlight"

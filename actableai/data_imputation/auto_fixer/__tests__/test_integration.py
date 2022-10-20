@@ -136,7 +136,7 @@ def test_neighbor_fixer_should_throw_error_when_there_is_no_sufficient_data_to_t
                         col="b",
                         index=2,
                         options=FixValueOptions(
-                            options=[FixValue(value=2.0, confidence=1)]
+                            options=[FixValue(value=1, confidence=1)]
                         ),
                     ),
                     FixInfo(
