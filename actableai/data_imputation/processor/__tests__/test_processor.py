@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 from datetime import datetime
 from unittest.mock import MagicMock, patch, call
+from actableai.data_imputation.config.config import NAN_INTEGER
 
 from actableai.data_imputation.error_detector import CellErrors
 from actableai.data_imputation.error_detector.cell_erros import (
@@ -466,7 +467,7 @@ def test_chain():
                         1,
                         2,
                         4,
-                        -999999999,
+                        NAN_INTEGER,
                     ]
                 }
             ),
