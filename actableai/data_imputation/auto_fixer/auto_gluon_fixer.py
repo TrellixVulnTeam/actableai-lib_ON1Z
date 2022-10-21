@@ -6,6 +6,7 @@ from autogluon.core.dataset import TabularDataset
 from autogluon.tabular import TabularPredictor
 from enum import Enum
 from typing import List, Set, Tuple, Optional
+from actableai.classification.config import MINIMUM_CLASSIFICATION_VALIDATION
 
 from actableai.data_imputation.auto_fixer.auto_fixer import AutoFixer
 from actableai.data_imputation.auto_fixer.errors import EmptyTrainDataException
@@ -117,9 +118,13 @@ class AutoGluonFixer(AutoFixer):
         )
 
         holdout_frac = None
-        if len(df_to_train) > 0:
-            holdout_frac = len(df_to_train[column_to_predict.name].unique()) / len(
-                df_to_train
+        if len(df_to_train) > 0 and (
+            problem_type == _ProblemType.binary
+            or problem_type == _ProblemType.multiclass
+        ):
+            holdout_frac = max(
+                len(df_to_train[column_to_predict.name].unique()) / len(df_to_train),
+                MINIMUM_CLASSIFICATION_VALIDATION,
             )
 
         predictor = TabularPredictor(

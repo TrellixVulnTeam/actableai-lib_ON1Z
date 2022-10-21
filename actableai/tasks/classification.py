@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Any, Dict, List, Optional, Tuple, Union
 import logging
+from actableai.classification.config import MINIMUM_CLASSIFICATION_VALIDATION
 
 from actableai.tasks import TaskType
 from actableai.tasks.base import AAITask
@@ -178,6 +179,11 @@ class _AAIClassificationTrainTask(AAITask):
             if time_limit is not None:
                 feature_prune_kwargs["feature_prune_time_limit"] = time_limit * 0.5
 
+        holdout_frac = max(
+            len(df_train[target].unique()) / len(df_train),
+            MINIMUM_CLASSIFICATION_VALIDATION,
+        )
+
         predictor = predictor.fit(
             train_data=df_train,
             hyperparameters=hyperparameters,
@@ -187,6 +193,7 @@ class _AAIClassificationTrainTask(AAITask):
             time_limit=time_limit,
             ag_args_ensemble={"fold_fitting_strategy": "sequential_local"},
             feature_prune_kwargs=feature_prune_kwargs,
+            holdout_frac=holdout_frac,
         )
 
         explainer = None
