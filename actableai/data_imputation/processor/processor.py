@@ -184,7 +184,9 @@ class Processor:
                 values = df[col]
                 nan_indexes = np.isnan(values)
                 values[nan_indexes] = NAN_INTEGER
-                df_result[col] = values.round().apply(int)
+                df_result[col] = values.apply(
+                    lambda x: int(round(x)) if not np.isnan(x) else np.nan
+                )
             elif expect_type == ColumnType.Float:
                 df_result[col] = df[col].apply(float)
             elif expect_type == ColumnType.Complex:

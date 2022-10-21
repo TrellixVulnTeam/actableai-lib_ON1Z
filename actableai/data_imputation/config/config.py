@@ -1,5 +1,6 @@
 import logging
 import os
+import numpy as np
 
 UNABLE_TO_FIX_DISTINCT_SIZE_THRESHOLD = os.getenv(
     "UNABLE_TO_FIX_DISTINCT_SIZE_THRESHOLD", 5
@@ -13,7 +14,7 @@ TYPO_APPEARANCE_FREQUENCY_THRESHOLD = os.getenv(
 UNABLE_TO_FIX_PLACEHOLDER = os.getenv("UNABLE_TO_FIX_PLACEHOLDER", "-CANT FIX-")
 NAN_REPLACE_VALUE = os.getenv("NAN_REPLACE_VALUE", "--NaN--")
 
-NAN_INTEGER = -999999999
+NAN_INTEGER = np.nan
 
 logger = logging.getLogger("data_imputation")
 logger.setLevel("INFO")
