@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Tuple
+from typing import Dict, List, Tuple
 
 from actableai.tasks import TaskType
 from actableai.tasks.base import AAITask
@@ -155,7 +155,7 @@ class AAIDataImputationTask(AAITask):
                 "validation": [],
             }
 
-        def diff(x) -> Literal['', 'highlight']:
+        def diff(x):
             raw_v = x[0]
             fixed_v = x[1]
             if isinstance(raw_v, int) and isinstance(fixed_v, float):
