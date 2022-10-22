@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from typing import List, Optional
-from autogluon.core.models.abstract.abstract_model import AbstractModel
 
 from tensorflow.keras.layers import Input, Dense, Dropout
 from tensorflow.keras.models import Model
