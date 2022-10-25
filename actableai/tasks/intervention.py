@@ -4,7 +4,6 @@ from typing import List, Dict, Optional
 import numpy as np
 import pandas as pd
 from sklearn.metrics import r2_score
-from actableai.classification.config import MINIMUM_CLASSIFICATION_VALIDATION
 from actableai.data_validation.base import CheckLevels
 from actableai.tasks import TaskType
 from actableai.tasks.base import AAITask
