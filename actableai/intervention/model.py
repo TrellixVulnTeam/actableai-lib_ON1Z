@@ -14,6 +14,7 @@ from autogluon.features import AutoMLPipelineFeatureGenerator
 from econml.dml import LinearDML, NonParamDML
 
 from actableai.causal.predictors import SKLearnMultilabelWrapper, SKLearnTabularWrapper
+from actableai.classification.config import MINIMUM_CLASSIFICATION_VALIDATION
 from actableai.intervention.config import LOGIT_MAX_VALUE, LOGIT_MIN_VALUE
 from actableai.utils import get_type_special_no_ag
 from actableai.utils.multilabel_predictor import MultilabelPredictor
@@ -105,9 +106,10 @@ class AAIInterventionEffectPredictor:
 
         model_t_holdout_frac = None
         if model_t_problem_type == "multiclass":
-            model_t_holdout_frac = len(
-                T[self.current_intervention_column].unique()
-            ) / len(T)
+            model_t_holdout_frac = max(
+                len(T[self.current_intervention_column].unique()) / len(T),
+                MINIMUM_CLASSIFICATION_VALIDATION,
+            )
 
         ag_args_fit = {"num_gpus": self.num_gpus, "drop_unique": self.drop_unique}
         feature_generator = AutoMLPipelineFeatureGenerator(
