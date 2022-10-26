@@ -383,7 +383,10 @@ class AAIInterventionEffectPredictor:
                         pd.DataFrame(np.zeros_like(Y.values), columns=Y.columns),
                     )
                 else:
-                    lb_custom_indices, ub_custom_indices = self.causal_model.effect_interval(
+                    (
+                        lb_custom_indices,
+                        ub_custom_indices,
+                    ) = self.causal_model.effect_interval(
                         X.iloc[t1_indices_non_na].values if X is not None else None,
                         T0=T0.iloc[t1_indices_non_na].values,  # type: ignore
                         T1=T1.iloc[t1_indices_non_na].values,  # type: ignore
@@ -475,7 +478,13 @@ class AAIInterventionEffectPredictor:
         type_special = df.apply(get_type_special_no_ag)
         num_cols = (type_special == "numeric") | (type_special == "integer")
         num_cols = list(df.loc[:, num_cols].columns)
-        cat_cols = type_special == "category"
+        # This is kind of wrong for model deployment because a user entered a bool
+        # and now he has to enter a str if _preprocess() not in predict().
+        custom_cols = (type_special == "boolean") | (type_special == "mixed")
+        df.loc[:, custom_cols] = df.loc[:, custom_cols].astype(str)
+
+        type_special = df.apply(get_type_special_no_ag)
+        cat_cols = (type_special == "category") | (type_special == "text")
         cat_cols = list(df.loc[:, cat_cols].columns)
 
         df = df.replace(to_replace=[None], value=np.nan)
