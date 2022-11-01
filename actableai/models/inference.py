@@ -1,47 +1,12 @@
 from typing import Dict
-import numpy as np
 import pandas as pd
 
 from actableai.exceptions.models import UnknownModelClassError
 from actableai.models.intervention import empty_string_to_nan
+from actableai.serve.abstract_serve import AbstractRayDeployment
 
 
-class AAIModelInference:
-    """
-    TODO write documentation
-    """
-
-    @classmethod
-    def deploy(cls, num_replicas, ray_options, s3_bucket, s3_prefix=""):
-        """
-        TODO write documentation
-        """
-        from ray import serve
-
-        return serve.deployment(
-            cls,
-            name=cls.__name__,
-            num_replicas=num_replicas,
-            ray_actor_options=ray_options,
-            init_args=(s3_bucket, s3_prefix),
-        ).deploy()
-
-    @classmethod
-    def get_handle(cls):
-        """
-        TODO write documentation
-        """
-        return cls.get_deployment().get_handle()
-
-    @classmethod
-    def get_deployment(cls):
-        """
-        TODO write documentation
-        """
-        from ray import serve
-
-        return serve.get_deployment(cls.__name__)
-
+class AAIModelInference(AbstractRayDeployment):
     def __init__(self, s3_bucket, s3_prefix=""):
         """
         TODO write documentation

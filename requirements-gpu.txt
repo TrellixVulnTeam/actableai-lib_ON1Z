@@ -170,6 +170,8 @@ dowhy==0.6
     # via econml
 econml==0.13.0
     # via -r requirements.in
+einops==0.2.0
+    # via vietocr
 ephem==4.1.3
     # via lunarcalendar
 execnet==1.9.0
@@ -230,6 +232,7 @@ gdown==4.4.0
     # via
     #   flair
     #   pyabsa
+    #   vietocr
 gensim==4.2.0
     # via
     #   bpemb
@@ -298,7 +301,11 @@ idna==3.3
     #   requests
     #   yarl
 imageio==2.19.3
-    # via scikit-image
+    # via
+    #   imgaug
+    #   scikit-image
+imgaug==0.4.0
+    # via vietocr
 immutables==0.18
     # via contextvars
 importlib-metadata==4.12.0
@@ -365,6 +372,8 @@ lightgbm==3.3.2
     #   econml
 llvmlite==0.38.1
     # via numba
+lmdb==1.3.0
+    # via vietocr
 locket==1.0.0
     # via partd
 lunarcalendar==0.0.9
@@ -382,6 +391,7 @@ matplotlib==3.5.2
     #   fastai
     #   flair
     #   gluonts
+    #   imgaug
     #   metric-visualizer
     #   mlxtend
     #   prophet
@@ -464,6 +474,7 @@ numpy==1.21.6
     #   h5py
     #   hyperopt
     #   imageio
+    #   imgaug
     #   keras-preprocessing
     #   lightgbm
     #   matplotlib
@@ -473,6 +484,7 @@ numpy==1.21.6
     #   nlpaug
     #   nptyping
     #   numba
+    #   opencv-python
     #   openml
     #   opt-einsum
     #   pandas
@@ -517,6 +529,8 @@ opencensus==0.9.0
     # via ray
 opencensus-context==0.1.2
     # via opencensus
+opencv-python==4.6.0.66
+    # via imgaug
 openml==0.12.2
     # via tabpfn
 opt-einsum==3.3.0
@@ -582,6 +596,7 @@ pillow==9.0.1
     #   autogluon-multimodal
     #   fastai
     #   imageio
+    #   imgaug
     #   matplotlib
     #   scikit-image
     #   tikzplotlib
@@ -596,6 +611,8 @@ portalocker==2.4.0
     # via sacrebleu
 pptree==3.1
     # via flair
+prefetch-generator==1.0.1
+    # via vietocr
 preshed==3.0.6
     # via
     #   spacy
@@ -776,7 +793,9 @@ sacrebleu==2.1.0
 sacremoses==0.0.53
     # via autogluon-contrib-nlp
 scikit-image==0.19.3
-    # via autogluon-multimodal
+    # via
+    #   autogluon-multimodal
+    #   imgaug
 scikit-learn==1.0.2
     # via
     #   -r requirements.in
@@ -809,6 +828,7 @@ scipy==1.7.3
     #   gensim
     #   gpytorch
     #   hyperopt
+    #   imgaug
     #   lightgbm
     #   metric-visualizer
     #   mlxtend
@@ -839,6 +859,8 @@ shap==0.39.0
     # via
     #   -r requirements.in
     #   econml
+shapely==1.8.5.post1
+    # via imgaug
 six==1.16.0
     # via
     #   astunparse
@@ -850,6 +872,7 @@ six==1.16.0
     #   gpustat
     #   grpcio
     #   hyperopt
+    #   imgaug
     #   keras-preprocessing
     #   langdetect
     #   patsy
@@ -1067,6 +1090,8 @@ urllib3==1.26.9
     #   requests
 uvicorn==0.16.0
     # via ray
+vietocr==0.3.9
+    # via -r requirements.in
 virtualenv==20.15.1
     # via ray
 visions==0.7.1

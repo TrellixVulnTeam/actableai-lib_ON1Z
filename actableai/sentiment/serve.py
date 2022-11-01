@@ -2,58 +2,15 @@ import traceback
 import logging
 from typing import Optional, List
 
+from actableai.serve.abstract_serve import AbstractRayDeployment
+
 logger = logging.getLogger(__name__)
 
 
-class AAISentimentExtractor:
+class AAISentimentExtractor(AbstractRayDeployment):
     """
     TODO write documentation
     """
-
-    @classmethod
-    def deploy(
-        cls,
-        num_replicas,
-        ray_options,
-        pyabsa_checkpoint,
-        device,
-        flair_pos_model_path: Optional[str] = None,
-        flair_pos_supported_language_codes: Optional[List[str]] = None,
-    ):
-        """
-        TODO write documentation
-        """
-        from ray import serve
-
-        return serve.deployment(
-            cls,
-            name=cls.__name__,
-            num_replicas=num_replicas,
-            ray_actor_options=ray_options,
-            init_args=(
-                pyabsa_checkpoint,
-                device,
-                flair_pos_model_path,
-                flair_pos_supported_language_codes,
-            ),
-        ).deploy()
-
-    @classmethod
-    def get_handle(cls):
-        """
-        TODO write documentation
-        """
-        return cls.get_deployment().get_handle()
-
-    @classmethod
-    def get_deployment(cls):
-        """
-        TODO write documentation
-        """
-        from ray import serve
-
-        return serve.get_deployment(cls.__name__)
-
     def __init__(
         self,
         checkpoint,
@@ -73,8 +30,7 @@ class AAISentimentExtractor:
         )
         self.rake = multi_rake.Rake(min_freq=1, tagger=tagger)
         self.sent_classifier = APCCheckpointManager.get_sentiment_classifier(
-            checkpoint=checkpoint,
-            auto_device=device,
+            checkpoint=checkpoint, auto_device=device
         )
 
     def predict(self, X, rake_threshold=1.0):
