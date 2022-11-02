@@ -14,7 +14,7 @@ class AbstractRayDeployment:
     """
 
     @classmethod
-    def deploy(cls, num_replicas, ray_options, *args):
+    def deploy(cls, num_replicas, ray_options, *args, **kwargs):
         """
         TODO write documentation
         """
@@ -26,6 +26,7 @@ class AbstractRayDeployment:
             num_replicas=num_replicas,
             ray_actor_options=ray_options,
             init_args=args,
+            init_kwargs=kwargs,
         ).deploy()
 
     @classmethod
